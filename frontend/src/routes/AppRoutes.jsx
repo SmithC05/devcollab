@@ -33,6 +33,7 @@ import IntelligenceLayout        from '../features/devcollab-intelligence/pages/
 import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
 import EngineeringCommandCenter  from '../features/devcollab-intelligence/pages/EngineeringCommandCenter';
 import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence';
+import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -183,7 +184,7 @@ export default function AppRoutes() {
         <Route path="project/:id"     element={<PlaceholderPage title="Project Intelligence" subtitle="Project-level engineering state — Phase 2" />} />
         <Route path="organization"    element={<OrganizationIntelligence />} />
         <Route path="member/:id"      element={<PlaceholderPage title="Member Intelligence" subtitle="Member capacity &amp; context — Phase 2" />} />
-        <Route path="decision/:id"    element={<PlaceholderPage title="Decision Center" subtitle="Agent analysis & simulation — Phase 3" />} />
+        <Route path="decision/:id"    element={<DecisionPoint />} />
         <Route path="simulation/:id"  element={<PlaceholderPage title="Simulation" subtitle="What-if analysis — Phase 3" />} />
       </Route>
 

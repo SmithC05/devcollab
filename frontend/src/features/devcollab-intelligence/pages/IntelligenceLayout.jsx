@@ -12,6 +12,7 @@ import '../styles/components.css';
 const NAV_LINKS = [
   { to: '/intelligence',              label: 'Command Center' },
   { to: '/intelligence/organization', label: 'Organization Intelligence' },
+  { to: '/intelligence/decision/dp1', label: 'Decision Point' },
   { to: '/intelligence/foundation-preview', label: 'Foundation Preview' },
 ];
 
