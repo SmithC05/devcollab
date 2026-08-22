@@ -3,7 +3,7 @@
 // Call this hook once at the top-level (App.jsx).
 
 import { useEffect } from 'react';
-import { useThemeStore } from '../store/themeStore';
+import { useThemeStore } from '../stores/themeStore';
 
 export function useTheme() {
   const { theme, toggleTheme, setTheme } = useThemeStore();

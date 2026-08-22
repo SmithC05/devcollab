@@ -65,7 +65,8 @@ export const useAuthStore = create(
     (set, get) => ({
       user: null,
       role: 'Owner', // Temporary default for RBAC simulation
-      workspace: null,
+      activeWorkspace: null,
+      sessionToken: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -77,7 +78,8 @@ export const useAuthStore = create(
             isAuthenticated: true,
             user: data.user,
             role: data.user.role,
-            workspace: data.user.workspace,
+            activeWorkspace: data.user.workspace,
+            sessionToken: data.session_token,
             isLoading: false,
           });
           return { success: true, data };
@@ -96,14 +98,39 @@ export const useAuthStore = create(
           set({
             user: null,
             role: null,
-            workspace: null,
+            activeWorkspace: null,
+            workspaces: [],
             isAuthenticated: false,
             isLoading: false,
           });
         }
       },
 
-      setWorkspace: (workspace) => set({ workspace }),
+      workspaces: [],
+      refreshWorkspaces: async () => {
+        // Since we don't have a dedicated endpoint for workspaces yet, 
+        // we'll populate the list with the user's active workspace from login.
+        const currentUser = get().user;
+        if (currentUser && currentUser.workspace) {
+           set({ 
+             workspaces: [{
+               ...currentUser.workspace,
+               members: [{ userId: currentUser.id, role: currentUser.role }]
+             }]
+           });
+        } else {
+           set({ workspaces: [] });
+        }
+      },
+
+      setActiveWorkspace: (workspaceId) => {
+        const ws = get().workspaces.find(w => w.id === workspaceId);
+        if (ws) {
+          set({ activeWorkspace: ws });
+        }
+      },
+
+      setWorkspace: (workspace) => set({ activeWorkspace: workspace }),
       
       setRole: (role) => set({ role }),
 

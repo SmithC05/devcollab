@@ -31,6 +31,7 @@ ALLOWED_HOSTS = config("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1", ca
 # ---------------------------------------------------------------------------
 
 INSTALLED_APPS = [
+    "daphne",
     # Django built-ins
     "django.contrib.admin",
     "django.contrib.auth",
@@ -55,6 +56,8 @@ INSTALLED_APPS = [
     "apps.tasks",
     "apps.simulations",
     "apps.scenarios",
+    "apps.realtime",
+    "apps.ai",
 ]
 
 # ---------------------------------------------------------------------------
@@ -137,6 +140,15 @@ USE_TZ = True
 # ---------------------------------------------------------------------------
 
 STATIC_URL = "static/"
+
+# ---------------------------------------------------------------------------
+# ASGI
+ASGI_APPLICATION = "config.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
 
 # ---------------------------------------------------------------------------
 # Default primary key field type

@@ -1,18 +1,10 @@
 import json
+import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate, login as django_login
-from django.contrib.auth.models import User
-from django.conf import settings
-from .jwt_utils import generate_access_token, generate_refresh_token, set_auth_cookies, clear_auth_cookies, decode_token
-
-def safe_user(user):
-    return {
-        "id": f"user-{user.id}", # Frontend expects string ID format like user-xxx
-        "email": user.email,
-        "name": f"{user.first_name} {user.last_name}".strip() or user.username,
-        "avatarInitials": (user.first_name[:1] + user.last_name[:1]).upper() if user.first_name and user.last_name else user.username[:2].upper()
-    }
+from django.contrib.auth import authenticate
+from apps.realtime.models import PresenceSession
+from apps.workspaces.models import WorkspaceMembership
 
 @csrf_exempt
 def login_view(request):
@@ -21,23 +13,54 @@ def login_view(request):
             data = json.loads(request.body)
             email = data.get('email')
             password = data.get('password')
-            
-            # Since we might not have set usernames correctly, let's auth by email
-            user_obj = User.objects.filter(email=email).first()
-            if not user_obj:
-                return JsonResponse({"success": False, "error": "Invalid email or password."}, status=401)
-                
-            user = authenticate(username=user_obj.username, password=password)
+
+            # We use email as username in seed script, or they are identical
+            # In our seed data, email is "smith@devcollab.io", username is "Smith"
+            # Let's try username first, if not found try email
+            from django.contrib.auth.models import User
+            user = User.objects.filter(email=email).first()
             if not user:
-                return JsonResponse({"success": False, "error": "Invalid email or password."}, status=401)
-                
-            access_token = generate_access_token(user.id)
-            refresh_token = generate_refresh_token(user.id)
-            
-            response = JsonResponse({
+                user = User.objects.filter(username=email).first()
+
+            if not user:
+                return JsonResponse({"success": False, "error": "User not found"}, status=404)
+
+            # Check password
+            if not user.check_password(password):
+                return JsonResponse({"success": False, "error": "Invalid credentials"}, status=401)
+
+            # Generate session token and PresenceSession
+            session_token = str(uuid.uuid4())
+            PresenceSession.objects.create(
+                user=user,
+                session_token=session_token,
+                status='ACTIVE'
+            )
+
+            # Get user's workspace
+            membership = WorkspaceMembership.objects.filter(user=user).first()
+            workspace_data = None
+            role = 'user'
+            if membership:
+                workspace_data = {
+                    "id": membership.workspace.id,
+                    "name": membership.workspace.name,
+                }
+                role = membership.role
+
+            user_data = {
+                "id": user.id,
+                "email": user.email,
+                "name": user.username,
+                "role": role,
+                "workspace": workspace_data
+            }
+
+            return JsonResponse({
                 "success": True,
                 "message": "Login successful",
-                "user": safe_user(user)
+                "user": user_data,
+                "session_token": session_token
             })
             set_auth_cookies(response, access_token, refresh_token)
             return response
@@ -87,7 +110,22 @@ def register_view(request):
 @csrf_exempt
 def logout_view(request):
     if request.method == 'POST':
-        response = JsonResponse({
+        try:
+            data = json.loads(request.body)
+            session_token = data.get('session_token')
+            if session_token:
+                session = PresenceSession.objects.filter(session_token=session_token).first()
+                if session:
+                    session.status = 'OFFLINE'
+                    session.save()
+                    # In a fully strict system we might delete the token or mark it invalid,
+                    # but setting status to OFFLINE is good for now.
+                    # A better way is to delete it so it can't be reused.
+                    session.delete()
+        except Exception:
+            pass
+
+        return JsonResponse({
             "success": True,
             "message": "Logged out successfully"
         })

@@ -7,28 +7,27 @@
 //   Authenticated, activeWorkspace exists → /dashboard
 
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import LoginPage from '../pages/LoginPage';
-import OnboardingPage from '../pages/OnboardingPage';
-import SelectWorkspacePage from '../pages/SelectWorkspacePage';
-import AuthCallbackPage from '../pages/AuthCallbackPage';
+import { useAuthStore } from '../stores/authStore';
+import LoginPage from '../components/auth/LoginPage';
+import OnboardingPage from '../components/auth/OnboardingPage';
+import SelectWorkspacePage from '../components/workspace/SelectWorkspacePage';
 import WorkspaceLayout from '../components/layout/WorkspaceLayout';
-import WorkspaceOverview from '../pages/WorkspaceOverview';
+import WorkspaceOverview from '../components/workspace/WorkspaceOverview';
 import ProjectLayout from '../components/project/ProjectLayout';
 import PlaceholderPage from '../components/project/PlaceholderPage';
-import ProjectOverviewPage  from '../pages/projects/ProjectOverviewPage';
-import ProjectBoardPage     from '../pages/projects/ProjectBoardPage';
-import ProjectActivityPage  from '../pages/projects/ProjectActivityPage';
-import ProjectMembersPage   from '../pages/projects/ProjectMembersPage';
-import ProjectWikiPage      from '../pages/projects/ProjectWikiPage';
-import ProjectSnippetsPage  from '../pages/projects/ProjectSnippetsPage';
-import ProjectEditorPage    from '../pages/projects/ProjectEditorPage';
-import ProjectChatPage      from '../pages/projects/ProjectChatPage';
-import ProjectSettingsPage  from '../pages/projects/ProjectSettingsPage';
-import ProjectSprintPage    from '../pages/projects/ProjectSprintPage';
-import ProjectWorkloadPage  from '../pages/projects/ProjectWorkloadPage';
-import ProjectMyTasksPage   from '../pages/projects/ProjectMyTasksPage';
-import ProjectMyTeamPage    from '../pages/projects/ProjectMyTeamPage';
+import ProjectOverviewPage  from '../components/project/ProjectOverviewPage';
+import ProjectBoardPage     from '../components/project/ProjectBoardPage';
+import ProjectActivityPage  from '../components/project/ProjectActivityPage';
+import ProjectMembersPage   from '../components/project/ProjectMembersPage';
+import ProjectWikiPage      from '../components/project/ProjectWikiPage';
+import ProjectSnippetsPage  from '../components/project/ProjectSnippetsPage';
+import ProjectEditorPage    from '../components/project/ProjectEditorPage';
+import ProjectChatPage      from '../components/project/ProjectChatPage';
+import ProjectSettingsPage  from '../components/project/ProjectSettingsPage';
+import ProjectSprintPage    from '../components/project/ProjectSprintPage';
+import ProjectWorkloadPage  from '../components/project/ProjectWorkloadPage';
+import ProjectMyTasksPage   from '../components/project/ProjectMyTasksPage';
+import ProjectMyTeamPage    from '../components/project/ProjectMyTeamPage';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
