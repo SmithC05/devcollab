@@ -30,6 +30,8 @@ urlpatterns = [
     path("api/projects/", include("apps.projects.urls")),
     path("api/developers/", include("apps.developers.urls")),
     path("api/tasks/", include("apps.tasks.urls")),
+    path("api/realtime/", include("apps.realtime.urls")),
     path("api/simulations/", include("apps.simulations.urls")),
     path("api/scenarios/", include("apps.scenarios.urls")),
+    path("api/ai/", include("apps.ai.urls")),
 ]

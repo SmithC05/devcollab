@@ -2,7 +2,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import TaskCard from './TaskCard';
 import { Plus } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function KanbanColumn({ column, tasks, onTaskClick, onAddTask }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });

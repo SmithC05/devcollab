@@ -5,6 +5,8 @@
 import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './routes/AppRoutes';
 import { useTheme } from './hooks/useTheme';
+import { useAuthStore } from './stores/authStore';
+import { useActivityTracker } from './hooks/useActivityTracker';
 import './index.css';
 
 function ThemeProvider({ children }) {
@@ -14,6 +16,9 @@ function ThemeProvider({ children }) {
 }
 
 export default function App() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  useActivityTracker(isAuthenticated);
+
   return (
     <BrowserRouter>
       <ThemeProvider>
