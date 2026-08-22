@@ -1,19 +1,19 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import PageContainer from './PageContainer';
 
 export default function WorkspaceLayout({ workspaceName }) {
   return (
-    <div className="min-h-screen bg-[#111111] text-gray-100">
+    <div className="flex h-screen bg-[#111111] text-gray-100 overflow-hidden">
       <Sidebar workspaceName={workspaceName} />
 
-      {/* MainShell: strict 220px offset */}
-      <div
-        className="flex flex-col min-h-screen bg-[#111111]"
-        style={{ marginLeft: '220px', width: 'calc(100% - 220px)', boxSizing: 'border-box', minWidth: 0 }}
-      >
+      {/* MainArea: flex-1 takes remaining horizontal space and handles ALL vertical scrolling */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto overflow-x-hidden">
         <Topbar workspaceName={workspaceName} />
-        <main className="flex-1 overflow-y-auto">
+        
+        {/* Page content flows naturally without nested scrollbars */}
+        <main className="flex-1 flex flex-col min-w-0">
           <Outlet />
         </main>
       </div>
