@@ -36,6 +36,7 @@ import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/
 import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
 import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
 import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
+import JudgeMode                 from '../features/devcollab-intelligence/pages/JudgeMode';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -189,6 +190,7 @@ export default function AppRoutes() {
         <Route path="decision/:id"    element={<DecisionPoint />} />
         <Route path="simulation/:id"  element={<SimulationCenter />} />
         <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
+        <Route path="judge"           element={<JudgeMode />} />
       </Route>
 
       {/* Default */}
