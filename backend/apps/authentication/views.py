@@ -3,8 +3,35 @@ import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from apps.realtime.models import PresenceSession
 from apps.workspaces.models import WorkspaceMembership
+from apps.authentication.jwt_utils import (
+    generate_access_token, 
+    generate_refresh_token, 
+    decode_token, 
+    set_auth_cookies, 
+    clear_auth_cookies
+)
+
+def safe_user(user):
+    membership = WorkspaceMembership.objects.filter(user=user).first()
+    workspace_data = None
+    role = 'user'
+    if membership:
+        workspace_data = {
+            "id": membership.workspace.id,
+            "name": membership.workspace.name,
+        }
+        role = membership.role
+
+    return {
+        "id": user.id,
+        "email": user.email,
+        "name": user.username,
+        "role": role,
+        "workspace": workspace_data
+    }
 
 @csrf_exempt
 def login_view(request):
@@ -17,7 +44,6 @@ def login_view(request):
             # We use email as username in seed script, or they are identical
             # In our seed data, email is "smith@devcollab.io", username is "Smith"
             # Let's try username first, if not found try email
-            from django.contrib.auth.models import User
             user = User.objects.filter(email=email).first()
             if not user:
                 user = User.objects.filter(username=email).first()
@@ -37,29 +63,13 @@ def login_view(request):
                 status='ACTIVE'
             )
 
-            # Get user's workspace
-            membership = WorkspaceMembership.objects.filter(user=user).first()
-            workspace_data = None
-            role = 'user'
-            if membership:
-                workspace_data = {
-                    "id": membership.workspace.id,
-                    "name": membership.workspace.name,
-                }
-                role = membership.role
+            access_token = generate_access_token(user.id)
+            refresh_token = generate_refresh_token(user.id)
 
-            user_data = {
-                "id": user.id,
-                "email": user.email,
-                "name": user.username,
-                "role": role,
-                "workspace": workspace_data
-            }
-
-            return JsonResponse({
+            response = JsonResponse({
                 "success": True,
                 "message": "Login successful",
-                "user": user_data,
+                "user": safe_user(user),
                 "session_token": session_token
             })
             set_auth_cookies(response, access_token, refresh_token)
@@ -125,7 +135,7 @@ def logout_view(request):
         except Exception:
             pass
 
-        return JsonResponse({
+        response = JsonResponse({
             "success": True,
             "message": "Logged out successfully"
         })
