@@ -29,6 +29,15 @@ import ProjectWorkloadPage  from '../components/project/ProjectWorkloadPage';
 import ProjectMyTasksPage   from '../components/project/ProjectMyTasksPage';
 import ProjectMyTeamPage    from '../components/project/ProjectMyTeamPage';
 import AuthCallbackPage     from '../pages/AuthCallbackPage';
+import IntelligenceLayout        from '../features/devcollab-intelligence/pages/IntelligenceLayout';
+import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
+import EngineeringCommandCenter  from '../features/devcollab-intelligence/pages/EngineeringCommandCenter';
+import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence';
+import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
+import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
+import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
+import JudgeMode                 from '../features/devcollab-intelligence/pages/JudgeMode';
+import DevCollabDemoMode, { DemoStartScreen } from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -169,6 +178,30 @@ export default function AppRoutes() {
         <Route path="chat"      element={<ProjectChatPage />} />
         <Route path="ai"        element={<PlaceholderPage title="AI Assistant" subtitle="Context-aware project intelligence — coming soon." />} />
         <Route path="settings"  element={<ProjectSettingsPage />} />
+      </Route>
+
+      {/* ── Demo / Orchestration Mode (Standalone Layout) ── */}
+      <Route path="/intelligence/demo" element={<DevCollabDemoMode />}>
+        <Route index element={<DemoStartScreen />} />
+        <Route path="judge" element={<JudgeMode />} />
+        <Route path="organization" element={<OrganizationIntelligence />} />
+        <Route path="decision/:id" element={<DecisionPoint />} />
+        <Route path="simulation/:id" element={<SimulationCenter />} />
+        <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
+      </Route>
+
+      {/* ── Phase 2-8: Isolated Intelligence Experience ── */}
+      <Route path="/intelligence" element={<IntelligenceLayout />}>
+        <Route index element={<EngineeringCommandCenter />} />
+        <Route path="foundation-preview" element={<FoundationPreviewPage />} />
+        {/* Future routes — placeholder until Phase 2–4 */}
+        <Route path="project/:id"     element={<PlaceholderPage title="Project Intelligence" subtitle="Project-level engineering state — Phase 2" />} />
+        <Route path="organization"    element={<OrganizationIntelligence />} />
+        <Route path="member/:id"      element={<PlaceholderPage title="Member Intelligence" subtitle="Member capacity &amp; context — Phase 2" />} />
+        <Route path="decision/:id"    element={<DecisionPoint />} />
+        <Route path="simulation/:id"  element={<SimulationCenter />} />
+        <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
+        <Route path="judge"           element={<JudgeMode />} />
       </Route>
 
       {/* Default */}
