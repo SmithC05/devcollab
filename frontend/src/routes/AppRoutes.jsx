@@ -156,11 +156,11 @@ export default function AppRoutes() {
         {/* ── Phase Integration 1: Unified Intelligence Experience ── */}
         <Route path="intelligence">
           <Route index element={<EngineeringCommandCenter />} />
-          <Route path="organization" element={<OrganizationIntelligence />} />
           <Route path="decision/:id" element={<DecisionPoint />} />
-          <Route path="simulation/:id" element={<SimulationCenter />} />
+          <Route path="simulation/task/:id" element={<SimulationCenter />} />
+          <Route path="simulation/demo/:id" element={<SimulationCenter />} />
           <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
-          <Route path="judge" element={<JudgeMode />} />
+          <Route path="demo" element={<DevCollabDemoMode />} />
         </Route>
       </Route>
 

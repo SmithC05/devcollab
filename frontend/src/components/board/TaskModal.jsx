@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTaskStore } from '../../stores/taskStore';
 import { wsClient } from '../../api/websocketClient';
 import { useAuthStore } from '../../stores/authStore';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Sparkles } from 'lucide-react';
 
 import { useMemberStore } from '../../stores/memberStore';
 const PRIORITIES = ['P0', 'P1', 'P2'];
@@ -26,6 +27,7 @@ const LABEL_STYLE = {
 
 export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
   const isEdit = Boolean(task);
+  const navigate = useNavigate();
   const { members } = useMemberStore();
   const { addTask, updateTask, deleteTask } = useTaskStore();
 
@@ -194,6 +196,16 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
 
         {/* Actions */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px' }}>
+          {isEdit && (
+            <button 
+              onClick={() => {
+                window.location.href = `/dashboard/intelligence/simulation/task/${task.id}`;
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--dv-primary-border)', background: 'var(--dv-primary-subtle)', color: 'var(--dv-primary)', cursor: 'pointer' }}
+            >
+              Simulate What-If
+            </button>
+          )}
           <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2a', background: 'transparent', color: '#888', cursor: 'pointer' }}>
             {canEdit ? 'Cancel' : 'Close'}
           </button>

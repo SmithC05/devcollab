@@ -16,6 +16,7 @@ import { fetchSimulation } from '../data/simulationAdapter';
 import { SimulationResults } from '../components/SimulationResults';
 import { ApprovalPanel } from '../components/ApprovalPanel';
 import { fadeUp, panelEnter, staggerChildren, slideIn } from '../motion/presets';
+import { taskApi } from '../../../api/taskApi';
 
 const SIMULATION_STEPS = [
   { id: 'baseline',   label: 'Reading baseline state' },
@@ -31,12 +32,13 @@ export default function SimulationCenter() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const isLiveTask = location.pathname.includes('/simulation/task/');
   const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
   
   const [baseline, setBaseline] = useState(null);
   const [scenarioConfig, setScenarioConfig] = useState({
     duration: '72h',
-    candidates: ['Rahul', 'Riya', 'Karthik']
+    candidates: [] // Will hold objects { id, name }
   });
   
   const [simState, setSimState] = useState('IDLE'); // IDLE | RUNNING | DONE | ERROR
@@ -48,14 +50,55 @@ export default function SimulationCenter() {
   const [executionComplete, setExecutionComplete] = useState(false);
 
   useEffect(() => {
-    // Load baseline state using existing data adapter
-    const data = getDecisionPointState(id);
-    if (!data) {
-      navigate(`${prefix}`);
+    if (isLiveTask) {
+      taskApi.getTaskEngineeringContext(id).then(data => {
+        const { task, project_state, project_members } = data;
+        
+        // Filter out current owner
+        const currentOwnerId = task.assignee?.id;
+        const currentOwnerName = task.assignee?.name || task.assignee?.username || 'Unassigned';
+        
+        const eligibleCandidates = project_members
+          .filter(m => m.id !== currentOwnerId)
+          .map(m => ({ id: m.id, name: m.name || m.username }));
+
+        setBaseline({
+          isLive: true,
+          project: task.project_name || `Project ${task.project_id}`,
+          task: task.title,
+          taskId: task.id,
+          trigger: {
+            label: 'OWNER_UNAVAILABLE',
+            before: { member: currentOwnerName }
+          }
+        });
+        
+        setScenarioConfig(prev => ({ ...prev, candidates: eligibleCandidates }));
+      }).catch(err => {
+        console.error("Failed to load live task simulation context", err);
+        navigate(`${prefix}`);
+      });
     } else {
-      setBaseline(data);
+      // Load demo baseline state using existing data adapter
+      const data = getDecisionPointState(id);
+      if (!data) {
+        navigate(`${prefix}`);
+      } else {
+        setBaseline(data);
+        setScenarioConfig(prev => ({ 
+          ...prev, 
+          candidates: ['Rahul', 'Riya', 'Karthik'].map((name, idx) => ({ id: 1000 + idx, name }))
+        }));
+      }
     }
-  }, [id, navigate]);
+  }, [id, isLiveTask, navigate, prefix]);
+
+  const resetScenario = () => {
+    setSimState('IDLE');
+    setSimResults(null);
+    setSimError(null);
+    setSelectedRecommendation(null);
+  };
 
   const runSimulation = async () => {
     setSimState('RUNNING');
@@ -92,10 +135,22 @@ export default function SimulationCenter() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 0 60px 0' }}>
+      
+      {/* Simulation Warning Banner */}
+      <div style={{ background: 'var(--dv-warning-subtle)', borderBottom: '1px solid var(--dv-warning-border)', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', borderRadius: 'var(--dv-radius-md)' }}>
+        <Shield size={16} color="var(--dv-warning)" />
+        <span style={{ fontSize: '13px', color: 'var(--dv-warning-text)', fontWeight: 500 }}>
+          <strong>SIMULATION MODE</strong> — This analysis is hypothetical and does not modify your workspace.
+        </span>
+      </div>
+
       {/* 1. Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <DvButton variant="ghost" size="sm" onClick={() => navigate(`${prefix}/decision/${id}`)}>
-          <ChevronLeft size={16} /> Back to Decision
+        <DvButton variant="ghost" size="sm" onClick={() => {
+          if (baseline?.isLive) navigate('/dashboard');
+          else navigate(`${prefix}/decision/${id}`);
+        }}>
+          <ChevronLeft size={16} /> Back
         </DvButton>
         <div style={{ width: 1, height: 16, background: 'var(--dv-border-subtle)' }} />
         <span style={{ fontSize: 11, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-muted)', letterSpacing: '0.1em' }}>
@@ -111,7 +166,9 @@ export default function SimulationCenter() {
           <motion.div variants={panelEnter} style={{ flex: 1 }}>
              <DvCard style={{ height: '100%' }}>
                 <div style={{ padding: '20px 24px', background: 'var(--dv-bg-elevated)', borderBottom: '1px solid var(--dv-border-subtle)', borderTopLeftRadius: 'var(--dv-radius-lg)', borderTopRightRadius: 'var(--dv-radius-lg)' }}>
-                   <div style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-info)', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>BASELINE STATE</div>
+                   <div style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-info)', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>
+                     {baseline.isLive ? 'BASELINE: LIVE ENGINEERING STATE' : 'BASELINE: CONTROLLED DEMO STATE'}
+                   </div>
                    <div style={{ fontSize: 'var(--dv-text-lg)', fontWeight: 700, color: 'var(--dv-text-primary)' }}>Observed Reality</div>
                 </div>
                 <div style={{ padding: '24px' }}>
@@ -174,7 +231,7 @@ export default function SimulationCenter() {
                          <div style={{ fontSize: 10, color: 'var(--dv-text-faint)', marginBottom: 4 }}>CANDIDATE POOL</div>
                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                             {scenarioConfig.candidates.map(c => (
-                               <DvBadge key={c} variant="outline" size="sm">{c}</DvBadge>
+                               <DvBadge key={c.id} variant="outline" size="sm">{c.name}</DvBadge>
                             ))}
                          </div>
                       </div>
@@ -185,10 +242,15 @@ export default function SimulationCenter() {
         </div>
 
         {/* 3. Action Bar */}
-        <motion.div variants={panelEnter} style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+        <motion.div variants={panelEnter} style={{ display: 'flex', justifyContent: 'center', marginBottom: 32, gap: '16px' }}>
           {simState === 'IDLE' && (
             <DvButton variant="primary" size="lg" onClick={runSimulation} icon={RefreshCw}>
               Run What-If Simulation
+            </DvButton>
+          )}
+          {simState !== 'IDLE' && (
+            <DvButton variant="ghost" size="sm" onClick={resetScenario}>
+              Edit Scenario
             </DvButton>
           )}
         </motion.div>
@@ -235,13 +297,13 @@ export default function SimulationCenter() {
         {/* 7. Next Steps */}
         {simState === 'DONE' && selectedRecommendation && (
            <motion.div variants={panelEnter} style={{ marginTop: 24 }}>
-             {selectedRecommendation.intervention.includes('KNOWLEDGE_TRANSFER') ? (
+             {(selectedRecommendation.type || selectedRecommendation.intervention || '').includes('KNOWLEDGE_TRANSFER') ? (
                <DvCard style={{ padding: 24, textAlign: 'center', background: 'var(--dv-bg-elevated)', borderColor: 'var(--dv-primary-border)' }}>
                  <div style={{ fontSize: 'var(--dv-text-lg)', fontWeight: 600, color: 'var(--dv-primary)', marginBottom: 8 }}>Knowledge Transfer Recommended</div>
                  <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)', marginBottom: 24 }}>
                    This intervention requires generating a structured knowledge handoff package before execution.
                  </div>
-                 <DvButton variant="primary" onClick={() => navigate(`${prefix}/knowledge-transfer/${scenarioId}?candidate=${encodeURIComponent(selectedRecommendation.candidate)}`)}>
+                 <DvButton variant="primary" onClick={() => navigate(`${prefix}/knowledge-transfer/${simResults.scenario_id}?candidate=${encodeURIComponent(selectedRecommendation.candidate_name || selectedRecommendation.candidate)}`)}>
                    PROCEED TO KNOWLEDGE TRANSFER <ArrowRight size={16} style={{ marginLeft: 8 }} />
                  </DvButton>
                </DvCard>
