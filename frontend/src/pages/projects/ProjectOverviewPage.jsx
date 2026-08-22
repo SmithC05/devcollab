@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Bell, Navigation } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 
 const PRIORITY_OPTIONS = ['P0 Urgent', 'P1 High', 'P2 Normal'];
 const MEMBER_OPTIONS   = ['adhi (MEMBER)', 'libin (ADMIN)', 'priya (MEMBER)', 'rahul (MEMBER)'];

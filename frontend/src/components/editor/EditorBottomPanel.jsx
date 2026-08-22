@@ -68,7 +68,7 @@ export default function EditorBottomPanel() {
               frontend/src/components/project/ProjectSidebar.jsx<br/>
               frontend/src/pages/projects/ProjectBoardPage.jsx<br/>
               frontend/src/pages/projects/ProjectMembersPage.jsx<br/>
-              frontend/src/stores/authStore.js
+              frontend/src/store/authStore.js
             </div>
             <div style={{ color: '#cccccc' }}>Please commit your changes or stash them before you switch branches.<br/>Aborting</div>
             

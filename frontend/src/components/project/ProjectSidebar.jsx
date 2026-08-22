@@ -4,7 +4,7 @@ import {
   BookOpen, Code2, FileCode2, MessageSquare, Sparkles, ChevronLeft, Settings,
   BarChart2, ListTodo, Presentation, Clock, PieChart
 } from 'lucide-react';
-import { useAuthStore, ROLES } from '../../stores/authStore';
+import { useAuthStore, ROLES } from '../../store/authStore';
 
 const NAV_OWNER = [
   {

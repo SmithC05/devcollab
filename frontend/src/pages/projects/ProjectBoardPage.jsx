@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { LayoutGrid, List, Calendar, Plus } from 'lucide-react';
 import KanbanView from '../../components/board/KanbanView';
 import TaskModal from '../../components/board/TaskModal';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 import { useTaskStore } from '../../stores/taskStore';
 
 const VIEWS = [
