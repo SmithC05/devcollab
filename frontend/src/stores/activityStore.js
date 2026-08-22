@@ -6,22 +6,11 @@ function generateActivityGrid() {
   const today = new Date();
   for (let i = 89; i >= 0; i--) {
     const date = subDays(today, i);
-    const count = Math.random() < 0.3 ? 0 : Math.floor(Math.random() * 8);
+    const count = 0; // Initialize to 0, will be populated by fetchEvents
     days.push({ date: format(date, 'yyyy-MM-dd'), count });
   }
   return days;
 }
-
-const SEED_EVENTS = [
-  { id: 'ev-1', type: 'task',    user: 'Arjun',  action: 'moved "Payment API integration" to In Progress',   time: new Date(Date.now() - 2 * 3600000).toISOString() },
-  { id: 'ev-2', type: 'task',    user: 'Arjun',  action: 'completed "Database schema"',              time: new Date(Date.now() - 40 * 3600000).toISOString() },
-  { id: 'ev-3', type: 'task',    user: 'Priya',  action: 'created "User registration API"',          time: new Date(Date.now() - 100 * 3600000).toISOString() },
-  { id: 'ev-4', type: 'member',  user: 'Rahul',  action: 'joined the project',                       time: new Date(Date.now() - 240 * 3600000).toISOString() },
-  { id: 'ev-5', type: 'docs',    user: 'Libin',  action: 'updated "Getting Started" wiki page',      time: new Date(Date.now() - 26 * 3600000).toISOString() },
-  { id: 'ev-6', type: 'code',    user: 'Rahul',  action: 'saved snippet "JWT Auth Header Helper"',   time: new Date(Date.now() - 30 * 3600000).toISOString() },
-  { id: 'ev-7', type: 'task',    user: 'Libin',  action: 'created "Project setup"',                  time: new Date(Date.now() - 300 * 3600000).toISOString() },
-  { id: 'ev-8', type: 'comment', user: 'Priya',  action: 'commented on "Payment API integration"',   time: new Date(Date.now() - 50 * 3600000).toISOString() },
-];
 
 // All grayscale — type colors
 export const TYPE_COLORS = {
@@ -32,21 +21,72 @@ export const TYPE_COLORS = {
   comment: '#666',
 };
 
+const mapBackendEventToFrontend = (backendEvent) => {
+  const { event_type, actor_details, payload, timestamp, id } = backendEvent;
+  const user = actor_details?.username || 'Unknown';
+  let type = 'task';
+  let action = event_type;
+
+  if (event_type === 'TASK_MOVED') {
+    type = 'task';
+    action = `moved task to ${payload.new_status}`;
+  } else if (event_type === 'COMMENT_ADDED') {
+    type = 'comment';
+    action = `commented: "${payload.comment_data?.content?.substring(0, 30)}..."`;
+  } else if (event_type === 'TASK_VIEW_STARTED') {
+    type = 'member';
+    action = `started viewing a task`;
+  }
+
+  return {
+    id: String(id),
+    type,
+    user,
+    action,
+    time: timestamp,
+  };
+};
+
 export const useActivityStore = create((set, get) => ({
-  events: SEED_EVENTS,
+  events: [],
   activityGrid: generateActivityGrid(),
   activeFilter: 'all',
+  isLoaded: false,
+
+  fetchEvents: async (projectId) => {
+    try {
+      const { realtimeApi } = await import('../api/realtimeApi');
+      const data = await realtimeApi.getEvents(projectId);
+      const formattedEvents = data.map(mapBackendEventToFrontend);
+      
+      // Compute grid from actual events
+      const grid = generateActivityGrid();
+      formattedEvents.forEach(ev => {
+        const d = format(parseISO(ev.time), 'yyyy-MM-dd');
+        const cell = grid.find(g => g.date === d);
+        if (cell) cell.count += 1;
+      });
+
+      set({ events: formattedEvents, activityGrid: grid, isLoaded: true });
+    } catch (error) {
+      console.error('Failed to fetch events', error);
+    }
+  },
 
   setFilter: (filter) => set({ activeFilter: filter }),
 
-  addEvent: (event) => {
+  addEvent: (backendEvent) => {
+    const formatted = mapBackendEventToFrontend(backendEvent);
     const today = format(new Date(), 'yyyy-MM-dd');
     set((state) => {
+      // Check for duplicates
+      if (state.events.find(e => e.id === formatted.id)) return state;
+      
       const updatedGrid = state.activityGrid.map((d) =>
         d.date === today ? { ...d, count: d.count + 1 } : d
       );
       return {
-        events: [{ id: `ev-${Date.now()}`, ...event, time: new Date().toISOString() }, ...state.events],
+        events: [formatted, ...state.events],
         activityGrid: updatedGrid,
       };
     });

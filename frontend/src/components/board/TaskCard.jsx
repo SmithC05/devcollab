@@ -1,8 +1,9 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PRIORITY_COLORS } from '../../stores/taskStore';
+import { usePresenceStore } from '../../stores/presenceStore';
 import { Calendar } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 
 function AvatarInitial({ name, size = 22 }) {
   return (
@@ -25,6 +26,8 @@ export default function TaskCard({ task, onClick }) {
     disabled: !can('task.move')
   });
   const p = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.P2;
+  const taskViewers = usePresenceStore(state => state.taskViewers[task.id]) || new Set();
+  const viewersArray = Array.from(taskViewers);
 
   return (
     <div
@@ -79,12 +82,21 @@ export default function TaskCard({ task, onClick }) {
         </div>
       )}
 
-      {/* Assignee + Due */}
+      {/* Viewers & Assignee & Due */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
-        {task.assignee
-          ? <AvatarInitial name={task.assignee} size={20} />
-          : <span style={{ fontSize: '11px', color: '#333' }}>Unassigned</span>
-        }
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {task.assignee
+            ? <AvatarInitial name={task.assigneeName || task.assignee} size={20} />
+            : <span style={{ fontSize: '11px', color: '#333' }}>Unassigned</span>
+          }
+          {viewersArray.length > 0 && (
+            <div style={{ display: 'flex', gap: '-4px' }}>
+              {viewersArray.map((userId) => (
+                <div key={userId} style={{ marginLeft: '-4px', borderRadius: '50%', border: '1px solid #111', background: '#3b82f6', width: 14, height: 14 }} />
+              ))}
+            </div>
+          )}
+        </div>
         {task.dueDate && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#444', fontSize: '10px' }}>
             <Calendar size={11} />

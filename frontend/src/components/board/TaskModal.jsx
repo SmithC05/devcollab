@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
-import { useAuthStore } from '../../store/authStore';
+import { wsClient } from '../../api/websocketClient';
+import { useAuthStore } from '../../stores/authStore';
 import { X, Trash2 } from 'lucide-react';
 
-const MEMBERS = ['Libin', 'Arjun', 'Priya', 'Rahul', 'Meera'];
+import { useMemberStore } from '../../stores/memberStore';
 const PRIORITIES = ['P0', 'P1', 'P2'];
 const COLUMNS_LIST = [
   { id: 'todo', label: 'To Do' },
@@ -25,7 +26,19 @@ const LABEL_STYLE = {
 
 export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
   const isEdit = Boolean(task);
+  const { members } = useMemberStore();
   const { addTask, updateTask, deleteTask } = useTaskStore();
+
+  useEffect(() => {
+    if (isEdit && task?.id) {
+      wsClient.sendTaskViewEvent(task.id, true);
+    }
+    return () => {
+      if (isEdit && task?.id) {
+        wsClient.sendTaskViewEvent(task.id, false);
+      }
+    };
+  }, [isEdit, task?.id]);
   const { can } = useAuthStore();
   
   const canEdit = can('task.edit');
@@ -40,6 +53,55 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
     labels:      task?.labels?.join(', ') || '',
     columnId:    task?.columnId    || defaultColumnId,
   });
+
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  useEffect(() => {
+    if (isEdit && task?.id) {
+      const fetchComments = async () => {
+        try {
+          const { taskApi } = await import('../../api/taskApi');
+          const data = await taskApi.getComments(task.id);
+          setComments(data);
+        } catch (e) {
+          console.error('Failed to fetch comments', e);
+        }
+      };
+      fetchComments();
+    }
+  }, [isEdit, task?.id]);
+
+  useEffect(() => {
+    const handleEngineEvent = (e) => {
+      const payload = e.detail;
+      if (payload.event_type === 'COMMENT_ADDED' && payload.task_id === task?.id) {
+        setComments(prev => {
+          if (prev.find(c => c.id === payload.comment_data.id)) return prev;
+          return [...prev, payload.comment_data];
+        });
+      }
+    };
+    document.addEventListener('engine_event', handleEngineEvent);
+    return () => document.removeEventListener('engine_event', handleEngineEvent);
+  }, [task?.id]);
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !task?.id) return;
+    setIsSubmittingComment(true);
+    try {
+      const { taskApi } = await import('../../api/taskApi');
+      const data = await taskApi.addComment(task.id, newComment);
+      setNewComment('');
+      // It will also be pushed via WebSocket (EngineEvent), but we can optimistically append or let WS handle it.
+      // WS handles it via engine_event listener.
+    } catch (e) {
+      console.error('Failed to add comment', e);
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
@@ -141,7 +203,7 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
               <label style={LABEL_STYLE}>Assignee</label>
               <select disabled={!canEdit} value={form.assignee} onChange={(e) => set('assignee', e.target.value)} style={INPUT_STYLE}>
                 <option value="">Unassigned</option>
-                {MEMBERS.map((m) => <option key={m} value={m}>{m}</option>)}
+                {members.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
               </select>
             </div>
             <div>
@@ -166,6 +228,48 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
             </button>
           )}
         </div>
+
+        {/* Comments Section */}
+        {isEdit && (
+          <div style={{ marginTop: '32px', borderTop: '1px solid #1a1a1a', paddingTop: '24px' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#f5f5f5', marginBottom: '16px' }}>Comments</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', maxHeight: '200px', overflowY: 'auto' }}>
+              {comments.map((comment, i) => (
+                <div key={comment.id || i} style={{ background: '#181818', padding: '12px', borderRadius: '8px', border: '1px solid #222' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#aaa' }}>{comment.author_details?.username || 'Unknown'}</span>
+                    <span style={{ fontSize: '10px', color: '#666' }}>{new Date(comment.created_at).toLocaleString()}</span>
+                  </div>
+                  <p style={{ fontSize: '13px', color: '#e5e5e5', margin: 0, whiteSpace: 'pre-wrap' }}>{comment.content}</p>
+                </div>
+              ))}
+              {comments.length === 0 && <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>No comments yet.</p>}
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input 
+                value={newComment} 
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                placeholder="Add a comment..." 
+                style={{ ...INPUT_STYLE, flex: 1 }} 
+              />
+              <button 
+                onClick={handleAddComment}
+                disabled={!newComment.trim() || isSubmittingComment}
+                style={{ 
+                  padding: '9px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, 
+                  background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer',
+                  opacity: (!newComment.trim() || isSubmittingComment) ? 0.5 : 1
+                }}
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

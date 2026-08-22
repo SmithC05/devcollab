@@ -1,61 +1,10 @@
 import json
+import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
-# Mock Users for Development Phase
-MOCK_USERS = {
-    "user@example.com": {
-        "id": "mock-user-001",
-        "email": "user@example.com",
-        "name": "DevCollab User",
-        "role": "user",
-        "workspace": None
-    },
-    "owner@example.com": {
-        "id": "mock-owner-001",
-        "email": "owner@example.com",
-        "name": "DevCollab Owner",
-        "role": "owner",
-        "workspace": {
-            "id": "workspace-001",
-            "name": "DevCollab Engineering",
-            "slug": "devcollab-engineering"
-        }
-    },
-    "admin@example.com": {
-        "id": "mock-admin-001",
-        "email": "admin@example.com",
-        "name": "DevCollab Admin",
-        "role": "admin",
-        "workspace": {
-            "id": "workspace-001",
-            "name": "DevCollab Engineering",
-            "slug": "devcollab-engineering"
-        }
-    },
-    "member@example.com": {
-        "id": "mock-member-001",
-        "email": "member@example.com",
-        "name": "DevCollab Member",
-        "role": "member",
-        "workspace": {
-            "id": "workspace-001",
-            "name": "DevCollab Engineering",
-            "slug": "devcollab-engineering"
-        }
-    },
-    "viewer@example.com": {
-        "id": "mock-viewer-001",
-        "email": "viewer@example.com",
-        "name": "DevCollab Viewer",
-        "role": "viewer",
-        "workspace": {
-            "id": "workspace-001",
-            "name": "DevCollab Engineering",
-            "slug": "devcollab-engineering"
-        }
-    }
-}
+from django.contrib.auth import authenticate
+from apps.realtime.models import PresenceSession
+from apps.workspaces.models import WorkspaceMembership
 
 @csrf_exempt
 def login_view(request):
@@ -64,18 +13,54 @@ def login_view(request):
             data = json.loads(request.body)
             email = data.get('email')
             password = data.get('password')
-            
-            if password != 'DevCollab123':
-                return JsonResponse({"success": False, "error": "Invalid credentials"}, status=401)
-                
-            user = MOCK_USERS.get(email)
+
+            # We use email as username in seed script, or they are identical
+            # In our seed data, email is "smith@devcollab.io", username is "Smith"
+            # Let's try username first, if not found try email
+            from django.contrib.auth.models import User
+            user = User.objects.filter(email=email).first()
+            if not user:
+                user = User.objects.filter(username=email).first()
+
             if not user:
                 return JsonResponse({"success": False, "error": "User not found"}, status=404)
-                
+
+            # Check password
+            if not user.check_password(password):
+                return JsonResponse({"success": False, "error": "Invalid credentials"}, status=401)
+
+            # Generate session token and PresenceSession
+            session_token = str(uuid.uuid4())
+            PresenceSession.objects.create(
+                user=user,
+                session_token=session_token,
+                status='ACTIVE'
+            )
+
+            # Get user's workspace
+            membership = WorkspaceMembership.objects.filter(user=user).first()
+            workspace_data = None
+            role = 'user'
+            if membership:
+                workspace_data = {
+                    "id": membership.workspace.id,
+                    "name": membership.workspace.name,
+                }
+                role = membership.role
+
+            user_data = {
+                "id": user.id,
+                "email": user.email,
+                "name": user.username,
+                "role": role,
+                "workspace": workspace_data
+            }
+
             return JsonResponse({
                 "success": True,
                 "message": "Login successful",
-                "user": user
+                "user": user_data,
+                "session_token": session_token
             })
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=400)
@@ -84,6 +69,21 @@ def login_view(request):
 @csrf_exempt
 def logout_view(request):
     if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            session_token = data.get('session_token')
+            if session_token:
+                session = PresenceSession.objects.filter(session_token=session_token).first()
+                if session:
+                    session.status = 'OFFLINE'
+                    session.save()
+                    # In a fully strict system we might delete the token or mark it invalid,
+                    # but setting status to OFFLINE is good for now.
+                    # A better way is to delete it so it can't be reused.
+                    session.delete()
+        except Exception:
+            pass
+
         return JsonResponse({
             "success": True,
             "message": "Logged out successfully"

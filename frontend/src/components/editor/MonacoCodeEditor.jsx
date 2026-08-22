@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { useEditorStore } from '../../stores/editorStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Code2 } from 'lucide-react';
 
 export default function MonacoCodeEditor() {
