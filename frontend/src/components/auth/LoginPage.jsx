@@ -1,9 +1,9 @@
 // src/pages/LoginPage.jsx
 // Route /login — renders the AuthShell inside a full-screen centered layout.
 
-import AuthShell from '../components/auth/AuthShell';
-import ThemeToggle from '../components/auth/ThemeToggle';
-import { useTheme } from '../hooks/useTheme';
+import AuthShell from "../auth/AuthShell";
+import ThemeToggle from "../auth/ThemeToggle";
+import { useTheme } from "../../hooks/useTheme";
 
 export default function LoginPage() {
   // Ensure theme class is applied
@@ -35,8 +35,8 @@ export default function LoginPage() {
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import LoginForm from '../components/auth/LoginForm';
-import RegisterForm from '../components/auth/RegisterForm';
+import LoginForm from "../auth/LoginForm";
+import RegisterForm from "../auth/RegisterForm";
 
 function MobileAuthShell() {
   const [mode, setMode] = useState('login');

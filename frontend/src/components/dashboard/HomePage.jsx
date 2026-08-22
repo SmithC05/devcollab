@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchHealth } from '../api/health';
+import { fetchHealth } from "../../api/health";
 
 /**
  * HomePage

@@ -1,10 +1,10 @@
 // src/pages/DashboardPlaceholder.jsx
 // Temporary placeholder. The actual dashboard will be built in a separate phase.
 
-import { useAuthStore } from '../stores/authStore';
-import ThemeToggle from '../components/auth/ThemeToggle';
-import { LogOut } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { useAuthStore } from "../../stores/authStore";
+import ThemeToggle from "../auth/ThemeToggle';
+import { LogOut } from 'lucide-react";
+import { useTheme } from "../../hooks/useTheme";
 
 export default function DashboardPlaceholder() {
   useTheme();

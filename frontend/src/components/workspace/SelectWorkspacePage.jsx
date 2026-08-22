@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Users, FolderOpen, LogOut, Link, Sparkles, ChevronRight } from 'lucide-react';
-import { useAuthStore } from '../stores/authStore';
-import { workspaceApi } from '../api/workspaceApi';
-import ThemeToggle from '../components/auth/ThemeToggle';
-import { useTheme } from '../hooks/useTheme';
-import CreateWorkspaceModal from '../components/workspace/CreateWorkspaceModal';
-import JoinWorkspaceModal from '../components/workspace/JoinWorkspaceModal';
+import { useAuthStore } from "../../stores/authStore";
+import { workspaceApi } from "../../api/workspaceApi";
+import ThemeToggle from "../auth/ThemeToggle";
+import { useTheme } from "../../hooks/useTheme";
+import CreateWorkspaceModal from "../workspace/CreateWorkspaceModal";
+import JoinWorkspaceModal from "../workspace/JoinWorkspaceModal";
 
 function getInitials(name) {
   if (!name) return 'WS';

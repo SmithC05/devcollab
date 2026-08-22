@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, UserPlus } from 'lucide-react';
-import { useAuthStore } from '../stores/authStore';
-import { workspaceApi } from '../api/workspaceApi';
-import ThemeToggle from '../components/auth/ThemeToggle';
-import { useTheme } from '../hooks/useTheme';
-import CreateWorkspaceModal from '../components/workspace/CreateWorkspaceModal';
-import JoinWorkspaceModal from '../components/workspace/JoinWorkspaceModal';
+import { useAuthStore } from "../../stores/authStore";
+import { workspaceApi } from "../../api/workspaceApi";
+import ThemeToggle from "../auth/ThemeToggle";
+import { useTheme } from "../../hooks/useTheme";
+import CreateWorkspaceModal from "../workspace/CreateWorkspaceModal";
+import JoinWorkspaceModal from "../workspace/JoinWorkspaceModal";
 
 const LogoMark = () => (
   <div className="w-[48px] h-[48px] rounded-[14px] bg-[#151515] border border-[#292929] flex items-center justify-center shrink-0 mb-6 mx-auto">

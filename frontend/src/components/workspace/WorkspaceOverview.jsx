@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Plus, Bell as BellIcon, CheckCircle2 } from 'lucide-react';
-import TasksCompletedChart from '../components/dashboard/TasksCompletedChart';
-import StatusDistribution from '../components/dashboard/StatusDistribution';
+import TasksCompletedChart from "../dashboard/TasksCompletedChart";
+import StatusDistribution from "../dashboard/StatusDistribution";
 
 export default function WorkspaceOverview({ setWorkspaceName }) {
   const [data, setData] = useState(null);
