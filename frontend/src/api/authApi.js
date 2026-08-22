@@ -7,6 +7,12 @@ export const authApi = {
       body: JSON.stringify({ email, password }),
     });
   },
+  register: async (name, email, password) => {
+    return await apiClient('/auth/register/', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password }),
+    });
+  },
   logout: async () => {
     try {
       return await apiClient('/auth/logout/', {
@@ -16,5 +22,10 @@ export const authApi = {
       console.warn("Logout failed", e);
       return { success: true };
     }
+  },
+  me: async () => {
+    return await apiClient('/auth/me/', {
+      method: 'GET',
+    });
   }
 };

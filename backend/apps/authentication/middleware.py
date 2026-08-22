@@ -8,6 +8,11 @@ class JWTAuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
         access_token = request.COOKIES.get('access_token')
         
+        if not access_token:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                access_token = auth_header.split(' ')[1]
+        
         if access_token:
             try:
                 payload = decode_token(access_token)

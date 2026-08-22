@@ -15,22 +15,10 @@ from apps.authentication.jwt_utils import (
 )
 
 def safe_user(user):
-    membership = WorkspaceMembership.objects.filter(user=user).first()
-    workspace_data = None
-    role = 'user'
-    if membership:
-        workspace_data = {
-            "id": membership.workspace.id,
-            "name": membership.workspace.name,
-        }
-        role = membership.role
-
     return {
         "id": user.id,
         "email": user.email,
-        "name": user.username,
-        "role": role,
-        "workspace": workspace_data
+        "name": user.username
     }
 
 @csrf_exempt
@@ -70,6 +58,7 @@ def login_view(request):
                 "success": True,
                 "message": "Login successful",
                 "user": safe_user(user),
+                "access_token": access_token,
                 "session_token": session_token
             })
             set_auth_cookies(response, access_token, refresh_token)
@@ -103,13 +92,22 @@ def register_view(request):
                 last_name=last_name
             )
             
+            session_token = str(uuid.uuid4())
+            PresenceSession.objects.create(
+                user=user,
+                session_token=session_token,
+                status='ACTIVE'
+            )
+            
             access_token = generate_access_token(user.id)
             refresh_token = generate_refresh_token(user.id)
             
             response = JsonResponse({
                 "success": True,
                 "message": "Registration successful",
-                "user": safe_user(user)
+                "user": safe_user(user),
+                "access_token": access_token,
+                "session_token": session_token
             })
             set_auth_cookies(response, access_token, refresh_token)
             return response
@@ -173,7 +171,10 @@ def refresh_view(request):
             access_token = generate_access_token(user.id)
             new_refresh_token = generate_refresh_token(user.id)
             
-            response = JsonResponse({"success": True})
+            response = JsonResponse({
+                "success": True,
+                "access_token": access_token
+            })
             set_auth_cookies(response, access_token, new_refresh_token)
             return response
         except Exception as e:

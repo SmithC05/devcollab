@@ -1,7 +1,7 @@
 // src/pages/AuthCallbackPage.jsx
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../stores/authStore';
 import { Loader2 } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 

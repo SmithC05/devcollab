@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 
 class Workspace(models.Model):
     name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_workspaces')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
