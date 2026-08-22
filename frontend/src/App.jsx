@@ -1,4 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useState } from 'react';
+
+import WorkspaceLayout from './components/layout/WorkspaceLayout';
+import WorkspaceOverview from './pages/WorkspaceOverview';
+
 import ProjectLayout from './components/project/ProjectLayout';
 import PlaceholderPage from './components/project/PlaceholderPage';
 import ProjectOverviewPage  from './pages/projects/ProjectOverviewPage';
@@ -17,7 +22,7 @@ import ProjectMyTeamPage    from './pages/projects/ProjectMyTeamPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
-import DashboardPlaceholder from './pages/DashboardPlaceholder';
+
 import { useAuthStore } from './stores/authStore';
 import { useActivityTracker } from './hooks/useActivityTracker';
 import './index.css';
@@ -25,6 +30,8 @@ import './index.css';
 export default function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   useActivityTracker(isAuthenticated);
+
+  const [workspaceName, setWorkspaceName] = useState('');
 
   return (
     <BrowserRouter>
@@ -36,11 +43,24 @@ export default function App() {
           <Route path="/onboarding" element={<Onboarding />} />
         </Route>
         
-        {/* State C: Authenticated WITH workspace -> /dashboard */}
+        {/* State C: Authenticated WITH workspace */}
         <Route element={<ProtectedRoute requireWorkspace={true} />}>
-          <Route path="/dashboard" element={<DashboardPlaceholder />} />
           
-          {/* Projects */}
+          {/* Redirect /dashboard to / so we can cleanly use root for WorkspaceLayout */}
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
+          
+          {/* Dashboard / Workspace Level Routes */}
+          <Route path="/" element={<WorkspaceLayout workspaceName={workspaceName} />}>
+            <Route index element={<WorkspaceOverview setWorkspaceName={setWorkspaceName} />} />
+            <Route path="projects" element={<div className="p-12 text-center text-xl text-gray-400">Projects Module - Coming Soon</div>} />
+            <Route path="activity" element={<div className="p-12 text-center text-xl text-gray-400">Activity Module - Coming Soon</div>} />
+            <Route path="members" element={<div className="p-12 text-center text-xl text-gray-400">Members Module - Coming Soon</div>} />
+            <Route path="billing" element={<div className="p-12 text-center text-xl text-gray-400">Billing Module - Coming Soon</div>} />
+            <Route path="settings" element={<div className="p-12 text-center text-xl text-gray-400">Settings Module - Coming Soon</div>} />
+            <Route path="ai" element={<div className="p-12 text-center text-xl text-gray-400">AI Assistant - Coming Soon</div>} />
+          </Route>
+          
+          {/* Projects (Specific project view) */}
           <Route path="/projects/:projectId" element={<ProjectLayout />}>
             <Route index element={<Navigate to="overview" replace />} />
 
@@ -68,9 +88,6 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Redirect root to login, ProtectedRoute will handle redirecting to dashboard/onboarding if logged in */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        
         {/* Fallback for unknown routes */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
