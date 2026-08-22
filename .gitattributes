@@ -1,0 +1,5 @@
+# ML artefacts (large binary files — store in DVC or similar)
+*.pkl binary
+*.joblib binary
+*.model binary
+*.bin binary
