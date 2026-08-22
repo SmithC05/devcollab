@@ -67,7 +67,7 @@ export default function JoinWorkspaceModal({ isOpen, onClose, onJoin }) {
                     type="button"
                     onClick={onClose}
                     disabled={isLoading}
-                    className="p-1.5 rounded-lg text-[#a3a3a3] hover:text-white hover:bg-[#222] transition-colors focus-visible:outline-none"
+                    className="p-1.5 rounded-lg text-[#a3a3a3] hover:text-white hover:bg-[var(--border-default)] transition-colors focus-visible:outline-none"
                     aria-label="Close modal"
                   >
                     <X size={20} strokeWidth={2.5} />
@@ -103,9 +103,9 @@ export default function JoinWorkspaceModal({ isOpen, onClose, onJoin }) {
                       disabled={isLoading}
                       className={`
                         w-full h-[56px] px-4 rounded-[14px] text-[15px] tracking-wide font-medium
-                        bg-[#0F0F0F] text-white placeholder:text-[#666]
+                        bg-[#0F0F0F] text-white placeholder:text-[var(--text-muted)]
                         border transition-colors outline-none
-                        focus:border-[#555]
+                        focus:border-[var(--text-muted)]
                         ${errors.code ? 'border-[#f87171]' : 'border-[#292929]'}
                       `}
                     />
@@ -121,7 +121,7 @@ export default function JoinWorkspaceModal({ isOpen, onClose, onJoin }) {
                       className="
                         h-[48px] px-6 rounded-[14px] text-[14px] font-semibold text-white
                         bg-transparent border border-[#292929]
-                        hover:bg-[#222] transition-colors
+                        hover:bg-[var(--border-default)] transition-colors
                         disabled:opacity-50 disabled:cursor-not-allowed
                       "
                     >

@@ -151,28 +151,28 @@ export default function ProjectSidebar() {
     <aside style={{
       width: '290px', minWidth: '290px', maxWidth: '290px', flexShrink: 0,
       height: '100vh', display: 'flex', flexDirection: 'column',
-      background: '#0e0e0e', borderRight: '1px solid #1e1e1e',
+      background: '#0e0e0e', borderRight: '1px solid var(--surface-hover)',
       overflowY: 'auto', overflowX: 'hidden', userSelect: 'none',
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 14px 14px', borderBottom: '1px solid #1a1a1a', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 14px 14px', borderBottom: '1px solid var(--surface-hover)', flexShrink: 0 }}>
         <div style={{
           width: '34px', height: '34px', borderRadius: '50%',
-          background: '#1e1e1e', border: '1px solid #2a2a2e', color: '#f5f5f5',
+          background: 'var(--surface-hover)', border: '1px solid #2a2a2e', color: 'var(--text-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 700, fontSize: '14px', flexShrink: 0,
         }}>
           {project.avatar}
         </div>
 
-        <span style={{ color: '#f5f5f5', fontWeight: 600, fontSize: '15px', flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '15px', flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
           {project.name}
         </span>
 
         <span style={{
           display: 'flex', alignItems: 'center', gap: '5px',
           padding: '3px 9px', borderRadius: '999px',
-          border: '1px solid #333', background: '#1a1a1a',
+          border: '1px solid var(--border-strong)', background: 'var(--surface-hover)',
           fontSize: '11px', fontWeight: 600, color: '#aaa',
           whiteSpace: 'nowrap', flexShrink: 0,
         }}>
@@ -180,7 +180,7 @@ export default function ProjectSidebar() {
           Active
         </span>
 
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', alignItems: 'center', padding: '3px', borderRadius: '5px', flexShrink: 0 }}>
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--focus-ring)', display: 'flex', alignItems: 'center', padding: '3px', borderRadius: '5px', flexShrink: 0 }}>
           <ChevronLeft size={14} strokeWidth={2.5} />
         </button>
       </div>
@@ -200,7 +200,7 @@ export default function ProjectSidebar() {
                   display: 'flex', alignItems: 'center', gap: '11px',
                   height: '38px', padding: '0 10px', borderRadius: '8px',
                   fontSize: '14px', fontWeight: isActive ? 500 : 400,
-                  color: isActive ? '#f5f5f5' : '#666',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
                   background: isActive ? '#1c1c1c' : 'transparent',
                   textDecoration: 'none', transition: 'background 120ms, color 120ms',
                   overflow: 'hidden', whiteSpace: 'nowrap',
@@ -218,28 +218,28 @@ export default function ProjectSidebar() {
       </div>
 
       {/* Footer / Role Switcher */}
-      <div style={{ borderTop: '1px solid #1a1a1a', padding: '14px', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+      <div style={{ borderTop: '1px solid var(--surface-hover)', padding: '14px', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
         <div style={{
           width: '34px', height: '34px', borderRadius: '50%',
-          background: '#1e1e1e', border: '1px solid #2a2a2a', color: '#f5f5f5',
+          background: 'var(--surface-hover)', border: '1px solid var(--border-strong)', color: 'var(--text-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 700, fontSize: '14px', flexShrink: 0,
         }}>
           D
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Demo User</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Demo User</span>
           <select 
             value={safeRole}
             onChange={(e) => setRole(e.target.value)}
             style={{ 
-              fontSize: '11px', color: '#888', marginTop: '2px', background: 'transparent', 
-              border: '1px solid #333', borderRadius: '4px', padding: '2px', outline: 'none',
+              fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', background: 'transparent', 
+              border: '1px solid var(--border-strong)', borderRadius: '4px', padding: '2px', outline: 'none',
               cursor: 'pointer', width: '100%'
             }}
           >
             {ROLES.map(r => (
-              <option key={r} value={r} style={{ background: '#111', color: '#fff' }}>Role: {r}</option>
+              <option key={r} value={r} style={{ background: 'var(--surface-raised)', color: 'var(--text-primary)' }}>Role: {r}</option>
             ))}
           </select>
         </div>

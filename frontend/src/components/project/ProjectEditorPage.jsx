@@ -23,7 +23,7 @@ export default function ProjectEditorPage() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', height: '100vh',
-      background: '#1e1e1e', fontFamily: 'Inter, system-ui, sans-serif'
+      background: 'var(--surface-hover)', fontFamily: 'Inter, system-ui, sans-serif'
     }}>
       <EditorHeader />
       

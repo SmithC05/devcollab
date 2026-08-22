@@ -70,12 +70,12 @@ function RequireWorkspace({ children }) {
   return children;
 }
 
-import WorkspaceProjectsPage from '../pages/workspace/WorkspaceProjectsPage';
-import WorkspaceActivityPage from '../pages/workspace/WorkspaceActivityPage';
-import WorkspaceMembersPage from '../pages/workspace/WorkspaceMembersPage';
-import WorkspaceBillingPage from '../pages/workspace/WorkspaceBillingPage';
-import WorkspaceSettingsPage from '../pages/workspace/WorkspaceSettingsPage';
-import WorkspaceAIAssistantPage from '../pages/workspace/WorkspaceAIAssistantPage';
+import WorkspaceProjectsPage from '../components/workspace/WorkspaceProjectsPage';
+import WorkspaceActivityPage from '../components/workspace/WorkspaceActivityPage';
+import WorkspaceMembersPage from '../components/workspace/WorkspaceMembersPage';
+import WorkspaceBillingPage from '../components/workspace/WorkspaceBillingPage';
+import WorkspaceSettingsPage from '../components/workspace/WorkspaceSettingsPage';
+import WorkspaceAIAssistantPage from '../components/workspace/WorkspaceAIAssistantPage';
 
 // ── Routes ────────────────────────────────────────────────────────────────
 

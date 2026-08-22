@@ -1,1 +1,424 @@
-﻿
+﻿We are now doing the DevCollab UI rebuild ONE COMPONENT AT A TIME.
+
+DO NOT TOUCH THE DASHBOARD CONTENT YET.
+
+CURRENT PRIORITY:
+1. Sidebar
+2. Top Navbar
+
+After these two are visually correct, STOP and wait for the next instruction.
+
+REFERENCE:
+Use the previously provided DevCollab reference screenshot as the visual target.
+The current implementation is already fairly close, so make controlled refinements rather than rebuilding the layout.
+
+==================================================
+SIDEBAR — PRIMARY TARGET
+==================================================
+
+The sidebar should feel spacious, stable and premium.
+
+Desktop width:
+240px
+
+Height:
+100vh
+
+Position:
+fixed/sticky left side
+
+Background:
+#0D0D0D
+
+Right border:
+#1F1F1F
+
+Do NOT make the sidebar narrower.
+
+------------------------------------------
+SIDEBAR TOP
+------------------------------------------
+
+DevCollab logo/header area should have:
+
+height around 52–56px
+
+left padding:
+16px
+
+right padding:
+16px
+
+Logo:
+small white rounded square/icon
+
+DevCollab:
+clear readable text
+font-size around 14–15px
+font-weight 600
+
+The content must NOT touch the extreme left edge.
+
+There must be visible breathing room between:
+sidebar edge → logo → text.
+
+------------------------------------------
+WORKSPACE SECTION
+------------------------------------------
+
+After the header, create comfortable spacing.
+
+WORKSPACE label:
+small
+uppercase
+muted
+letter spacing
+
+Use approximately:
+font-size: 10–11px
+
+Workspace name:
+font-size: 13–14px
+font-weight: 600
+
+There should be visible spacing between:
+WORKSPACE label
+and
+workspace name.
+
+Do not compress them.
+
+------------------------------------------
+NAVIGATION
+------------------------------------------
+
+Navigation items should have:
+
+height:
+36–40px
+
+padding:
+8px 12px
+
+gap between icon and text:
+10–12px
+
+font-size:
+13–14px
+
+Icons:
+16–18px
+
+Navigation should not look oversized,
+but it must have enough vertical breathing room.
+
+Structure:
+
+WORKSPACE
+
+Overview
+Projects
+Activity
+Members
+Billing
+Settings
+
+Then divider.
+
+INTELLIGENCE
+
+AI Assistant
+
+------------------------------------------
+ACTIVE NAVIGATION
+------------------------------------------
+
+Active Overview should closely resemble the reference.
+
+Use:
+background #1A1A1A
+
+text:
+white
+
+font-weight:
+600
+
+Border:
+Do NOT use a bright white outline around the entire active item.
+
+The current screenshot has a very obvious white rectangular border around Overview.
+
+REMOVE THAT.
+
+The active item should look like a subtle dark selected surface,
+not a focused browser control.
+
+Optional:
+subtle left indicator or very subtle border.
+
+------------------------------------------
+SIDEBAR GROUP SPACING
+------------------------------------------
+
+This is important.
+
+Do NOT place navigation items tightly together.
+
+Use approximately:
+
+4–6px spacing between items
+
+16–20px spacing before a new navigation group
+
+24px+ breathing room around section labels.
+
+The sidebar should have significant unused vertical space.
+
+Do NOT try to fill the entire sidebar.
+
+------------------------------------------
+SIDEBAR BOTTOM
+------------------------------------------
+
+User area must remain pinned to the bottom.
+
+Use approximately:
+height: 52–60px
+
+Top border:
+#1F1F1F
+
+User avatar:
+28–32px
+
+User name:
+13px
+
+Theme toggle:
+small icon button
+
+Logout:
+small icon button
+
+Maintain horizontal spacing.
+
+==================================================
+NAVBAR — PRIMARY TARGET
+==================================================
+
+Navbar should sit immediately to the right of the sidebar.
+
+Height:
+52–56px
+
+Background:
+#0D0D0D
+
+Bottom border:
+#1F1F1F
+
+Position:
+sticky top-0
+
+z-index:
+above page content.
+
+------------------------------------------
+LEFT SIDE
+------------------------------------------
+
+Breadcrumb should start with comfortable left padding.
+
+Do NOT let it touch the sidebar border.
+
+Use approximately:
+24–32px left padding.
+
+Example:
+
+Team Thunder / Overview
+
+Workspace name:
+muted gray
+
+/
+muted
+
+Overview:
+white
+
+Do not use tiny text.
+
+Target:
+13–14px.
+
+------------------------------------------
+SEARCH
+------------------------------------------
+
+This is important.
+
+The reference has a wide, visually balanced search bar.
+
+Current search is too narrow.
+
+Target:
+approximately 360–420px width
+on desktop.
+
+Height:
+34–36px
+
+Centered vertically.
+
+Background:
+#161616
+
+Border:
+#222222
+
+Radius:
+8–10px
+
+Placeholder:
+#666 / #777
+
+Text:
+12–13px
+
+Keyboard shortcut badge:
+small and subtle.
+
+Do NOT make the search bar look like a tiny input.
+
+Do NOT stretch it across the entire navbar.
+
+It should have enough width to feel intentional.
+
+------------------------------------------
+RIGHT SIDE
+------------------------------------------
+
+Keep:
+
+Theme toggle
+Notification
+Avatar
+
+Each icon button should have comfortable spacing.
+
+Target:
+32–36px click area.
+
+Do NOT put them directly next to each other with almost no gap.
+
+Use approximately:
+8–12px gap.
+
+Avatar:
+30–32px
+
+Circular.
+
+------------------------------------------
+NAVBAR PROPORTION
+------------------------------------------
+
+Overall structure should visually be:
+
+┌────────────────────── Sidebar ─────────────────────┐
+│                                                     │
+└─────────────────────────────────────────────────────┘
+
+        Team Thunder / Overview
+                     [ Search ]
+                           Theme Bell Avatar
+
+The navbar should NOT feel compressed.
+
+==================================================
+GLOBAL SPACING RULE
+==================================================
+
+For this pass, prioritize:
+
+BREATHING ROOM > INFORMATION DENSITY
+
+The current dashboard content is already much closer.
+
+Do NOT change:
+- dashboard grids
+- dashboard cards
+- statistics
+- projects
+- charts
+- page content
+
+Only adjust the shell.
+
+==================================================
+RESPONSIVE
+==================================================
+
+For desktop:
+focus on exact visual match.
+
+For tablet:
+preserve the 240px sidebar where practical.
+
+For mobile:
+do not fully redesign yet.
+
+Only ensure nothing breaks.
+
+We will handle detailed responsive behavior later.
+
+==================================================
+IMPORTANT — DO NOT CHANGE
+==================================================
+
+Do not modify:
+- backend
+- API calls
+- Zustand
+- route definitions
+- dashboard data
+- authentication
+- business logic
+
+Only modify the presentation/layout of:
+- Sidebar.jsx
+- Topbar.jsx
+- WorkspaceLayout.jsx if required for spacing/alignment
+- relevant global CSS only if required
+
+==================================================
+FINAL VISUAL CHECK
+==================================================
+
+Before finishing, compare the result against the reference.
+
+Check specifically:
+
+1. Is the sidebar about 240px?
+2. Is there breathing room from the left edge?
+3. Is the DevCollab header properly padded?
+4. Is WORKSPACE comfortably separated from navigation?
+5. Are navigation items not cramped?
+6. Is the active item subtle instead of outlined in bright white?
+7. Is the bottom user area spacious?
+8. Is the navbar approximately 52–56px?
+9. Does the breadcrumb have enough left padding?
+10. Is the search bar around 360–420px wide?
+11. Are theme/bell/avatar spaced properly?
+12. Does the whole shell feel calm and spacious?
+
+DO NOT TOUCH THE DASHBOARD IN THIS PASS.
+
+When finished, report only:
+- files changed
+- what was adjusted
+- whether the navbar/sidebar now match the reference proportions
+
+Then STOP.
