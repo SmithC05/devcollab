@@ -173,8 +173,7 @@ function ProjectRow({ project, isLast, onClick }) {
         cursor:       'pointer',
         transition:   'background 0.12s',
       }}
-      onHoverStart={e => { e.currentTarget.style.background = 'var(--dv-bg-elevated)'; }}
-      onHoverEnd={e => { e.currentTarget.style.background = ''; }}
+      whileHover={{ backgroundColor: 'var(--dv-bg-elevated)' }}
       onClick={onClick}
       role="button"
       tabIndex={0}

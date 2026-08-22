@@ -78,26 +78,6 @@ export function DvCard({ children, className = '', elevated = false, onClick, ro
 }
 
 
-// ── DvDivider ─────────────────────────────────────────────────────────────
-export function DvDivider({ label, className = '' }) {
-  if (label) {
-    return (
-      <div className={`dv-divider-labeled ${className}`} style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0' }}>
-        <div style={{ flex: 1, height: 1, background: 'var(--dv-border-subtle)' }} />
-        <span style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
-        <div style={{ flex: 1, height: 1, background: 'var(--dv-border-subtle)' }} />
-      </div>
-    );
-  }
-  return (
-    <div
-      className={`dv-divider ${className}`}
-      role="separator"
-      style={{ height: 1, background: 'var(--dv-border-subtle)', margin: '8px 0' }}
-    />
-  );
-}
-
 // ── DvPanel ───────────────────────────────────────────────────────────────
 export function DvPanel({ children, className = '', title, titleRight, noPad = false }) {
   return (
