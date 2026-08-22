@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { useEditorStore } from '../../stores/editorStore';
 
 export default function EditorHeader() {
