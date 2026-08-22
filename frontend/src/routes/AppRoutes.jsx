@@ -12,6 +12,17 @@ import LoginPage from '../pages/LoginPage';
 import OnboardingPage from '../pages/OnboardingPage';
 import SelectWorkspacePage from '../pages/SelectWorkspacePage';
 import DashboardPlaceholder from '../pages/DashboardPlaceholder';
+import ProjectLayout from '../components/project/ProjectLayout';
+import PlaceholderPage from '../components/project/PlaceholderPage';
+import ProjectOverviewPage  from '../pages/projects/ProjectOverviewPage';
+import ProjectBoardPage     from '../pages/projects/ProjectBoardPage';
+import ProjectActivityPage  from '../pages/projects/ProjectActivityPage';
+import ProjectMembersPage   from '../pages/projects/ProjectMembersPage';
+import ProjectWikiPage      from '../pages/projects/ProjectWikiPage';
+import ProjectSnippetsPage  from '../pages/projects/ProjectSnippetsPage';
+import ProjectEditorPage    from '../pages/projects/ProjectEditorPage';
+import ProjectChatPage      from '../pages/projects/ProjectChatPage';
+import ProjectSettingsPage  from '../pages/projects/ProjectSettingsPage';
 
 // ── Guards ────────────────────────────────────────────────────────────────
 
@@ -108,15 +119,27 @@ export default function AppRoutes() {
         }
       />
 
-      {/* Legacy project routes — keep working (protected) */}
+      {/* Project routes */}
       <Route
-        path="/projects/*"
+        path="/projects/:projectId"
         element={
           <RequireWorkspace>
-            <DashboardPlaceholder />
+            <ProjectLayout />
           </RequireWorkspace>
         }
-      />
+      >
+        <Route index element={<Navigate to="overview" replace />} />
+        <Route path="overview"  element={<ProjectOverviewPage />} />
+        <Route path="board"     element={<ProjectBoardPage />} />
+        <Route path="activity"  element={<ProjectActivityPage />} />
+        <Route path="members"   element={<ProjectMembersPage />} />
+        <Route path="wiki"      element={<ProjectWikiPage />} />
+        <Route path="snippets"  element={<ProjectSnippetsPage />} />
+        <Route path="editor"    element={<ProjectEditorPage />} />
+        <Route path="chat"      element={<ProjectChatPage />} />
+        <Route path="ai"        element={<PlaceholderPage title="AI Assistant" subtitle="Context-aware project intelligence — coming soon." />} />
+        <Route path="settings"  element={<ProjectSettingsPage />} />
+      </Route>
 
       {/* Default */}
       <Route path="/" element={<Navigate to="/login" replace />} />
