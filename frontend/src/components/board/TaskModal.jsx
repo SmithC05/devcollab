@@ -28,8 +28,8 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
   const { addTask, updateTask, deleteTask } = useTaskStore();
   const { can } = useAuthStore();
   
-  const canEdit = can('EDIT_TASK');
-  const canDelete = can('DELETE_TASK');
+  const canEdit = can('task.edit');
+  const canDelete = can('task.delete');
 
   const [form, setForm] = useState({
     title:       task?.title       || '',
