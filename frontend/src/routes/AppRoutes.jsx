@@ -29,6 +29,8 @@ import ProjectWorkloadPage  from '../components/project/ProjectWorkloadPage';
 import ProjectMyTasksPage   from '../components/project/ProjectMyTasksPage';
 import ProjectMyTeamPage    from '../components/project/ProjectMyTeamPage';
 import AuthCallbackPage     from '../pages/AuthCallbackPage';
+import IntelligenceLayout   from '../features/devcollab-intelligence/pages/IntelligenceLayout';
+import FoundationPreviewPage from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -169,6 +171,12 @@ export default function AppRoutes() {
         <Route path="chat"      element={<ProjectChatPage />} />
         <Route path="ai"        element={<PlaceholderPage title="AI Assistant" subtitle="Context-aware project intelligence — coming soon." />} />
         <Route path="settings"  element={<ProjectSettingsPage />} />
+      </Route>
+
+      {/* DevCollab Intelligence — Isolated experience */}
+      <Route path="/intelligence" element={<IntelligenceLayout />}>
+        <Route index element={<FoundationPreviewPage />} />
+        <Route path="foundation-preview" element={<FoundationPreviewPage />} />
       </Route>
 
       {/* Default */}

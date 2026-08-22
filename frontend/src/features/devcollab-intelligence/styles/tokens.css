@@ -1,0 +1,173 @@
+/**
+ * DevCollab Intelligence — Design Tokens
+ * Isolated from the main application tokens.
+ * All custom properties are namespaced with --dv- to avoid collision.
+ */
+
+.dv-intelligence {
+  /* ── Backgrounds ──────────────────────────────────────────────────── */
+  --dv-bg-canvas:    #090b0e;
+  --dv-bg-base:      #0c0f13;
+  --dv-bg-surface:   #101419;
+  --dv-bg-elevated:  #141820;
+  --dv-bg-overlay:   #191e28;
+  --dv-bg-hover:     #1c2230;
+  --dv-bg-active:    #202638;
+
+  /* ── Borders ──────────────────────────────────────────────────────── */
+  --dv-border-subtle:   rgba(255,255,255,0.04);
+  --dv-border-default:  rgba(255,255,255,0.07);
+  --dv-border-strong:   rgba(255,255,255,0.12);
+  --dv-border-focus:    rgba(99,137,253,0.5);
+
+  /* ── Text ─────────────────────────────────────────────────────────── */
+  --dv-text-primary:    #eaeef4;
+  --dv-text-secondary:  #8b95a8;
+  --dv-text-muted:      #525d6e;
+  --dv-text-faint:      #363f4d;
+  --dv-text-inverse:    #090b0e;
+
+  /* ── Accent (Brand Blue) ──────────────────────────────────────────── */
+  --dv-accent:            #6389fd;
+  --dv-accent-hover:      #7b9dfe;
+  --dv-accent-subtle:     rgba(99,137,253,0.08);
+  --dv-accent-border:     rgba(99,137,253,0.2);
+  --dv-accent-glow:       rgba(99,137,253,0.12);
+
+  /* ── Semantic ─────────────────────────────────────────────────────── */
+  --dv-success:           #2dd4a4;
+  --dv-success-subtle:    rgba(45,212,164,0.08);
+  --dv-success-border:    rgba(45,212,164,0.2);
+
+  --dv-warning:           #f5a623;
+  --dv-warning-subtle:    rgba(245,166,35,0.08);
+  --dv-warning-border:    rgba(245,166,35,0.2);
+
+  --dv-danger:            #f56060;
+  --dv-danger-subtle:     rgba(245,96,96,0.08);
+  --dv-danger-border:     rgba(245,96,96,0.2);
+
+  --dv-info:              #60b8f5;
+  --dv-info-subtle:       rgba(96,184,245,0.08);
+  --dv-info-border:       rgba(96,184,245,0.2);
+
+  /* ── Intelligence State Tokens ────────────────────────────────────── */
+  --dv-observed:          #eaeef4;
+  --dv-observed-subtle:   rgba(234,238,244,0.06);
+  --dv-observed-border:   rgba(234,238,244,0.12);
+
+  --dv-analyzing:         #a78bfa;
+  --dv-analyzing-subtle:  rgba(167,139,250,0.08);
+  --dv-analyzing-border:  rgba(167,139,250,0.2);
+
+  --dv-predicted:         #38bdf8;
+  --dv-predicted-subtle:  rgba(56,189,248,0.08);
+  --dv-predicted-border:  rgba(56,189,248,0.2);
+
+  --dv-simulated:         #fb923c;
+  --dv-simulated-subtle:  rgba(251,146,60,0.08);
+  --dv-simulated-border:  rgba(251,146,60,0.2);
+
+  --dv-recommended:       #2dd4a4;
+  --dv-recommended-subtle: rgba(45,212,164,0.08);
+  --dv-recommended-border:  rgba(45,212,164,0.2);
+
+  --dv-approved:          #6389fd;
+  --dv-approved-subtle:   rgba(99,137,253,0.08);
+  --dv-approved-border:   rgba(99,137,253,0.2);
+
+  --dv-executed:          #f5a623;
+  --dv-executed-subtle:   rgba(245,166,35,0.08);
+  --dv-executed-border:   rgba(245,166,35,0.2);
+
+  /* ── Spacing Scale ────────────────────────────────────────────────── */
+  --dv-space-1:   4px;
+  --dv-space-2:   8px;
+  --dv-space-3:   12px;
+  --dv-space-4:   16px;
+  --dv-space-5:   20px;
+  --dv-space-6:   24px;
+  --dv-space-8:   32px;
+  --dv-space-10:  40px;
+  --dv-space-12:  48px;
+  --dv-space-16:  64px;
+  --dv-space-20:  80px;
+
+  /* ── Radius Scale ─────────────────────────────────────────────────── */
+  --dv-radius-xs:  2px;
+  --dv-radius-sm:  4px;
+  --dv-radius-md:  6px;
+  --dv-radius-lg:  10px;
+  --dv-radius-xl:  14px;
+  --dv-radius-2xl: 20px;
+  --dv-radius-full: 9999px;
+
+  /* ── Typography ───────────────────────────────────────────────────── */
+  --dv-font-sans:  'Inter', 'Helvetica Neue', system-ui, sans-serif;
+  --dv-font-mono:  'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+
+  --dv-text-xs:    11px;
+  --dv-text-sm:    12px;
+  --dv-text-base:  13px;
+  --dv-text-md:    14px;
+  --dv-text-lg:    16px;
+  --dv-text-xl:    18px;
+  --dv-text-2xl:   22px;
+  --dv-text-3xl:   28px;
+  --dv-text-4xl:   36px;
+  --dv-text-display: 48px;
+
+  --dv-leading-tight:  1.2;
+  --dv-leading-snug:   1.35;
+  --dv-leading-normal: 1.5;
+  --dv-leading-relaxed: 1.65;
+
+  --dv-tracking-tight:  -0.03em;
+  --dv-tracking-snug:   -0.01em;
+  --dv-tracking-normal:  0;
+  --dv-tracking-wide:    0.04em;
+  --dv-tracking-wider:   0.08em;
+  --dv-tracking-widest:  0.12em;
+
+  /* ── Shadows ──────────────────────────────────────────────────────── */
+  --dv-shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
+  --dv-shadow-md:  0 4px 12px rgba(0,0,0,0.5);
+  --dv-shadow-lg:  0 8px 24px rgba(0,0,0,0.6);
+  --dv-shadow-xl:  0 16px 40px rgba(0,0,0,0.7);
+  --dv-glow-accent: 0 0 24px rgba(99,137,253,0.12);
+  --dv-glow-predicted: 0 0 24px rgba(56,189,248,0.1);
+  --dv-glow-recommended: 0 0 24px rgba(45,212,164,0.1);
+
+  /* ── Animation ────────────────────────────────────────────────────── */
+  --dv-duration-instant:  50ms;
+  --dv-duration-fast:     120ms;
+  --dv-duration-normal:   200ms;
+  --dv-duration-slow:     350ms;
+  --dv-duration-slower:   500ms;
+  --dv-duration-slowest:  800ms;
+
+  --dv-ease-default:  cubic-bezier(0.16, 1, 0.3, 1);
+  --dv-ease-in:       cubic-bezier(0.4, 0, 1, 1);
+  --dv-ease-out:      cubic-bezier(0, 0, 0.2, 1);
+  --dv-ease-spring:   cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --dv-ease-linear:   linear;
+
+  /* ── Z-index Layers ───────────────────────────────────────────────── */
+  --dv-z-base:      0;
+  --dv-z-raised:    10;
+  --dv-z-dropdown:  100;
+  --dv-z-sticky:    200;
+  --dv-z-overlay:   300;
+  --dv-z-modal:     400;
+  --dv-z-toast:     500;
+  --dv-z-tooltip:   600;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .dv-intelligence * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
