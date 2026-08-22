@@ -28,6 +28,7 @@ import ProjectSprintPage    from '../components/project/ProjectSprintPage';
 import ProjectWorkloadPage  from '../components/project/ProjectWorkloadPage';
 import ProjectMyTasksPage   from '../components/project/ProjectMyTasksPage';
 import ProjectMyTeamPage    from '../components/project/ProjectMyTeamPage';
+import AuthCallbackPage     from '../pages/AuthCallbackPage';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -102,6 +103,9 @@ export default function AppRoutes() {
           </PublicOnlyRoute>
         }
       />
+
+      {/* Auth Callback (Public) */}
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       {/* Onboarding — needs auth, no workspaces yet */}
       <Route
