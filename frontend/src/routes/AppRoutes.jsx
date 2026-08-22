@@ -187,6 +187,7 @@ export default function AppRoutes() {
         <Route path="member/:id"      element={<PlaceholderPage title="Member Intelligence" subtitle="Member capacity &amp; context — Phase 2" />} />
         <Route path="decision/:id"    element={<DecisionPoint />} />
         <Route path="simulation/:id"  element={<SimulationCenter />} />
+        <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
       </Route>
 
       {/* Default */}
