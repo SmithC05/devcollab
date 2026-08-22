@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../../stores/chatStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Hash, Plus, Send, X } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 

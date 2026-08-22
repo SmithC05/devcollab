@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
 import { wsClient } from '../../api/websocketClient';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { X, Trash2 } from 'lucide-react';
 
-const MEMBERS = ['Libin', 'Arjun', 'Priya', 'Rahul', 'Meera'];
+import { useMemberStore } from '../../stores/memberStore';
 const PRIORITIES = ['P0', 'P1', 'P2'];
 const COLUMNS_LIST = [
   { id: 'todo', label: 'To Do' },
@@ -26,6 +26,7 @@ const LABEL_STYLE = {
 
 export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
   const isEdit = Boolean(task);
+  const { members } = useMemberStore();
   const { addTask, updateTask, deleteTask } = useTaskStore();
 
   useEffect(() => {
@@ -177,7 +178,7 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
               <label style={LABEL_STYLE}>Assignee</label>
               <select disabled={!canEdit} value={form.assignee} onChange={(e) => set('assignee', e.target.value)} style={INPUT_STYLE}>
                 <option value="">Unassigned</option>
-                {MEMBERS.map((m) => <option key={m} value={m}>{m}</option>)}
+                {members.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
               </select>
             </div>
             <div>

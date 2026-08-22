@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Trash2, Archive, Save } from 'lucide-react';
 
 export default function ProjectSettingsPage() {

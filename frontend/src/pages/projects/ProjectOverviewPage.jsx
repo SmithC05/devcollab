@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Bell, Navigation } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
+
+import { useMemberStore } from '../../stores/memberStore';
 
 const PRIORITY_OPTIONS = ['P0 Urgent', 'P1 High', 'P2 Normal'];
-const MEMBER_OPTIONS   = ['adhi (MEMBER)', 'libin (ADMIN)', 'priya (MEMBER)', 'rahul (MEMBER)'];
 const DUE_OPTIONS      = ['Today', 'Tomorrow', 'This week', 'Next week', 'No date'];
 
 function TopHeader({ projectName }) {
@@ -38,8 +39,11 @@ function TopHeader({ projectName }) {
 }
 
 function WorkDispatcher() {
+  const { members } = useMemberStore();
+  const MEMBER_OPTIONS = members.length > 0 ? members.map(m => `${m.name} (${(m.role || 'MEMBER').toUpperCase()})`) : ['Unassigned'];
+
   const [priority, setPriority] = useState('P1 High');
-  const [assignee, setAssignee] = useState('adhi (MEMBER)');
+  const [assignee, setAssignee] = useState(MEMBER_OPTIONS[0]);
   const [due, setDue] = useState('Tomorrow');
   const [taskTitle, setTaskTitle] = useState('');
 

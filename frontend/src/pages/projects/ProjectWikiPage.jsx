@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useWikiStore } from '../../stores/wikiStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, UserPlus } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
-import * as workspaceService from '../services/workspaceService';
+import { useAuthStore } from '../stores/authStore';
+import { workspaceApi } from '../api/workspaceApi';
 import ThemeToggle from '../components/auth/ThemeToggle';
 import { useTheme } from '../hooks/useTheme';
 import CreateWorkspaceModal from '../components/workspace/CreateWorkspaceModal';
@@ -28,13 +28,13 @@ export default function OnboardingPage() {
 
   const handleCreate = async (name, slug, description) => {
     // We pass the new values to the service
-    await workspaceService.createWorkspace(name, slug, description, user?.id);
+    await workspaceApi.createWorkspace(name, slug, user?.id);
     await useAuthStore.getState().refreshWorkspaces();
     navigate('/select-workspace');
   };
 
   const handleJoin = async (inviteCode) => {
-    await workspaceService.joinWorkspace(inviteCode, user?.id);
+    await workspaceApi.joinWorkspace(inviteCode, user?.id);
     await useAuthStore.getState().refreshWorkspaces();
     navigate('/select-workspace');
   };

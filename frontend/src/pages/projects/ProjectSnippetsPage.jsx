@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSnippetStore, SUPPORTED_LANGUAGES } from '../../stores/snippetStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Search, Plus, Copy, Trash2, X, Check, Pencil } from 'lucide-react';

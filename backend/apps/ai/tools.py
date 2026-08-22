@@ -39,26 +39,27 @@ def get_task_context(task_id: int) -> str:
 
 def get_developer_profile(user_id: int, project_id: int) -> str:
     """Returns an evidence-based profile of a developer for a given project."""
-    # Deterministic prototype - we will hardcode Smith/Rahul logic for the demo, 
-    # but in real code it would pull from history.
-    if user_id == 1: # Smith
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.get(id=user_id)
+        
+        # Simple dynamic logic based on email to maintain demo personality
+        skills = ["Python", "Backend", "API"] if "smith" in user.email else (["React", "Frontend"] if "rahul" in user.email else ["General"])
+        familiarity = "HIGH" if "smith" in user.email else "MEDIUM"
+        
         return json.dumps({
-            "user_id": 1,
-            "skills": ["Backend", "Python", "API"],
-            "project_familiarity": "HIGH",
-            "current_workload": "HEAVY"
+            "user_id": user_id,
+            "username": user.username,
+            "skills": skills,
+            "project_familiarity": familiarity,
+            "current_workload": "LIGHT" # Would be dynamically calculated in a real app
         })
-    elif user_id == 2: # Rahul
+    except Exception:
         return json.dumps({
-            "user_id": 2,
-            "skills": ["Frontend", "React"],
-            "project_familiarity": "LOW",
-            "current_workload": "LIGHT"
+            "user_id": user_id,
+            "project_familiarity": "MEDIUM"
         })
-    return json.dumps({
-        "user_id": user_id,
-        "project_familiarity": "MEDIUM"
-    })
 
 def get_task_dependencies(task_id: int) -> str:
     """Returns upstream and downstream dependencies for a task."""

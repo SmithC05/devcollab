@@ -71,10 +71,23 @@ def execute_deterministic_demo_flow(project_id: int, message: str) -> dict:
     presence = json.loads(get_team_presence(project_id))
     tool_trace.append({"tool": "get_team_presence", "success": True})
     
-    # Identify Smith and Rahul
+    # Identify Smith and Rahul dynamically
     smith_id = 1
     rahul_id = 2
-    task_id = 1 # Payment API is usually ID 1
+    task_id = 1
+    try:
+        from django.contrib.auth import get_user_model
+        from apps.tasks.models import Task
+        User = get_user_model()
+        smith = User.objects.filter(username="Smith").first()
+        rahul = User.objects.filter(username="Rahul").first()
+        if smith: smith_id = smith.id
+        if rahul: rahul_id = rahul.id
+        
+        task = Task.objects.filter(project_id=project_id, title__icontains="Payment").first()
+        if task: task_id = task.id
+    except Exception as e:
+        logger.warning(f"Failed to dynamically resolve users/tasks for deterministic fallback: {e}")
     
     # 3. get_task_context
     task_ctx = json.loads(get_task_context(task_id))

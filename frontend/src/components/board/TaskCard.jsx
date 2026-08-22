@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { PRIORITY_COLORS } from '../../stores/taskStore';
 import { usePresenceStore } from '../../stores/presenceStore';
 import { Calendar } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 
 function AvatarInitial({ name, size = 22 }) {
   return (

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMemberStore } from '../../stores/memberStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Search, Plus, X, UserPlus, Trash2 } from 'lucide-react';
 
 const ROLE_COLORS = {

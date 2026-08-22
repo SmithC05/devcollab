@@ -7,7 +7,7 @@
 //   Authenticated, activeWorkspace exists → /dashboard
 
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../stores/authStore';
 import LoginPage from '../pages/LoginPage';
 import OnboardingPage from '../pages/OnboardingPage';
 import SelectWorkspacePage from '../pages/SelectWorkspacePage';

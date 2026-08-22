@@ -1,70 +1,11 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
 
-const SEED_TASKS = {
-  todo: [
-    {
-      id: 'task-1',
-      title: 'Set up CI/CD pipeline',
-      description: 'Configure GitHub Actions for automated testing and deployment.',
-      assignee: 'Libin',
-      priority: 'P1',
-      dueDate: '2026-08-30',
-      labels: ['devops', 'infra'],
-      columnId: 'todo',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'task-2',
-      title: 'Write API documentation',
-      description: 'Document all REST endpoints using OpenAPI spec.',
-      assignee: 'Priya',
-      priority: 'P2',
-      dueDate: '2026-09-05',
-      labels: ['docs'],
-      columnId: 'todo',
-      createdAt: new Date().toISOString(),
-    },
-  ],
-  inprogress: [
-    {
-      id: 'task-3',
-      title: 'Payment API integration',
-      description: 'Integrate Razorpay for subscription billing.',
-      assignee: 'Arjun',
-      priority: 'P0',
-      dueDate: '2026-08-25',
-      labels: ['backend', 'payments'],
-      columnId: 'inprogress',
-      createdAt: new Date().toISOString(),
-    },
-  ],
-  inreview: [
-    {
-      id: 'task-4',
-      title: 'Authentication middleware',
-      description: 'Implement JWT-based auth middleware for DRF.',
-      assignee: 'Libin',
-      priority: 'P1',
-      dueDate: '2026-08-22',
-      labels: ['backend', 'security'],
-      columnId: 'inreview',
-      createdAt: new Date().toISOString(),
-    },
-  ],
-  done: [
-    {
-      id: 'task-5',
-      title: 'Database schema design',
-      description: 'Finalize the PostgreSQL schema for projects and tasks.',
-      assignee: 'Priya',
-      priority: 'P1',
-      dueDate: '2026-08-20',
-      labels: ['backend', 'db'],
-      columnId: 'done',
-      createdAt: new Date().toISOString(),
-    },
-  ],
+const EMPTY_TASKS = {
+  todo: [],
+  inprogress: [],
+  inreview: [],
+  done: [],
 };
 
 export const COLUMNS = [
@@ -82,7 +23,7 @@ export const PRIORITY_COLORS = {
 };
 
 export const useTaskStore = create((set, get) => ({
-  columns: SEED_TASKS,
+  columns: EMPTY_TASKS,
 
   addTask: (columnId, taskData) => {
     const task = {
