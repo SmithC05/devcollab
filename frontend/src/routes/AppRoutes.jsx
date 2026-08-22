@@ -11,7 +11,8 @@ import { useAuthStore } from '../store/authStore';
 import LoginPage from '../pages/LoginPage';
 import OnboardingPage from '../pages/OnboardingPage';
 import SelectWorkspacePage from '../pages/SelectWorkspacePage';
-import DashboardPlaceholder from '../pages/DashboardPlaceholder';
+import WorkspaceLayout from '../components/layout/WorkspaceLayout';
+import WorkspaceOverview from '../pages/WorkspaceOverview';
 import ProjectLayout from '../components/project/ProjectLayout';
 import PlaceholderPage from '../components/project/PlaceholderPage';
 import ProjectOverviewPage  from '../pages/projects/ProjectOverviewPage';
@@ -23,7 +24,10 @@ import ProjectSnippetsPage  from '../pages/projects/ProjectSnippetsPage';
 import ProjectEditorPage    from '../pages/projects/ProjectEditorPage';
 import ProjectChatPage      from '../pages/projects/ProjectChatPage';
 import ProjectSettingsPage  from '../pages/projects/ProjectSettingsPage';
-
+import ProjectSprintPage    from '../pages/projects/ProjectSprintPage';
+import ProjectWorkloadPage  from '../pages/projects/ProjectWorkloadPage';
+import ProjectMyTasksPage   from '../pages/projects/ProjectMyTasksPage';
+import ProjectMyTeamPage    from '../pages/projects/ProjectMyTeamPage';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -68,6 +72,9 @@ function RequireWorkspace({ children }) {
 // ── Routes ────────────────────────────────────────────────────────────────
 
 export default function AppRoutes() {
+  const { activeWorkspace } = useAuthStore();
+  const workspaceName = activeWorkspace?.name || '';
+
   return (
     <Routes>
       {/* Public (login/register in one shell) */}
@@ -114,10 +121,18 @@ export default function AppRoutes() {
         path="/dashboard"
         element={
           <RequireWorkspace>
-            <DashboardPlaceholder />
+            <WorkspaceLayout workspaceName={workspaceName} />
           </RequireWorkspace>
         }
-      />
+      >
+        <Route index element={<WorkspaceOverview setWorkspaceName={() => {}} />} />
+        <Route path="projects" element={<div className="p-12 text-center text-xl text-gray-400">Projects Module - Coming Soon</div>} />
+        <Route path="activity" element={<div className="p-12 text-center text-xl text-gray-400">Activity Module - Coming Soon</div>} />
+        <Route path="members" element={<div className="p-12 text-center text-xl text-gray-400">Members Module - Coming Soon</div>} />
+        <Route path="billing" element={<div className="p-12 text-center text-xl text-gray-400">Billing Module - Coming Soon</div>} />
+        <Route path="settings" element={<div className="p-12 text-center text-xl text-gray-400">Settings Module - Coming Soon</div>} />
+        <Route path="ai" element={<div className="p-12 text-center text-xl text-gray-400">AI Assistant - Coming Soon</div>} />
+      </Route>
 
       {/* Project routes */}
       <Route
@@ -133,6 +148,10 @@ export default function AppRoutes() {
         <Route path="board"     element={<ProjectBoardPage />} />
         <Route path="activity"  element={<ProjectActivityPage />} />
         <Route path="members"   element={<ProjectMembersPage />} />
+        <Route path="sprint"    element={<ProjectSprintPage />} />
+        <Route path="workload"  element={<ProjectWorkloadPage />} />
+        <Route path="mytasks"   element={<ProjectMyTasksPage />} />
+        <Route path="myteam"    element={<ProjectMyTeamPage />} />
         <Route path="wiki"      element={<ProjectWikiPage />} />
         <Route path="snippets"  element={<ProjectSnippetsPage />} />
         <Route path="editor"    element={<ProjectEditorPage />} />
