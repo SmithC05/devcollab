@@ -12,9 +12,14 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import DashboardPlaceholder from './pages/DashboardPlaceholder';
+import { useAuthStore } from './stores/authStore';
+import { useActivityTracker } from './hooks/useActivityTracker';
 import './index.css';
 
 export default function App() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  useActivityTracker(isAuthenticated);
+
   return (
     <BrowserRouter>
       <Routes>

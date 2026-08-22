@@ -8,6 +8,7 @@ export const useAuthStore = create(
       user: null,
       role: null,
       workspace: null,
+      sessionToken: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -20,6 +21,7 @@ export const useAuthStore = create(
             user: data.user,
             role: data.user.role,
             workspace: data.user.workspace,
+            sessionToken: data.session_token,
             isLoading: false,
           });
           return { success: true, data };

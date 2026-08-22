@@ -20,9 +20,12 @@ export const authApi = {
 
   logout: async () => {
     try {
+      const { useAuthStore } = await import('../stores/authStore');
+      const { sessionToken } = useAuthStore.getState();
       const response = await fetch(`${BASE_URL}/auth/logout/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_token: sessionToken }),
       });
       if (!response.ok) {
         throw new Error('Logout failed');

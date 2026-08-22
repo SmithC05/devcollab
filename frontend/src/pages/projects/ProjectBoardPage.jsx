@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { LayoutGrid, List, Calendar, Plus } from 'lucide-react';
 import KanbanView from '../../components/board/KanbanView';
 import TaskModal from '../../components/board/TaskModal';
+import { useTaskStore } from '../../stores/taskStore';
 
 const VIEWS = [
   { id: 'board',    label: 'Board',    icon: LayoutGrid },
@@ -10,8 +12,30 @@ const VIEWS = [
 ];
 
 export default function ProjectBoardPage() {
+  const { projectId } = useParams();
   const [activeView, setActiveView] = useState('board');
   const [showNewTask, setShowNewTask] = useState(false);
+  const fetchTasks = useTaskStore(state => state.fetchTasks);
+  const syncEngineEvent = useTaskStore(state => state.syncEngineEvent);
+
+  useEffect(() => {
+    if (projectId) {
+      fetchTasks(projectId);
+    }
+  }, [projectId, fetchTasks]);
+
+  useEffect(() => {
+    const handleEngineEvent = (e) => {
+      const payload = e.detail;
+      if (payload.task_id) {
+        syncEngineEvent(payload);
+      }
+    };
+    document.addEventListener('engine_event', handleEngineEvent);
+    return () => {
+      document.removeEventListener('engine_event', handleEngineEvent);
+    };
+  }, [syncEngineEvent]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#080808', color: '#f5f5f5', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
