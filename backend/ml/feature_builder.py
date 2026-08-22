@@ -1,5 +1,7 @@
 import random
 from typing import Dict, Any, Tuple
+from django.utils import timezone
+from apps.tasks.models import Task
 
 # We generate deterministic synthetic values seeded by stable entity IDs for missing data
 def _synthetic(task_id: int, user_id: int, key: str, min_val: float, max_val: float, is_int: bool = False):
@@ -111,9 +113,6 @@ def build_knowledge_transfer_features(task, candidate) -> Tuple[Dict[str, Any], 
     add_feat("handoff_completeness", _synthetic(t_id, u_id, "handoff_comp", 0.5, 1.0), "SYNTHETIC_DEMO")
     
     return features, provenance
-from django.utils import timezone
-from apps.tasks.models import Task
-
 def build_features(task: Task) -> dict:
     """
     Builds the 31 required ML features from the actual DevCollab database.
