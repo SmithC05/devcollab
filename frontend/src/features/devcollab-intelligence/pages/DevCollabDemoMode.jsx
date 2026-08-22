@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MemoryRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   PlayCircle, Search, Server, GitBranch, ArrowRight, Shield, Activity, Users, Database
@@ -70,8 +70,10 @@ function WorkflowStepper({ activeStepId }) {
   );
 }
 
-function DemoStartScreen() {
+export function DemoStartScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
 
   return (
     <div style={{ padding: 40, maxWidth: 800, margin: '0 auto' }}>
@@ -81,7 +83,7 @@ function DemoStartScreen() {
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <DvCard style={{ padding: 32, cursor: 'pointer' }} onClick={() => navigate('/intelligence/judge')}>
+        <DvCard style={{ padding: 32, cursor: 'pointer' }} onClick={() => navigate(`${prefix}/judge`)}>
           <div style={{ marginBottom: 16 }}><GitBranch size={24} color="var(--dv-accent)" /></div>
           <h3 style={{ fontSize: 16, marginBottom: 8 }}>START WITH REAL ENGINEERING SOURCE</h3>
           <p style={{ fontSize: 13, color: 'var(--dv-text-muted)', marginBottom: 24 }}>
@@ -90,7 +92,7 @@ function DemoStartScreen() {
           <DvButton variant="outline">[ ANALYZE REPOSITORY ]</DvButton>
         </DvCard>
 
-        <DvCard style={{ padding: 32, cursor: 'pointer' }} onClick={() => navigate('/intelligence/decision/dp1')}>
+        <DvCard style={{ padding: 32, cursor: 'pointer' }} onClick={() => navigate(`${prefix}/decision/dp1`)}>
           <div style={{ marginBottom: 16 }}><Server size={24} color="var(--dv-warning)" /></div>
           <h3 style={{ fontSize: 16, marginBottom: 8 }}>RUN CONTROLLED SCENARIO</h3>
           <p style={{ fontSize: 13, color: 'var(--dv-text-muted)', marginBottom: 24 }}>
@@ -103,7 +105,7 @@ function DemoStartScreen() {
   );
 }
 
-function Orchestrator() {
+export default function DevCollabDemoMode() {
   const location = useLocation();
   const [activeStep, setActiveStep] = useState('STATE');
 
@@ -147,23 +149,8 @@ function Orchestrator() {
 
       {/* Embedded Routes */}
       <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
-        <Routes>
-          <Route path="/" element={<DemoStartScreen />} />
-          <Route path="/intelligence/judge" element={<JudgeMode />} />
-          <Route path="/intelligence/organization" element={<OrganizationIntelligence />} />
-          <Route path="/intelligence/decision/:id" element={<DecisionPoint />} />
-          <Route path="/intelligence/simulation/:id" element={<SimulationCenter />} />
-          <Route path="/intelligence/knowledge-transfer/:id" element={<KnowledgeTransfer />} />
-        </Routes>
+        <Outlet />
       </div>
     </div>
-  );
-}
-
-export default function DevCollabDemoMode() {
-  return (
-    <MemoryRouter initialEntries={['/']}>
-      <Orchestrator />
-    </MemoryRouter>
   );
 }

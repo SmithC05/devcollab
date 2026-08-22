@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Lock, CheckCircle, AlertTriangle, 
-  Search, GitBranch, Terminal, Shield, Zap, Info, FolderGit2
+  Search, GitBranch, Terminal, Shield, Zap, Info, FolderGit2, ArrowRight
 } from 'lucide-react';
 import { DvCard, DvButton, DvBadge, DvDivider, DvPanel, DvAvatar } from '../primitives/core';
 import { DvAgentActivity } from '../primitives/agent';
@@ -58,6 +58,8 @@ function ProvenanceBadge({ type }) {
 
 export default function JudgeMode() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
   const [repoUrl, setRepoUrl] = useState('');
   const [status, setStatus] = useState('NOT_CONNECTED'); // NOT_CONNECTED | CONNECTING | ANALYZING | READY | FAILED
   const [errorMsg, setErrorMsg] = useState('');
@@ -307,7 +309,7 @@ export default function JudgeMode() {
                     </div>
                     <DvButton 
                       variant="primary" 
-                      onClick={() => navigate('/intelligence/organization')}
+                      onClick={() => navigate(`${prefix}/organization`)}
                     >
                       OPEN ENGINEERING INTELLIGENCE <ArrowRight size={16} style={{ marginLeft: 8 }} />
                     </DvButton>

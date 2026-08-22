@@ -37,7 +37,7 @@ import DecisionPoint             from '../features/devcollab-intelligence/pages/
 import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
 import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
 import JudgeMode                 from '../features/devcollab-intelligence/pages/JudgeMode';
-import DevCollabDemoMode         from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
+import DevCollabDemoMode, { DemoStartScreen } from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -181,7 +181,14 @@ export default function AppRoutes() {
       </Route>
 
       {/* ── Demo / Orchestration Mode (Standalone Layout) ── */}
-      <Route path="/intelligence/demo/*" element={<DevCollabDemoMode />} />
+      <Route path="/intelligence/demo" element={<DevCollabDemoMode />}>
+        <Route index element={<DemoStartScreen />} />
+        <Route path="judge" element={<JudgeMode />} />
+        <Route path="organization" element={<OrganizationIntelligence />} />
+        <Route path="decision/:id" element={<DecisionPoint />} />
+        <Route path="simulation/:id" element={<SimulationCenter />} />
+        <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
+      </Route>
 
       {/* ── Phase 2-8: Isolated Intelligence Experience ── */}
       <Route path="/intelligence" element={<IntelligenceLayout />}>

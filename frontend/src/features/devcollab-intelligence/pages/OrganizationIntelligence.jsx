@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, AlertCircle, AlertTriangle, ArrowRight, Brain,
@@ -1151,6 +1151,8 @@ function EvidenceDrawer({ resp, onClose }) {
 // ─────────────────────────────────────────────────────────────────────────────
 export default function OrganizationIntelligence() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
   const [data] = useState(() => getOrganizationIntelligenceState());
   const [selectedNode, setSelectedNode] = useState(null);
   const [evidenceResp, setEvidenceResp] = useState(null);

@@ -504,62 +504,62 @@ function AgentPanel({ agentActivity }) {
   );
 }
 
+const MemberRow = ({ m, isOwner }) => (
+  <div style={{
+    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+    background: isOwner ? 'var(--dv-danger-subtle)' : 'var(--dv-bg-elevated)',
+    border: `1px solid ${isOwner ? 'var(--dv-danger-border)' : 'var(--dv-border-subtle)'}`,
+    borderRadius: 'var(--dv-radius-md)', marginBottom: 8,
+  }}>
+    <div style={{ position: 'relative', flexShrink: 0 }}>
+      <DvAvatar name={m.name} size={36} />
+      <span style={{
+        position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: '50%',
+        background: availStatusColor(m.status), border: '1.5px solid var(--dv-bg-canvas)',
+      }} />
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <span style={{ fontSize: 'var(--dv-text-sm)', fontWeight: 700, color: 'var(--dv-text-primary)' }}>{m.name}</span>
+        {isOwner && <DvBadge variant="muted" size="sm">Owner</DvBadge>}
+        <DvBadge variant={m.status === 'OVERLOADED' ? 'danger' : m.status === 'BUSY' ? 'warning' : 'success'} size="sm">{m.status}</DvBadge>
+      </div>
+      <div style={{ display: 'flex', gap: 14 }}>
+        <div>
+          <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', marginBottom: 2 }}>Capacity</div>
+          <DvProgressBar value={m.capacity} max={100}
+            variant={m.capacity >= 85 ? 'danger' : m.capacity >= 55 ? 'warning' : 'recommended'} />
+          <span style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-muted)' }}>{m.capacity}%</span>
+        </div>
+        <div>
+          <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', marginBottom: 2 }}>Task Context</div>
+          <DvProgressBar value={m.contextScore} max={100}
+            variant={m.contextScore >= 70 ? 'recommended' : m.contextScore >= 40 ? 'warning' : 'danger'} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-muted)' }}>{m.contextScore}%</span>
+            <DvBadge variant={m.contextScore >= 70 ? 'success' : m.contextScore >= 40 ? 'warning' : 'danger'} size="sm">
+              {contextScoreToLabel(m.contextScore)}
+            </DvBadge>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div><ProvenancePip prov={m.provenance} /></div>
+  </div>
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 6: Engineering State Snapshot
 // ─────────────────────────────────────────────────────────────────────────────
 function EngineeringSnapshot({ snapshot }) {
   const { owner, candidates } = snapshot;
 
-  const MemberRow = ({ m, isOwner }) => (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-      background: isOwner ? 'var(--dv-danger-subtle)' : 'var(--dv-bg-elevated)',
-      border: `1px solid ${isOwner ? 'var(--dv-danger-border)' : 'var(--dv-border-subtle)'}`,
-      borderRadius: 'var(--dv-radius-md)', marginBottom: 8,
-    }}>
-      <div style={{ position: 'relative', flexShrink: 0 }}>
-        <DvAvatar name={m.name} size={36} />
-        <span style={{
-          position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: '50%',
-          background: availStatusColor(m.status), border: '1.5px solid var(--dv-bg-canvas)',
-        }} />
-      </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 'var(--dv-text-sm)', fontWeight: 700, color: 'var(--dv-text-primary)' }}>{m.name}</span>
-          {isOwner && <DvBadge variant="muted" size="sm">Owner</DvBadge>}
-          <DvBadge variant={m.status === 'OVERLOADED' ? 'danger' : m.status === 'BUSY' ? 'warning' : 'success'} size="sm">{m.status}</DvBadge>
-        </div>
-        <div style={{ display: 'flex', gap: 14 }}>
-          <div>
-            <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', marginBottom: 2 }}>Capacity</div>
-            <DvProgressBar value={m.capacity} max={100}
-              variant={m.capacity >= 85 ? 'danger' : m.capacity >= 55 ? 'warning' : 'recommended'} />
-            <span style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-muted)' }}>{m.capacity}%</span>
-          </div>
-          <div>
-            <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', marginBottom: 2 }}>Task Context</div>
-            <DvProgressBar value={m.contextScore} max={100}
-              variant={m.contextScore >= 70 ? 'recommended' : m.contextScore >= 40 ? 'warning' : 'danger'} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <span style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-muted)' }}>{m.contextScore}%</span>
-              <DvBadge variant={m.contextScore >= 70 ? 'success' : m.contextScore >= 40 ? 'warning' : 'danger'} size="sm">
-                {contextScoreToLabel(m.contextScore)}
-              </DvBadge>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div><ProvenancePip prov={m.provenance} /></div>
-    </div>
-  );
-
   return (
     <DvCard style={{ padding: '20px 24px' }}>
       <SectionLabel label="Engineering State Snapshot" icon={BarChart2}
         sub="Observed state only — no predictions" />
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-        <span style={{ fontSize: 10, padding: '2px 8px', background: 'var(--dv-bg-elevated)', border: '1px solid var(--dv-border-default)', borderRadius: 'var(--dv-radius-sm)', color: 'var(--dv-success)', fontFamily: 'var(--dv-font-mono)', fontWeight: 700, fontSize: 9 }}>
+        <span style={{ padding: '2px 8px', background: 'var(--dv-bg-elevated)', border: '1px solid var(--dv-border-default)', borderRadius: 'var(--dv-radius-sm)', color: 'var(--dv-success)', fontFamily: 'var(--dv-font-mono)', fontWeight: 700, fontSize: 9 }}>
           OBSERVED
         </span>
       </div>
@@ -992,9 +992,10 @@ function EvidenceSection({ evidence }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // CALL TO ACTION
 // ─────────────────────────────────────────────────────────────────────────────
-function CtaSection({ decisionId, decisionSeverity }) {
+function CtaSection({ decisionId, decisionSeverity, status }) {
   const navigate = useNavigate();
-  const pal = SEVERITY_COLORS[decisionSeverity] ?? SEVERITY_COLORS.MEDIUM;
+  const location = useLocation();
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
 
   return (
     <motion.div variants={scenarioTransition} initial="hidden" animate="visible"
@@ -1018,7 +1019,7 @@ function CtaSection({ decisionId, decisionSeverity }) {
 
       <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
         <button
-          onClick={() => navigate('/intelligence/organization')}
+          onClick={() => navigate(`${prefix}/organization`)}
           style={{
             padding: '10px 18px', borderRadius: 'var(--dv-radius-md)', cursor: 'pointer',
             border: '1px solid var(--dv-border-default)', background: 'transparent',
@@ -1031,7 +1032,7 @@ function CtaSection({ decisionId, decisionSeverity }) {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => navigate(`/intelligence/simulation/${decisionId}`)}
+          onClick={() => navigate(`${prefix}/simulation/${decisionId}`)}
           style={{
             padding: '10px 22px', borderRadius: 'var(--dv-radius-md)', cursor: 'pointer',
             border: 'none', background: 'var(--dv-accent)',
@@ -1052,6 +1053,8 @@ function CtaSection({ decisionId, decisionSeverity }) {
 export default function DecisionPoint() {
   const { id = 'dp1' } = useParams();
   const navigate        = useNavigate();
+  const location        = useLocation();
+  const prefix          = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
 
   const data = useMemo(() => getDecisionPointState(id), [id]);
   const { decision, trigger, whyItMatters, impactMap, engineeringSnapshot,
@@ -1067,7 +1070,7 @@ export default function DecisionPoint() {
         background: 'var(--dv-bg-canvas)', position: 'sticky', top: 52, zIndex: 10,
         display: 'flex', alignItems: 'center', gap: 12,
       }}>
-        <button onClick={() => navigate('/intelligence/organization')} style={{
+        <button onClick={() => navigate(`${prefix}/organization`)} style={{
           background: 'none', border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: 5, color: 'var(--dv-text-muted)', fontSize: 11,
         }}>

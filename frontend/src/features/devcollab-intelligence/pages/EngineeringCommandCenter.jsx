@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, AlertTriangle, Brain, CheckCircle, ChevronRight,
@@ -514,6 +514,8 @@ export default function EngineeringCommandCenter() {
   const [refreshing, setRefreshing] = useState(false);
   const [tick, setTick]           = useState(0);
   const navigate                  = useNavigate();
+  const location                  = useLocation();
+  const prefix                    = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
   const { accessToken }           = useAuthStore.getState();
 
   const load = useCallback(async (isRefresh = false) => {
@@ -671,7 +673,7 @@ export default function EngineeringCommandCenter() {
                             key={p.id}
                             project={p}
                             isLast={i === sortedProjects.length - 1}
-                            onClick={() => navigate(`/intelligence/project/${p.id}`)}
+                            onClick={() => navigate(`${prefix}/project/${p.id}`)}
                           />
                         ))}
                       </motion.div>
@@ -692,7 +694,7 @@ export default function EngineeringCommandCenter() {
                       <MemberCard
                         key={member.id}
                         member={member}
-                        onClick={() => navigate(`/intelligence/member/${member.id}`)}
+                        onClick={() => navigate(`${prefix}/member/${member.id}`)}
                       />
                     ))}
                   </motion.div>
@@ -750,7 +752,7 @@ export default function EngineeringCommandCenter() {
                           <DecisionCard
                             key={dp.id}
                             dp={dp}
-                            onAnalyze={() => navigate(`/intelligence/decision/${dp.id}`)}
+                            onAnalyze={() => navigate(`${prefix}/decision/${dp.id}`)}
                           />
                         ))}
                       </div>

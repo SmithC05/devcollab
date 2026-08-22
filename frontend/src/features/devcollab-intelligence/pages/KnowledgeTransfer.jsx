@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, Shield, Zap, RefreshCw, ChevronLeft, 
@@ -30,6 +30,8 @@ const AGENT_STEPS = [
 export default function KnowledgeTransfer() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
 
   const [handoffState, setHandoffState] = useState('NOT_STARTED'); // NOT_STARTED | GENERATING | REVIEW | APPROVED
   const [activeStepIdx, setActiveStepIdx] = useState(0);
@@ -76,7 +78,7 @@ export default function KnowledgeTransfer() {
       {/* 1. Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <DvButton variant="ghost" size="sm" onClick={() => navigate(`/intelligence/simulation/${id}`)}>
+          <DvButton variant="ghost" size="sm" onClick={() => navigate(`${prefix}/simulation/${id}`)}>
             <ChevronLeft size={16} /> Back to Simulation
           </DvButton>
           <div style={{ width: 1, height: 16, background: 'var(--dv-border-subtle)' }} />

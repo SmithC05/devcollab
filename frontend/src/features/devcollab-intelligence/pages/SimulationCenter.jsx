@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, Shield, Zap, RefreshCw, ChevronLeft, 
@@ -30,6 +30,8 @@ const SIMULATION_STEPS = [
 export default function SimulationCenter() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
   
   const [baseline, setBaseline] = useState(null);
   const [scenarioConfig, setScenarioConfig] = useState({
@@ -49,7 +51,7 @@ export default function SimulationCenter() {
     // Load baseline state using existing data adapter
     const data = getDecisionPointState(id);
     if (!data) {
-      navigate('/intelligence');
+      navigate(`${prefix}`);
     } else {
       setBaseline(data);
     }
@@ -92,7 +94,7 @@ export default function SimulationCenter() {
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 0 60px 0' }}>
       {/* 1. Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <DvButton variant="ghost" size="sm" onClick={() => navigate(`/intelligence/decision/${id}`)}>
+        <DvButton variant="ghost" size="sm" onClick={() => navigate(`${prefix}/decision/${id}`)}>
           <ChevronLeft size={16} /> Back to Decision
         </DvButton>
         <div style={{ width: 1, height: 16, background: 'var(--dv-border-subtle)' }} />
@@ -239,7 +241,7 @@ export default function SimulationCenter() {
                  <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)', marginBottom: 24 }}>
                    This intervention requires generating a structured knowledge handoff package before execution.
                  </div>
-                 <DvButton variant="primary" onClick={() => navigate(`/intelligence/knowledge-transfer/${scenarioId}?candidate=${encodeURIComponent(selectedRecommendation.candidate)}`)}>
+                 <DvButton variant="primary" onClick={() => navigate(`${prefix}/knowledge-transfer/${scenarioId}?candidate=${encodeURIComponent(selectedRecommendation.candidate)}`)}>
                    PROCEED TO KNOWLEDGE TRANSFER <ArrowRight size={16} style={{ marginLeft: 8 }} />
                  </DvButton>
                </DvCard>
