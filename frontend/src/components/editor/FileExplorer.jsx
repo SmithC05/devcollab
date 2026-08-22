@@ -1,7 +1,7 @@
 import React from 'react';
 import FileTree from './FileTree';
 import { useEditorStore } from '../../stores/editorStore';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function FileExplorer() {
   const { files, createFolder, createFile, loadWorkspace } = useEditorStore();

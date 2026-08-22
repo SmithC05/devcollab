@@ -1,33 +1,9 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
 
-const SEED_CHANNELS = [
-  { id: 'ch-general',     name: 'general',     description: 'General project discussions', unread: 0 },
-  { id: 'ch-engineering', name: 'engineering',  description: 'Engineering topics',          unread: 2 },
-  { id: 'ch-design',      name: 'design',       description: 'Design feedback',             unread: 0 },
-  { id: 'ch-random',      name: 'random',       description: 'Off-topic chat',              unread: 1 },
-];
-
-const SEED_MESSAGES = {
-  'ch-general': [
-    { id: 'msg-1', sender: 'Libin', avatar: 'L', avatarBg: '#2a2a2a', text: 'Good morning team! Stand-up in 10 minutes.', time: new Date(Date.now() - 3600000 * 3).toISOString() },
-    { id: 'msg-2', sender: 'Arjun', avatar: 'A', avatarBg: '#222',    text: 'On it. Quick update: payment API is 80% done.', time: new Date(Date.now() - 3600000 * 2.8).toISOString() },
-    { id: 'msg-3', sender: 'Priya', avatar: 'P', avatarBg: '#1a1a1a', text: 'Tests are ready for auth middleware. Will push after review.', time: new Date(Date.now() - 3600000 * 2.5).toISOString() },
-    { id: 'msg-4', sender: 'Libin', avatar: 'L', avatarBg: '#2a2a2a', text: 'Great progress everyone.', time: new Date(Date.now() - 3600000 * 2).toISOString() },
-  ],
-  'ch-engineering': [
-    { id: 'msg-5', sender: 'Arjun', avatar: 'A', avatarBg: '#222',    text: 'Anyone used dnd-kit before? Setting it up for the kanban.', time: new Date(Date.now() - 3600000 * 5).toISOString() },
-    { id: 'msg-6', sender: 'Libin', avatar: 'L', avatarBg: '#2a2a2a', text: 'Yes, it\'s solid. Use SortableContext with custom sensors.', time: new Date(Date.now() - 3600000 * 4.8).toISOString() },
-  ],
-  'ch-design':  [],
-  'ch-random':  [
-    { id: 'msg-7', sender: 'Priya', avatar: 'P', avatarBg: '#1a1a1a', text: 'Coffee break?', time: new Date(Date.now() - 3600000 * 1).toISOString() },
-  ],
-};
-
 export const useChatStore = create((set, get) => ({
-  channels: SEED_CHANNELS,
-  messages: SEED_MESSAGES,
+  channels: [],
+  messages: {},
   activeChannelId: 'ch-general',
 
   setActiveChannel: (channelId) => {
