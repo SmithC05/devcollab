@@ -20,8 +20,8 @@ export const apiClient = async (endpoint, options = {}) => {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'API request failed');
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.error || errorBody.message || 'API request failed');
   }
 
   return response.json();
