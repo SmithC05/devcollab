@@ -47,6 +47,12 @@ export function SimulationResults({ result }) {
                 ))}
               </ul>
             </div>
+            
+            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
+               <DvButton variant="primary" onClick={() => onReview && onReview(recommended)}>
+                 REVIEW RECOMMENDATION
+               </DvButton>
+            </div>
           </DvCard>
         </motion.div>
       )}

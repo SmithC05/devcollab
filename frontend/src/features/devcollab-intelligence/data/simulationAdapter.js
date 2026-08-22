@@ -59,6 +59,46 @@ export async function fetchSimulation(decisionId, trigger, candidateNames) {
   }
 }
 
+export async function approveSimulation(scenarioId, candidateName, intervention) {
+  const candidateId = DEMO_USER_MAP[candidateName];
+  if (!candidateId) {
+    throw new Error(`Invalid candidate mapped for approval: ${candidateName}`);
+  }
+
+  const payload = {
+    candidate_id: candidateId,
+    intervention: intervention
+  };
+
+  try {
+    const token = localStorage.getItem('access_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`http://localhost:8000/api/simulations/${scenarioId}/approve/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      // Handle Conflict (stale simulation) or NotFound gracefully if possible, or throw
+      if (response.status === 400 || response.status === 404 || response.status === 409) {
+         throw new Error(JSON.parse(errorText).error || 'Simulation could not be approved.');
+      }
+      throw new Error(`Approval failed: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.error('Approval Adapter Error:', err);
+    throw err;
+  }
+}
+
 /**
  * Transforms the backend response into the format expected by SimulationResults.jsx.
  * Also appends a derived 'recommended' flag based on backend heuristic output.

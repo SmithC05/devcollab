@@ -14,6 +14,7 @@ import { DvAgentActivity } from '../primitives/agent';
 import { getDecisionPointState, severityToVariant } from '../data/decisionAdapter';
 import { fetchSimulation } from '../data/simulationAdapter';
 import { SimulationResults } from '../components/SimulationResults';
+import { ApprovalPanel } from '../components/ApprovalPanel';
 import { fadeUp, panelEnter, staggerChildren, slideIn } from '../motion/presets';
 
 const SIMULATION_STEPS = [
@@ -40,6 +41,9 @@ export default function SimulationCenter() {
   const [simError, setSimError] = useState(null);
   const [simResults, setSimResults] = useState(null);
   const [activeStepIdx, setActiveStepIdx] = useState(0);
+  
+  const [selectedRecommendation, setSelectedRecommendation] = useState(null);
+  const [executionComplete, setExecutionComplete] = useState(false);
 
   useEffect(() => {
     // Load baseline state using existing data adapter
@@ -56,6 +60,8 @@ export default function SimulationCenter() {
     setSimError(null);
     setSimResults(null);
     setActiveStepIdx(0);
+    setSelectedRecommendation(null);
+    setExecutionComplete(false);
 
     // Fake progressive agent staging for visual story
     const advanceStaging = async () => {
@@ -217,8 +223,21 @@ export default function SimulationCenter() {
         )}
 
         {/* 6. Results */}
-        {simState === 'DONE' && simResults && (
-           <SimulationResults result={simResults} />
+        {simState === 'DONE' && simResults && !selectedRecommendation && (
+           <SimulationResults 
+              result={simResults} 
+              onReview={(rec) => setSelectedRecommendation(rec)} 
+           />
+        )}
+
+        {/* 7. Approval Flow */}
+        {simState === 'DONE' && selectedRecommendation && (
+           <ApprovalPanel 
+              scenarioId={simResults.scenario_id}
+              baseline={baseline}
+              recommendation={selectedRecommendation}
+              onComplete={(payload) => setExecutionComplete(true)}
+           />
         )}
       </motion.div>
     </div>
