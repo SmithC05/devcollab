@@ -70,6 +70,13 @@ function RequireWorkspace({ children }) {
   return children;
 }
 
+import WorkspaceProjectsPage from '../pages/workspace/WorkspaceProjectsPage';
+import WorkspaceActivityPage from '../pages/workspace/WorkspaceActivityPage';
+import WorkspaceMembersPage from '../pages/workspace/WorkspaceMembersPage';
+import WorkspaceBillingPage from '../pages/workspace/WorkspaceBillingPage';
+import WorkspaceSettingsPage from '../pages/workspace/WorkspaceSettingsPage';
+import WorkspaceAIAssistantPage from '../pages/workspace/WorkspaceAIAssistantPage';
+
 // ── Routes ────────────────────────────────────────────────────────────────
 
 export default function AppRoutes() {
@@ -130,12 +137,12 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<WorkspaceOverview setWorkspaceName={() => {}} />} />
-        <Route path="projects" element={<div className="p-12 text-center text-xl text-gray-400">Projects Module - Coming Soon</div>} />
-        <Route path="activity" element={<div className="p-12 text-center text-xl text-gray-400">Activity Module - Coming Soon</div>} />
-        <Route path="members" element={<div className="p-12 text-center text-xl text-gray-400">Members Module - Coming Soon</div>} />
-        <Route path="billing" element={<div className="p-12 text-center text-xl text-gray-400">Billing Module - Coming Soon</div>} />
-        <Route path="settings" element={<div className="p-12 text-center text-xl text-gray-400">Settings Module - Coming Soon</div>} />
-        <Route path="ai" element={<div className="p-12 text-center text-xl text-gray-400">AI Assistant - Coming Soon</div>} />
+        <Route path="projects" element={<WorkspaceProjectsPage />} />
+        <Route path="activity" element={<WorkspaceActivityPage />} />
+        <Route path="members" element={<WorkspaceMembersPage />} />
+        <Route path="billing" element={<WorkspaceBillingPage />} />
+        <Route path="settings" element={<WorkspaceSettingsPage />} />
+        <Route path="ai" element={<WorkspaceAIAssistantPage />} />
       </Route>
 
       {/* Project routes */}
