@@ -89,6 +89,19 @@ export const useAuthStore = create(
         }
       },
 
+      register: async (name, email, password) => {
+        set({ isLoading: true });
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            set({ isLoading: false });
+            resolve({ 
+              success: false, 
+              error: 'Registration is disabled in this demo environment. Please sign in using one of the seeded accounts (e.g. smith@devcollab.io).' 
+            });
+          }, 800);
+        });
+      },
+
       logout: async () => {
         set({ isLoading: true });
         try {
