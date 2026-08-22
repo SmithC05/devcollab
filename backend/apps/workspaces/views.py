@@ -1,25 +1,37 @@
 import json
+import uuid
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
-MOCK_WORKSPACES = {
-    "DEVTEAM001": {
-        "id": "workspace-001",
-        "name": "DevCollab Engineering",
-        "slug": "devcollab-engineering",
-        "ownerId": "mock-owner-001"
-    },
-    "HACK2026": {
-        "id": "workspace-002",
-        "name": "Hackathon Team",
-        "slug": "hackathon-team",
-        "ownerId": "mock-owner-002"
-    }
-}
+from django.contrib.auth.models import User
+from .models import Workspace, WorkspaceMembership
 
 @csrf_exempt
-def create_workspace(request):
-    if request.method == 'POST':
+def workspaces_view(request):
+    if request.method == 'GET':
+        if not request.user.is_authenticated:
+            return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
+            
+        memberships = WorkspaceMembership.objects.filter(user=request.user).select_related('workspace')
+        
+        workspaces_data = []
+        for membership in memberships:
+            ws = membership.workspace
+            workspaces_data.append({
+                "id": ws.id,
+                "name": ws.name,
+                "slug": ws.slug,
+                "role": membership.role,
+                "plan": "free", # Placeholder
+                "memberCount": ws.memberships.count(),
+                "projectCount": 0 # Placeholder
+            })
+            
+        return JsonResponse({
+            "success": True,
+            "workspaces": workspaces_data
+        })
+
+    elif request.method == 'POST':
         try:
             data = json.loads(request.body)
             name = data.get('name')
@@ -29,28 +41,38 @@ def create_workspace(request):
             if not name or not slug:
                 return JsonResponse({"success": False, "error": "Name and slug are required"}, status=400)
                 
-            # Simulate basic validation
-            for ws in MOCK_WORKSPACES.values():
-                if ws['slug'] == slug:
-                    return JsonResponse({"success": False, "error": "Workspace slug already exists"}, status=400)
+            if Workspace.objects.filter(slug=slug).exists():
+                return JsonResponse({"success": False, "error": "Workspace slug already exists"}, status=400)
             
-            # Create mock workspace
-            import uuid
-            workspace_id = f"workspace-{str(uuid.uuid4())[:8]}"
+            owner = User.objects.filter(id=owner_id).first()
+            if not owner:
+                return JsonResponse({"success": False, "error": "Owner not found"}, status=400)
+                
+            workspace = Workspace.objects.create(
+                name=name,
+                slug=slug,
+                owner=owner
+            )
             
-            workspace = {
-                "id": workspace_id,
-                "name": name,
-                "slug": slug,
-                "ownerId": owner_id
+            WorkspaceMembership.objects.create(
+                workspace=workspace,
+                user=owner,
+                role='OWNER'
+            )
+            
+            workspace_data = {
+                "id": workspace.id,
+                "name": workspace.name,
+                "slug": workspace.slug,
+                "ownerId": owner.id
             }
             
             return JsonResponse({
                 "success": True,
                 "message": "Workspace created successfully",
-                "workspace": workspace,
+                "workspace": workspace_data,
                 "membership": {
-                    "role": "owner"
+                    "role": "OWNER"
                 }
             })
         except Exception as e:
@@ -68,20 +90,31 @@ def join_workspace(request):
             if not invite_code:
                 return JsonResponse({"success": False, "error": "Invite code is required"}, status=400)
                 
-            workspace = MOCK_WORKSPACES.get(invite_code)
+            # Treat invite_code as slug for now
+            workspace = Workspace.objects.filter(slug=invite_code).first()
             if not workspace:
                 return JsonResponse({"success": False, "error": "Invalid invite code"}, status=404)
+                
+            user = User.objects.filter(id=user_id).first()
+            if not user:
+                return JsonResponse({"success": False, "error": "User not found"}, status=400)
+                
+            membership, created = WorkspaceMembership.objects.get_or_create(
+                workspace=workspace,
+                user=user,
+                defaults={'role': 'MEMBER'}
+            )
                 
             return JsonResponse({
                 "success": True,
                 "message": "Joined workspace successfully",
                 "workspace": {
-                    "id": workspace["id"],
-                    "name": workspace["name"],
-                    "slug": workspace["slug"]
+                    "id": workspace.id,
+                    "name": workspace.name,
+                    "slug": workspace.slug
                 },
                 "membership": {
-                    "role": "member"
+                    "role": membership.role
                 }
             })
         except Exception as e:

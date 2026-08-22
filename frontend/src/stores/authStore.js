@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi } from '../api/authApi';
+import { workspaceApi } from '../api/workspaceApi';
 
 export const ROLES = ['Owner', 'Admin', 'Lead', 'Dev'];
 
@@ -67,19 +68,64 @@ export const useAuthStore = create(
       role: 'Owner', // Temporary default for RBAC simulation
       activeWorkspace: null,
       sessionToken: null,
+      accessToken: null,
       isAuthenticated: false,
       isLoading: false,
+
+      initFromServer: async () => {
+        set({ isLoading: true });
+        try {
+          const data = await authApi.me();
+          if (data.success && data.user) {
+            let fetchedWorkspaces = [];
+            try {
+              const wsData = await workspaceApi.getWorkspaces();
+              if (wsData.success) {
+                fetchedWorkspaces = wsData.workspaces;
+              }
+            } catch (e) {
+              console.error("Failed to fetch workspaces during init", e);
+            }
+
+            set({
+              isAuthenticated: true,
+              user: data.user,
+              workspaces: fetchedWorkspaces,
+              isLoading: false,
+            });
+          } else {
+            set({ isLoading: false, isAuthenticated: false });
+          }
+        } catch (error) {
+          set({ isLoading: false, isAuthenticated: false });
+        }
+      },
 
       login: async (email, password) => {
         set({ isLoading: true });
         try {
           const data = await authApi.login(email, password);
+          set({ 
+            sessionToken: data.session_token,
+            accessToken: data.access_token 
+          });
+          
+          let fetchedWorkspaces = [];
+          try {
+            const wsData = await workspaceApi.getWorkspaces();
+            if (wsData.success) {
+              fetchedWorkspaces = wsData.workspaces;
+            }
+          } catch (e) {
+            console.error("Failed to fetch workspaces during login", e);
+          }
+
           set({
             isAuthenticated: true,
             user: data.user,
-            role: data.user.role,
-            activeWorkspace: data.user.workspace,
+            workspaces: fetchedWorkspaces,
             sessionToken: data.session_token,
+            accessToken: data.access_token,
             isLoading: false,
           });
           return { success: true, data };
@@ -87,6 +133,48 @@ export const useAuthStore = create(
           set({ isLoading: false });
           return { success: false, error: error.message };
         }
+      },
+
+      register: async (name, email, password) => {
+        set({ isLoading: true });
+        try {
+          const data = await authApi.register(name, email, password);
+          set({ 
+            sessionToken: data.session_token,
+            accessToken: data.access_token 
+          });
+
+          let fetchedWorkspaces = [];
+          try {
+            const wsData = await workspaceApi.getWorkspaces();
+            if (wsData.success) {
+              fetchedWorkspaces = wsData.workspaces;
+            }
+          } catch (e) {
+            console.error("Failed to fetch workspaces during register", e);
+          }
+
+          set({
+            isAuthenticated: true,
+            user: data.user,
+            workspaces: fetchedWorkspaces,
+            sessionToken: data.session_token,
+            accessToken: data.access_token,
+            isLoading: false,
+          });
+          return { success: true, data };
+        } catch (error) {
+          set({ isLoading: false });
+          return { success: false, error: error.message };
+        }
+      },
+
+      loginWithGoogle: () => {
+        window.location.href = 'http://127.0.0.1:8000/accounts/google/login/';
+      },
+
+      loginWithGitHub: () => {
+        window.location.href = 'http://127.0.0.1:8000/accounts/github/login/';
       },
 
       logout: async () => {
@@ -100,6 +188,8 @@ export const useAuthStore = create(
             role: null,
             activeWorkspace: null,
             workspaces: [],
+            sessionToken: null,
+            accessToken: null,
             isAuthenticated: false,
             isLoading: false,
           });
@@ -107,30 +197,34 @@ export const useAuthStore = create(
       },
 
       workspaces: [],
+      addWorkspace: (workspace, role) => {
+        const newWorkspaceData = {
+           ...workspace,
+           role: role
+        };
+        set((state) => ({
+           workspaces: [...state.workspaces, newWorkspaceData],
+        }));
+      },
       refreshWorkspaces: async () => {
-        // Since we don't have a dedicated endpoint for workspaces yet, 
-        // we'll populate the list with the user's active workspace from login.
-        const currentUser = get().user;
-        if (currentUser && currentUser.workspace) {
-           set({ 
-             workspaces: [{
-               ...currentUser.workspace,
-               members: [{ userId: currentUser.id, role: currentUser.role }]
-             }]
-           });
-        } else {
-           set({ workspaces: [] });
+        try {
+          const wsData = await workspaceApi.getWorkspaces();
+          if (wsData.success) {
+            set({ workspaces: wsData.workspaces });
+          }
+        } catch (e) {
+          console.error("Failed to refresh workspaces", e);
         }
       },
 
       setActiveWorkspace: (workspaceId) => {
         const ws = get().workspaces.find(w => w.id === workspaceId);
         if (ws) {
-          set({ activeWorkspace: ws });
+          set({ activeWorkspace: ws, role: ws.role });
         }
       },
 
-      setWorkspace: (workspace) => set({ activeWorkspace: workspace }),
+      setWorkspace: (workspace) => set({ activeWorkspace: workspace, role: workspace?.role }),
       
       setRole: (role) => set({ role }),
 

@@ -20,7 +20,7 @@ export default function ProjectSettingsPage() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold border-b border-[#2a2a2e] pb-2">General</h2>
         
-        <div className="bg-[#111113] p-6 rounded-lg border border-[#2a2a2e] space-y-4">
+        <div className="bg-[var(--surface-raised)113] p-6 rounded-lg border border-[#2a2a2e] space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Project Name</label>
             <input 

@@ -6,17 +6,17 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Search, Plus, Copy, Trash2, X, Check, Pencil } from 'lucide-react';
 
 const INPUT_STYLE = {
-  background: '#0e0e0e', border: '1px solid #2a2a2a', borderRadius: '7px',
-  padding: '9px 12px', fontSize: '13px', color: '#e5e5e5',
+  background: '#0e0e0e', border: '1px solid var(--border-strong)', borderRadius: '7px',
+  padding: '9px 12px', fontSize: '13px', color: 'var(--text-primary)',
   outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
 };
 
 // Override Prism syntax highlighter colors to be mostly grayscale
 // (Note: full grayscale syntax highlighting requires a custom theme object, but we'll tone down the container and language badge)
 const LANG_COLORS = {
-  javascript: '#888', typescript: '#888', python: '#888',
-  bash: '#888', sql: '#888', html: '#888', css: '#888',
-  json: '#888', yaml: '#888', go: '#888', rust: '#888',
+  javascript: 'var(--text-secondary)', typescript: 'var(--text-secondary)', python: 'var(--text-secondary)',
+  bash: 'var(--text-secondary)', sql: 'var(--text-secondary)', html: 'var(--text-secondary)', css: 'var(--text-secondary)',
+  json: 'var(--text-secondary)', yaml: 'var(--text-secondary)', go: 'var(--text-secondary)', rust: 'var(--text-secondary)',
 };
 
 function SnippetModal({ snippet, onClose }) {
@@ -41,10 +41,10 @@ function SnippetModal({ snippet, onClose }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '12px', width: '600px', maxHeight: '92vh', overflow: 'auto', padding: '26px' }}>
+      <div style={{ background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', borderRadius: '12px', width: '600px', maxHeight: '92vh', overflow: 'auto', padding: '26px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
-          <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#f5f5f5', margin: 0 }}>{isEdit ? 'Edit Snippet' : 'New Snippet'}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><X size={16} /></button>
+          <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{isEdit ? 'Edit Snippet' : 'New Snippet'}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={16} /></button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div><label style={LABEL}>Title *</label><input value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Snippet title" style={INPUT_STYLE} autoFocus /></div>
@@ -56,8 +56,8 @@ function SnippetModal({ snippet, onClose }) {
           <div><label style={LABEL}>Code *</label><textarea value={form.code} onChange={(e) => set('code', e.target.value)} rows={10} placeholder="Paste your code here..." style={{ ...INPUT_STYLE, fontFamily: 'monospace', fontSize: '12px', resize: 'vertical' }} /></div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: '7px', background: 'transparent', border: '1px solid #2a2a2a', color: '#888', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
-          <button onClick={handleSave} style={{ padding: '8px 20px', borderRadius: '7px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>{isEdit ? 'Save' : 'Create Snippet'}</button>
+          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: '7px', background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+          <button onClick={handleSave} style={{ padding: '8px 20px', borderRadius: '7px', background: 'var(--text-primary)', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>{isEdit ? 'Save' : 'Create Snippet'}</button>
         </div>
       </div>
     </div>
@@ -66,7 +66,7 @@ function SnippetModal({ snippet, onClose }) {
 
 function SnippetCard({ snippet, onEdit, onDelete, canEdit, canDelete }) {
   const [copied, setCopied] = useState(false);
-  const langColor = LANG_COLORS[snippet.language] || '#888';
+  const langColor = LANG_COLORS[snippet.language] || 'var(--text-secondary)';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(snippet.code);
@@ -75,21 +75,21 @@ function SnippetCard({ snippet, onEdit, onDelete, canEdit, canDelete }) {
   };
 
   return (
-    <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', overflow: 'hidden' }}>
-      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #1a1a1a' }}>
+    <div style={{ background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', borderRadius: '10px', overflow: 'hidden' }}>
+      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--surface-hover)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: '4px', background: '#1a1a1a', color: '#aaa', border: '1px solid #333', textTransform: 'capitalize' }}>
+              <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: '4px', background: 'var(--surface-hover)', color: '#aaa', border: '1px solid var(--border-strong)', textTransform: 'capitalize' }}>
                 {snippet.language}
               </span>
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#e5e5e5' }}>{snippet.title}</div>
-            {snippet.description && <div style={{ fontSize: '12px', color: '#666', marginTop: '3px' }}>{snippet.description}</div>}
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{snippet.title}</div>
+            {snippet.description && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '3px' }}>{snippet.description}</div>}
             {snippet.tags?.length > 0 && (
               <div style={{ display: 'flex', gap: '5px', marginTop: '7px', flexWrap: 'wrap' }}>
                 {snippet.tags.map((t) => (
-                  <span key={t} style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '999px', background: '#1a1a1a', color: '#666', border: '1px solid #2a2a2a' }}>{t}</span>
+                  <span key={t} style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '999px', background: 'var(--surface-hover)', color: 'var(--text-muted)', border: '1px solid var(--border-strong)' }}>{t}</span>
                 ))}
               </div>
             )}
@@ -97,7 +97,7 @@ function SnippetCard({ snippet, onEdit, onDelete, canEdit, canDelete }) {
           <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
             <button onClick={handleCopy} title="Copy code" style={ICON_BTN}>{copied ? <Check size={13} color="#ccc" /> : <Copy size={13} />}</button>
             {canEdit && <button onClick={() => onEdit(snippet)} title="Edit" style={ICON_BTN}><Pencil size={13} /></button>}
-            {canDelete && <button onClick={() => onDelete(snippet.id)} title="Delete" style={{ ...ICON_BTN, color: '#555' }}><Trash2 size={13} /></button>}
+            {canDelete && <button onClick={() => onDelete(snippet.id)} title="Delete" style={{ ...ICON_BTN, color: 'var(--text-muted)' }}><Trash2 size={13} /></button>}
           </div>
         </div>
       </div>
@@ -118,14 +118,14 @@ export default function ProjectSnippetsPage() {
   const snippets = getFiltered();
 
   return (
-    <div style={{ height: '100vh', overflow: 'auto', background: '#080808', color: '#f5f5f5', fontFamily: 'Inter, system-ui, sans-serif', padding: '28px 32px' }}>
+    <div style={{ height: '100vh', overflow: 'auto', background: '#080808', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif', padding: '28px 32px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Code Snippets</h1>
-          <p style={{ fontSize: '13px', color: '#555', margin: 0 }}>Project-scoped reusable code storage.</p>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Project-scoped reusable code storage.</p>
         </div>
         {can('snippet.create') && (
-          <button onClick={() => setModalSnippet(false)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
+          <button onClick={() => setModalSnippet(false)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: 'var(--text-primary)', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
             <Plus size={14} strokeWidth={2.5} /> Save Snippet
           </button>
         )}
@@ -133,10 +133,10 @@ export default function ProjectSnippetsPage() {
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
-          <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#555' }} />
-          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search snippets..." style={{ width: '100%', boxSizing: 'border-box', background: '#111', border: '1px solid #1e1e1e', borderRadius: '8px', padding: '9px 12px 9px 34px', fontSize: '13px', color: '#e5e5e5', outline: 'none', fontFamily: 'inherit' }} />
+          <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search snippets..." style={{ width: '100%', boxSizing: 'border-box', background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', borderRadius: '8px', padding: '9px 12px 9px 34px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
         </div>
-        <select value={activeLanguage} onChange={(e) => setActiveLanguage(e.target.value)} style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: '#e5e5e5', outline: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+        <select value={activeLanguage} onChange={(e) => setActiveLanguage(e.target.value)} style={{ background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', borderRadius: '8px', padding: '9px 12px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
           <option value="">All languages</option>
           {SUPPORTED_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
         </select>
@@ -149,7 +149,7 @@ export default function ProjectSnippetsPage() {
             canEdit={can('snippet.edit')} canDelete={can('snippet.delete')} 
           />
         ))}
-        {snippets.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#555', padding: '48px', fontSize: '14px' }}>No snippets found. Save your first snippet →</div>}
+        {snippets.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--text-muted)', padding: '48px', fontSize: '14px' }}>No snippets found. Save your first snippet →</div>}
       </div>
 
       {modalSnippet === false && <SnippetModal onClose={() => setModalSnippet(null)} />}
@@ -158,5 +158,5 @@ export default function ProjectSnippetsPage() {
   );
 }
 
-const LABEL = { display: 'block', fontSize: '10px', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#555', marginBottom: '6px' };
-const ICON_BTN = { background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '5px', borderRadius: '5px', display: 'flex', alignItems: 'center', transition: 'color 150ms' };
+const LABEL = { display: 'block', fontSize: '10px', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' };
+const ICON_BTN = { background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px', borderRadius: '5px', display: 'flex', alignItems: 'center', transition: 'color 150ms' };

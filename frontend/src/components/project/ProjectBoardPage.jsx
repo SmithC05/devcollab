@@ -40,17 +40,17 @@ export default function ProjectBoardPage() {
   }, [syncEngineEvent]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#080808', color: '#f5f5f5', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#080808', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid var(--surface-hover)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#f5f5f5', margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Tasks</h1>
-          <p style={{ fontSize: '13px', color: '#555', margin: 0 }}>Manage and track your sprint deliverables.</p>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Tasks</h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Manage and track your sprint deliverables.</p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* View Switcher */}
-          <div style={{ display: 'flex', alignItems: 'center', background: '#111', border: '1px solid #1e1e1e', borderRadius: '8px', padding: '3px', gap: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', borderRadius: '8px', padding: '3px', gap: '2px' }}>
             {VIEWS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -59,8 +59,8 @@ export default function ProjectBoardPage() {
                   display: 'flex', alignItems: 'center', gap: '6px',
                   padding: '5px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 500,
                   border: 'none', cursor: 'pointer', transition: 'all 120ms',
-                  background: activeView === id ? '#1e1e1e' : 'transparent',
-                  color: activeView === id ? '#f5f5f5' : '#555',
+                  background: activeView === id ? 'var(--surface-hover)' : 'transparent',
+                  color: activeView === id ? 'var(--text-primary)' : 'var(--text-muted)',
                 }}
               >
                 <Icon size={13} /> {label}
@@ -72,7 +72,7 @@ export default function ProjectBoardPage() {
           {can('task.create') && (
             <button
               onClick={() => setShowNewTask(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '8px', background: 'var(--text-primary)', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
             >
               <Plus size={15} strokeWidth={2.5} /> New Task
             </button>
@@ -84,8 +84,8 @@ export default function ProjectBoardPage() {
       <div style={{ flex: 1, overflow: 'auto', padding: '24px 28px' }}>
         {activeView === 'board' && <KanbanView />}
         {activeView !== 'board' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#444', gap: '8px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 600, color: '#666' }}>{activeView.charAt(0).toUpperCase() + activeView.slice(1)} view</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--focus-ring)', gap: '8px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-muted)' }}>{activeView.charAt(0).toUpperCase() + activeView.slice(1)} view</span>
             <span style={{ fontSize: '13px' }}>Coming soon — switch to Board.</span>
           </div>
         )}

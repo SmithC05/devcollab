@@ -27,7 +27,6 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
 
   const handleCreate = async (name, slug, description) => {
-    // We pass the new values to the service
     await workspaceApi.createWorkspace(name, slug, user?.id);
     await useAuthStore.getState().refreshWorkspaces();
     navigate('/select-workspace');
@@ -104,6 +103,18 @@ export default function OnboardingPage() {
             >
               <UserPlus size={20} />
               Join a Workspace
+            </button>
+          </div>
+
+          <div className="mt-8 text-center">
+            <button
+              onClick={async () => {
+                await useAuthStore.getState().logout();
+                navigate('/login');
+              }}
+              className="text-[#737373] text-[14px] hover:text-white transition-colors"
+            >
+              Sign out and use a different account
             </button>
           </div>
         </div>

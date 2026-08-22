@@ -25,7 +25,7 @@ export default function ProjectHeader() {
   }, [isLoaded, fetchNotifications, addNotification]);
 
   return (
-    <header className="h-16 border-b border-[#222] bg-[#161616] flex items-center justify-between px-6">
+    <header className="h-16 border-b border-[var(--border-default)] bg-[var(--surface-raised)] flex items-center justify-between px-6">
       {/* Breadcrumb / Left Side */}
       <div className="flex items-center text-sm">
         <span className="text-zinc-400">Collab</span>
@@ -50,7 +50,7 @@ export default function ProjectHeader() {
         </button>
 
         {/* Search Shortcut */}
-        <button className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full border border-[#333] hover:bg-[#222] transition-colors text-zinc-400 text-xs">
+        <button className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full border border-[var(--border-strong)] hover:bg-[var(--border-default)] transition-colors text-zinc-400 text-xs">
           <Search className="w-3.5 h-3.5" />
           <span className="font-medium tracking-widest text-[10px]">⌘K</span>
         </button>
@@ -59,7 +59,7 @@ export default function ProjectHeader() {
         <button className="text-zinc-400 hover:text-zinc-200 transition-colors relative">
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#161616] text-[8px] text-white flex items-center justify-center font-bold">
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[var(--surface-raised)] text-[8px] text-white flex items-center justify-center font-bold">
               {unreadCount}
             </span>
           )}

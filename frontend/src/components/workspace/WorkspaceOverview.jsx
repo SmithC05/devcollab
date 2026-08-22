@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Plus, Bell as BellIcon, CheckCircle2 } from 'lucide-react';
-import TasksCompletedChart from "../dashboard/TasksCompletedChart";
-import StatusDistribution from "../dashboard/StatusDistribution";
+import { Sparkles, Plus, CheckCircle2, ArrowRight, Circle, Check, Bell } from 'lucide-react';
+import TasksCompletedChart from '../dashboard/TasksCompletedChart';
+import StatusDistribution from '../dashboard/StatusDistribution';
+import PageContainer from '../layout/PageContainer';
 
 export default function WorkspaceOverview({ setWorkspaceName }) {
   const [data, setData] = useState(null);
@@ -10,7 +11,7 @@ export default function WorkspaceOverview({ setWorkspaceName }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/workspace/overview/');
+        const response = await fetch('/api/workspace/overview/');
         if (response.ok) {
           const json = await response.json();
           setData(json);
@@ -28,149 +29,367 @@ export default function WorkspaceOverview({ setWorkspaceName }) {
   }, [setWorkspaceName]);
 
   const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
     return 'Good evening';
   };
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <span className="text-[12px] text-[#555555]">Loading workspace...</span>
+      <div className="h-full flex items-center justify-center py-32">
+        <span className="text-[13px] text-[var(--text-muted)]">Loading workspace...</span>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-[1200px] mx-auto pt-[28px] pb-24 px-[32px] box-border">
-      {/* ── HEADER ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-[40px] flex-wrap gap-4">
-        <div style={{ minWidth: 0 }}>
-          {/* Workspace label */}
-          <div className="text-[9px] font-semibold text-[#555555] uppercase tracking-[0.14em] mb-[8px]">
-            {data?.workspace_name || 'TEAM THUNDER'}
+    <PageContainer>
+      <div className="flex flex-col" style={{ gap: '40px' }}>
+
+        {/* ── HEADER ─────────────────────────────────────────────────── */}
+        <div className="flex items-start justify-between flex-wrap gap-6">
+          <div style={{ minWidth: 0 }}>
+            {/* Workspace label */}
+            <p style={{
+              fontSize: '10px',
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.14em',
+              color: 'var(--text-muted)',
+              marginBottom: '10px'
+            }}>
+              {data?.workspace_name || 'WORKSPACE'}
+            </p>
+
+            {/* Main heading */}
+            <h1 style={{
+              fontSize: '44px',
+              fontWeight: 600,
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+              color: 'var(--text-primary)',
+              marginBottom: '10px'
+            }}>
+              {getGreeting()}, {data?.user_name || 'User'}
+            </h1>
+
+            {/* Project count */}
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
+              {data?.total_projects === 1 ? '1 project' : `${data?.total_projects ?? 0} projects`} in this workspace
+            </p>
           </div>
-          {/* Greeting */}
-          <h1 className="text-[clamp(28px,2.2vw,34px)] font-semibold leading-[1.15] text-gray-100 tracking-tight mb-[6px]">
-            {getGreeting()}, {data?.user_name || 'dev collab'}
-          </h1>
-          {/* Project count */}
-          <p className="text-[12px] text-[#666666]">
-            {data?.active_projects === 1 ? '1 project' : `${data?.active_projects ?? 0} projects`}
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-3 shrink-0" style={{ marginTop: '8px' }}>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: '7px',
+              height: '38px', padding: '0 18px',
+              border: '1px solid var(--border-strong)', background: 'var(--surface-raised)',
+              color: 'var(--text-primary)', borderRadius: '8px',
+              fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+              transition: 'background 0.15s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-raised)'}
+            >
+              <Sparkles size={14} />
+              Ask AI
+            </button>
+            <button style={{
+              display: 'flex', alignItems: 'center', gap: '7px',
+              height: '38px', padding: '0 20px',
+              background: 'var(--text-primary)', color: 'var(--bg)',
+              borderRadius: '8px', border: 'none',
+              fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+              transition: 'background 0.15s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--text-primary)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--text-primary)'}
+            >
+              <Plus size={15} />
+              New Project
+            </button>
+          </div>
+        </div>
+
+        {/* ── STATS ───────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: '48px' }}>
+          {[
+            { label: 'Tasks Pending', value: data?.tasks_pending ?? 0 },
+            { label: 'Tasks Completed', value: data?.tasks_completed ?? 0 },
+            { label: 'Active Projects', value: data?.active_projects_user ?? 0 },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <div style={{
+                fontSize: '40px',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                lineHeight: 1,
+                marginBottom: '10px',
+                fontVariantNumeric: 'tabular-nums',
+              }}>
+                {stat.value}
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── TOP PRIORITY TASKS & MY PROJECTS ────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: '20px' }}>
+
+          {/* Top Priority Tasks */}
+          <div style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border-default)',
+            borderRadius: '12px',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '240px',
+          }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Top Priority Tasks
+              </h2>
+              <button style={{
+                display: 'flex', alignItems: 'center', gap: '4px',
+                fontSize: '12px', color: 'var(--text-muted)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                transition: 'color 0.15s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              >
+                View all <ArrowRight size={12} />
+              </button>
+            </div>
+            <div className="flex-1 flex flex-col" style={{ gap: '10px' }}>
+              {data?.top_priority_tasks?.length > 0 ? (
+                data.top_priority_tasks.map((task, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-strong)',
+                    background: 'var(--surface-hover)',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--focus-ring)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+                  >
+                    <div className="flex items-center" style={{ gap: '10px' }}>
+                      <div style={{
+                        width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                        background: task.status === 'Done' ? '#22C55E' :
+                          task.status === 'In Progress' ? '#3B82F6' : 'var(--text-muted)',
+                      }} />
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>{task.title}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{task.status}</div>
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '10px', fontWeight: 700, padding: '2px 8px',
+                      border: '1px solid var(--border-strong)', borderRadius: '4px',
+                      color: 'var(--text-secondary)', background: 'var(--surface-raised)',
+                    }}>
+                      {task.priority || 'Normal'}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center" style={{ padding: '32px', textAlign: 'center', background: 'var(--surface-raised)', borderRadius: '8px', border: '1px dashed var(--border-default)' }}>
+                  <CheckCircle2 size={20} style={{ color: 'var(--focus-ring)', marginBottom: '10px' }} />
+                  <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '4px' }}>No priority tasks</p>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>You're all caught up.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* My Projects */}
+          <div style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border-default)',
+            borderRadius: '12px',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '240px',
+          }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>My Projects</h2>
+              <button style={{
+                display: 'flex', alignItems: 'center', gap: '4px',
+                fontSize: '12px', color: 'var(--text-muted)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                transition: 'color 0.15s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              >
+                View all <ArrowRight size={12} />
+              </button>
+            </div>
+            <div className="flex-1 flex flex-col" style={{ gap: '10px' }}>
+              {data?.my_projects?.length > 0 ? (
+                data.my_projects.map((project, i) => (
+                  <div key={i} style={{
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-strong)',
+                    background: 'var(--surface-hover)',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.15s',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--focus-ring)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+                  >
+                    <div className="flex items-center justify-between" style={{ marginBottom: '8px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {project.name}
+                      </div>
+                      <span style={{
+                        fontSize: '10px', fontWeight: 600,
+                        color: project.status === 'Active' ? '#22C55E' : 'var(--text-secondary)',
+                        flexShrink: 0, marginLeft: '8px',
+                      }}>
+                        {project.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center" style={{ gap: '16px', marginBottom: '10px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <Circle size={10} /> {project.tasks_open} open
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <Check size={11} /> {project.tasks_completed} done
+                      </span>
+                    </div>
+                    <div className="flex items-center" style={{ gap: '8px' }}>
+                      <div style={{ flex: 1, height: '4px', background: 'var(--border-default)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${project.progress}%`, background: '#3B82F6', borderRadius: '2px' }} />
+                      </div>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', width: '28px', textAlign: 'right', flexShrink: 0 }}>
+                        {project.progress}%
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center" style={{ padding: '32px', textAlign: 'center', background: 'var(--surface-raised)', borderRadius: '8px', border: '1px dashed var(--border-default)' }}>
+                  <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '4px' }}>No projects yet</p>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Create your first project.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── NOTIFICATIONS / RECENT PROJECTS / ACTIVITY ───────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '20px' }}>
+          {/* Notifications */}
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border-default)', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', minHeight: '180px' }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>Notifications</h2>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--border-strong)', background: 'var(--surface-raised)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px', color: '#22C55E' }}>
+                <Bell size={15} />
+              </div>
+              <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '4px' }}>No notifications</p>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>You're all caught up.</p>
+            </div>
+          </div>
+
+          {/* Recent Projects */}
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border-default)', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', minHeight: '180px' }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>Recent Projects</h2>
+              <button style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              >
+                View all <ArrowRight size={10} />
+              </button>
+            </div>
+            <div className="flex flex-col" style={{ gap: '8px' }}>
+              {data?.recent_projects?.length > 0 ? (
+                data.recent_projects.map((p, i) => (
+                  <div key={i} style={{ padding: '10px 12px', borderRadius: '7px', border: '1px solid var(--border-default)', background: 'var(--surface-raised)', cursor: 'pointer', transition: 'border-color 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-strong)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
+                  >
+                    <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>{p.name}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.tasks_count} tasks</div>
+                  </div>
+                ))
+              ) : (
+                <div className="flex-1 flex items-center justify-center" style={{ padding: '16px' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No recent projects</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border-default)', borderRadius: '12px', padding: '24px', display: 'flex', flexDirection: 'column', minHeight: '180px' }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>Recent Activity</h2>
+              <button style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+              >
+                View all <ArrowRight size={10} />
+              </button>
+            </div>
+            <div className="flex-1 flex items-center justify-center">
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No recent activity</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── WORKSPACE ACTIVITY (CHARTS) ──────────────────────────── */}
+        <div>
+          <p style={{
+            fontSize: '10px', fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: '0.14em', color: 'var(--text-muted)', marginBottom: '16px'
+          }}>
+            Workspace Activity
           </p>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex items-center gap-[8px] shrink-0">
-          <button className="flex items-center justify-center gap-[6px] h-[36px] px-4 shrink-0
-                             border border-[#2A2A2A] bg-[#161616]
-                             hover:bg-[#1E1E1E] text-gray-100
-                             rounded-[7px] text-[13px] font-medium transition-colors whitespace-nowrap">
-            <Sparkles size={14} />
-            Ask AI
-          </button>
-          <button className="flex items-center justify-center gap-[6px] h-[38px] px-5 shrink-0
-                             bg-white text-gray-900
-                             hover:opacity-90 rounded-[7px] text-[13px] font-semibold transition-opacity whitespace-nowrap">
-            <Plus size={15} />
-            New Project
-          </button>
-        </div>
-      </div>
-
-      {/* ── STATS ──────────────────────────────────────────── */}
-      <div
-        className="grid mb-10"
-        style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <div className="text-[26px] font-semibold text-gray-100 leading-none mb-1.5 tabular-nums">
-            {data?.active_projects ?? 0}
-          </div>
-          <div className="text-[11px] text-[#666666] truncate">Active Projects</div>
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <div className="text-[26px] font-semibold text-gray-100 leading-none mb-1.5 tabular-nums">
-            {data?.team_members ?? 1}
-          </div>
-          <div className="text-[11px] text-[#666666] truncate">Team Members</div>
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <div className="text-[26px] font-semibold text-gray-100 leading-none mb-1.5 tabular-nums">
-            {data?.total_tasks ?? 0}
-          </div>
-          <div className="text-[11px] text-[#666666] truncate">Tasks Across Projects</div>
-        </div>
-      </div>
-
-      {/* ── DIVIDER ─────────────────────────────────────────── */}
-      <div className="h-px bg-[#1F1F1F] mb-8 w-full" />
-
-      {/* ── SECTION HEADERS ─────────────────────────────────── */}
-      <div
-        className="grid gap-[14px] mb-4 w-full"
-        style={{ gridTemplateColumns: '1fr 1fr 1.35fr' }}
-      >
-        <div className="col-span-2">
-          <span className="text-[9px] font-semibold text-[#555555] uppercase tracking-[0.14em]">
-            WORKSPACE ACTIVITY
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <BellIcon size={12} className="text-[#555555]" />
-          <span className="text-[11px] font-medium text-[#CCCCCC]">
-            Notifications
-          </span>
-        </div>
-      </div>
-
-      {/* ── ACTIVITY CARDS ──────────────────────────────────── */}
-      <div
-        className="grid gap-[14px] w-full"
-        style={{ gridTemplateColumns: '1fr 1fr 1.35fr' }}
-      >
-        {/* Card 1: Tasks Completed Chart */}
-        <div
-          className="rounded-xl border border-[#222222] bg-[#151515] flex flex-col overflow-hidden"
-          style={{ height: '190px' }}
-        >
-          <div className="px-5 pt-5 pb-2 text-[9px] text-[#555555] shrink-0">
-            Tasks Completed (Last 7 Days)
-          </div>
-          <div className="flex-1 min-h-0 px-2 pb-2">
-            <TasksCompletedChart data={data?.tasks_completed_7_days} />
-          </div>
-        </div>
-
-        {/* Card 2: Status Distribution */}
-        <div
-          className="rounded-xl border border-[#222222] bg-[#151515] flex flex-col overflow-hidden"
-          style={{ height: '190px' }}
-        >
-          <div className="px-5 pt-5 pb-2 text-[9px] text-[#555555] shrink-0">
-            Status Distribution
-          </div>
-          <div className="flex-1 min-h-0 flex items-center justify-center px-5">
-            <StatusDistribution distribution={data?.task_status_distribution} />
-          </div>
-        </div>
-
-        {/* Card 3: Notifications */}
-        <div
-          className="rounded-xl border border-[#222222] bg-[#151515] flex flex-col items-center justify-center overflow-hidden"
-          style={{ height: '190px' }}
-        >
-          <div className="w-7 h-7 rounded-full border border-[#2A2A2A]
-                          flex items-center justify-center mb-3 text-green-500">
-            <CheckCircle2 size={15} />
-          </div>
-          <div className="text-[11px] font-medium text-[#AAAAAA]">
-            No notifications
+          <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: '20px' }}>
+            <div style={{
+              background: 'var(--surface)', border: '1px solid var(--border-default)',
+              borderRadius: '12px', display: 'flex', flexDirection: 'column',
+              overflow: 'hidden', height: '260px',
+            }}>
+              <div style={{ padding: '20px 20px 8px', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500, flexShrink: 0 }}>
+                Tasks Completed (Last 7 Days)
+              </div>
+              <div style={{ flex: 1, minHeight: 0, padding: '0 8px 8px' }}>
+                <TasksCompletedChart data={data?.tasks_completed_7_days} />
+              </div>
+            </div>
+            <div style={{
+              background: 'var(--surface)', border: '1px solid var(--border-default)',
+              borderRadius: '12px', display: 'flex', flexDirection: 'column',
+              overflow: 'hidden', height: '260px',
+            }}>
+              <div style={{ padding: '20px 20px 8px', fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500, flexShrink: 0 }}>
+                Status Distribution
+              </div>
+              <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', padding: '0 20px 20px' }}>
+                <StatusDistribution distribution={data?.task_status_distribution} />
+              </div>
+            </div>
           </div>
         </div>
 
       </div>
-    </div>
+    </PageContainer>
   );
 }
