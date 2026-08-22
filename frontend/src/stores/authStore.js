@@ -65,7 +65,7 @@ export const useAuthStore = create(
     (set, get) => ({
       user: null,
       role: 'Owner', // Temporary default for RBAC simulation
-      workspace: null,
+      activeWorkspace: null,
       sessionToken: null,
       isAuthenticated: false,
       isLoading: false,
@@ -78,7 +78,7 @@ export const useAuthStore = create(
             isAuthenticated: true,
             user: data.user,
             role: data.user.role,
-            workspace: data.user.workspace,
+            activeWorkspace: data.user.workspace,
             sessionToken: data.session_token,
             isLoading: false,
           });
@@ -98,7 +98,7 @@ export const useAuthStore = create(
           set({
             user: null,
             role: null,
-            workspace: null,
+            activeWorkspace: null,
             workspaces: [],
             isAuthenticated: false,
             isLoading: false,
@@ -126,11 +126,11 @@ export const useAuthStore = create(
       setActiveWorkspace: (workspaceId) => {
         const ws = get().workspaces.find(w => w.id === workspaceId);
         if (ws) {
-          set({ workspace: ws });
+          set({ activeWorkspace: ws });
         }
       },
 
-      setWorkspace: (workspace) => set({ workspace }),
+      setWorkspace: (workspace) => set({ activeWorkspace: workspace }),
       
       setRole: (role) => set({ role }),
 
