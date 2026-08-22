@@ -1,8 +1,8 @@
 // src/pages/SelectWorkspacePage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Plus, Users, FolderOpen } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Users, FolderOpen, LogOut, Link, Sparkles, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { workspaceApi } from '../api/workspaceApi';
 import ThemeToggle from '../components/auth/ThemeToggle';
@@ -20,12 +20,12 @@ function getInitials(name) {
 export default function SelectWorkspacePage() {
   useTheme();
   const navigate = useNavigate();
-  const { user, workspaces, refreshWorkspaces, setActiveWorkspace } = useAuthStore();
+  const { user, workspaces, refreshWorkspaces, setActiveWorkspace, logout } = useAuthStore();
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [hoveredId, setHoveredId] = useState(null);
 
-  // Fallback refresh on mount to ensure we have the latest data
   useEffect(() => {
     refreshWorkspaces();
   }, [refreshWorkspaces]);
@@ -49,139 +49,206 @@ export default function SelectWorkspacePage() {
 
   return (
     <div
-      className="min-h-screen bg-black p-4 md:p-12 w-full"
+      className="relative min-h-screen bg-[#050505] p-4 md:p-12 w-full overflow-hidden flex flex-col items-center justify-center"
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
     >
       <ThemeToggle />
 
-      <div className="w-full mx-auto mt-8 md:mt-16" style={{ maxWidth: 1200 }}>
+      {/* Decorative Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px]" />
+        <div className="absolute bottom-[10%] -right-[10%] w-[40%] h-[40%] rounded-full bg-violet-600/10 blur-[100px]" />
+        
+        {/* Subtle grid pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]" 
+          style={{ 
+            backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, 
+            backgroundSize: '40px 40px' 
+          }} 
+        />
+      </div>
+
+      <div className="w-full mx-auto relative z-10" style={{ maxWidth: 1000 }}>
         
         {/* Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 w-full"
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 w-full"
         >
-          <div>
-            <h1 className="text-[32px] md:text-[36px] font-bold text-white tracking-tight mb-2">
-              Select Workspace
+          <div className="max-w-2xl">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/70 text-xs font-semibold uppercase tracking-widest mb-6 backdrop-blur-md"
+            >
+              <Sparkles size={14} className="text-indigo-400" />
+              Welcome back, {user?.name?.split(' ')[0] || 'User'}
+            </motion.div>
+            
+            <h1 className="text-[40px] md:text-[52px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/60 tracking-tight mb-4 leading-tight">
+              Select your workspace
             </h1>
-            <p className="text-[15px] text-[#A3A3A3]">
-              Choose a workspace to enter, or create a new one.
+            <p className="text-[17px] text-white/50 leading-relaxed font-light">
+              Choose an existing workspace to continue collaborating, or create a new environment for your next big idea.
             </p>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-4">
             <button
-              onClick={() => {
-                useAuthStore.getState().logout();
-              }}
+              onClick={() => logout()}
               className="
-                h-12 px-5 rounded-xl
+                group h-12 px-5 rounded-2xl
                 flex items-center justify-center gap-2
-                bg-transparent border border-red-900/30
-                text-red-500 text-sm font-semibold
-                hover:bg-red-500/10 transition-colors
+                bg-white/5 border border-white/5
+                text-white/70 text-sm font-medium
+                hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 
+                transition-all duration-300
               "
             >
+              <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform" />
               Logout
             </button>
             <button
               onClick={() => setIsJoinOpen(true)}
               className="
-                h-12 px-5 rounded-xl
+                h-12 px-5 rounded-2xl
                 flex items-center justify-center gap-2
-                bg-transparent border border-[#292929]
-                text-white text-sm font-semibold
-                hover:bg-[#151515] transition-colors
+                bg-white/5 border border-white/10
+                text-white text-sm font-medium
+                hover:bg-white/10 hover:border-white/20 transition-all duration-300
               "
             >
-              Join Workspace
+              <Link size={16} />
+              Join
             </button>
             <button
               onClick={() => setIsCreateOpen(true)}
               className="
-                h-12 px-5 rounded-xl
+                group h-12 px-6 rounded-2xl
                 flex items-center justify-center gap-2
                 bg-white text-black
-                text-sm font-bold
-                hover:bg-[#f0f0f0] transition-colors
+                text-sm font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]
+                hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:scale-[1.02] 
+                transition-all duration-300
               "
             >
-              <Plus size={18} strokeWidth={2.5} />
-              Create
+              <Plus size={18} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-300" />
+              Create New
             </button>
           </div>
         </motion.div>
 
         {/* Workspaces Grid */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.05 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           {workspaces.map((ws, i) => {
-            const role = ws.members.find(m => m.userId === user?.id)?.role?.toUpperCase() || 'MEMBER';
+            const role = ws.members?.find(m => m.userId === user?.id)?.role?.toUpperCase() || 'MEMBER';
+            const isHovered = hoveredId === ws.id;
+            
             return (
-              <motion.button
+              <motion.div
                 key={ws.id}
-                onClick={() => handleSelectWorkspace(ws.id)}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.05 * i }}
-                className="
-                  group w-full text-left bg-[#0A0A0A] border border-[#242424] rounded-[18px]
-                  flex flex-col overflow-hidden transition-all duration-200
-                  hover:border-[#444] hover:-translate-y-[2px]
-                  hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)]
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20
-                "
+                transition={{ duration: 0.4, delay: 0.1 * i, ease: [0.16, 1, 0.3, 1] }}
+                onMouseEnter={() => setHoveredId(ws.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                className="relative group h-full"
               >
-                <div className="p-6 pb-5 flex-1">
-                  <div className="flex justify-between items-start mb-6">
-                    {/* Avatar */}
-                    <div className="w-[44px] h-[44px] rounded-[10px] bg-[#1a1a1a] flex items-center justify-center border border-[#333]">
-                      <span className="text-white text-[15px] font-bold tracking-wider">
-                        {getInitials(ws.name)}
-                      </span>
+                {/* Glow effect behind the card */}
+                <div 
+                  className={`
+                    absolute inset-0 rounded-[24px] bg-gradient-to-br from-indigo-500/20 to-purple-500/20 blur-xl transition-opacity duration-500
+                    ${isHovered ? 'opacity-100' : 'opacity-0'}
+                  `}
+                />
+                
+                <button
+                  onClick={() => handleSelectWorkspace(ws.id)}
+                  className={`
+                    relative w-full h-full text-left bg-white/[0.02] backdrop-blur-xl border border-white/[0.08] rounded-[24px]
+                    flex flex-col overflow-hidden transition-all duration-500
+                    hover:bg-white/[0.04] hover:border-white/[0.15] hover:-translate-y-1
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50
+                  `}
+                >
+                  <div className="p-7 pb-6 flex-1 relative z-10">
+                    <div className="flex justify-between items-start mb-8">
+                      {/* Avatar with glowing ring */}
+                      <div className="relative">
+                        <div className={`absolute inset-0 rounded-2xl bg-indigo-500/20 blur-md transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`} />
+                        <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center border border-white/10 shadow-inner">
+                          <span className="text-white text-lg font-bold tracking-wider">
+                            {getInitials(ws.name)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Plan Badge */}
+                      <div className="px-3 py-1.5 rounded-full bg-black/40 border border-white/5 text-[10px] font-bold text-white/60 tracking-widest backdrop-blur-md">
+                        {ws.plan?.toUpperCase() || 'FREE'}
+                      </div>
                     </div>
-                    {/* Plan Badge */}
-                    <div className="px-2.5 py-1 rounded-[6px] bg-[#151515] border border-[#292929] text-[10px] font-bold text-[#888] tracking-widest">
-                      {ws.plan?.toUpperCase() || 'FREE'}
+
+                    <h3 className="text-xl font-bold text-white mb-2 truncate group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/70 transition-all">
+                      {ws.name}
+                    </h3>
+                    
+                    <div className="flex items-center gap-2 text-xs font-semibold text-white/40 tracking-widest">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                      {role}
                     </div>
                   </div>
 
-                  <h3 className="text-[19px] font-bold text-white mb-1.5 truncate">
-                    {ws.name}
-                  </h3>
-                  
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#737373] tracking-widest">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#555]" />
-                    {role}
+                  <div className="px-7 py-5 bg-black/20 border-t border-white/[0.04] flex items-center justify-between">
+                    <div className="flex items-center gap-5">
+                      <div className="flex items-center gap-2 text-white/40 group-hover:text-white/60 transition-colors">
+                        <Users size={15} />
+                        <span className="text-sm font-medium">{ws.members?.length || 1}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-white/40 group-hover:text-white/60 transition-colors">
+                        <FolderOpen size={15} />
+                        <span className="text-sm font-medium">{ws.projectsCount || 0}</span>
+                      </div>
+                    </div>
+                    
+                    <div className={`
+                      w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/50
+                      transition-all duration-300 border border-transparent
+                      ${isHovered ? 'translate-x-1 bg-white/10 text-white border-white/10' : ''}
+                    `}>
+                      <ChevronRight size={16} />
+                    </div>
                   </div>
-                </div>
-
-                <div className="px-6 py-4 bg-[#050505] border-t border-[#1a1a1a] flex items-center gap-6">
-                  <div className="flex items-center gap-2 text-[#737373]">
-                    <Users size={14} />
-                    <span className="text-[13px] font-medium">{ws.members?.length || 1}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[#737373]">
-                    <FolderOpen size={14} />
-                    <span className="text-[13px] font-medium">{ws.projectsCount || 0}</span>
-                  </div>
-                </div>
-              </motion.button>
+                </button>
+              </motion.div>
             );
           })}
         </motion.div>
 
         {workspaces.length === 0 && (
-          <div className="text-center py-20 text-[#525252]">
-            <p className="text-[15px]">You don't belong to any workspaces yet.</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col items-center justify-center py-32 text-center"
+          >
+            <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
+              <FolderOpen size={32} className="text-white/30" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">No workspaces found</h3>
+            <p className="text-[15px] text-white/40 max-w-sm">
+              You don't belong to any workspaces yet. Create a new one or join an existing team to get started.
+            </p>
+          </motion.div>
         )}
       </div>
 

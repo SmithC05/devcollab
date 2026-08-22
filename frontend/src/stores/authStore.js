@@ -99,9 +99,34 @@ export const useAuthStore = create(
             user: null,
             role: null,
             workspace: null,
+            workspaces: [],
             isAuthenticated: false,
             isLoading: false,
           });
+        }
+      },
+
+      workspaces: [],
+      refreshWorkspaces: async () => {
+        // Since we don't have a dedicated endpoint for workspaces yet, 
+        // we'll populate the list with the user's active workspace from login.
+        const currentUser = get().user;
+        if (currentUser && currentUser.workspace) {
+           set({ 
+             workspaces: [{
+               ...currentUser.workspace,
+               members: [{ userId: currentUser.id, role: currentUser.role }]
+             }]
+           });
+        } else {
+           set({ workspaces: [] });
+        }
+      },
+
+      setActiveWorkspace: (workspaceId) => {
+        const ws = get().workspaces.find(w => w.id === workspaceId);
+        if (ws) {
+          set({ workspace: ws });
         }
       },
 
