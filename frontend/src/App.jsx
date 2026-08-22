@@ -10,6 +10,10 @@ import ProjectSnippetsPage  from './pages/projects/ProjectSnippetsPage';
 import ProjectEditorPage    from './pages/projects/ProjectEditorPage';
 import ProjectChatPage      from './pages/projects/ProjectChatPage';
 import ProjectSettingsPage  from './pages/projects/ProjectSettingsPage';
+import ProjectSprintPage    from './pages/projects/ProjectSprintPage';
+import ProjectWorkloadPage  from './pages/projects/ProjectWorkloadPage';
+import ProjectMyTasksPage   from './pages/projects/ProjectMyTasksPage';
+import ProjectMyTeamPage    from './pages/projects/ProjectMyTeamPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
@@ -40,6 +44,10 @@ export default function App() {
             <Route path="board"     element={<ProjectBoardPage />} />
             <Route path="activity"  element={<ProjectActivityPage />} />
             <Route path="members"   element={<ProjectMembersPage />} />
+            <Route path="sprint"    element={<ProjectSprintPage />} />
+            <Route path="workload"  element={<ProjectWorkloadPage />} />
+            <Route path="mytasks"   element={<ProjectMyTasksPage />} />
+            <Route path="myteam"    element={<ProjectMyTeamPage />} />
 
             {/* KNOWLEDGE & DEV */}
             <Route path="wiki"      element={<ProjectWikiPage />} />

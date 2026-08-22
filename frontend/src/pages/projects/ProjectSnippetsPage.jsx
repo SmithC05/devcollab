@@ -124,7 +124,7 @@ export default function ProjectSnippetsPage() {
           <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Code Snippets</h1>
           <p style={{ fontSize: '13px', color: '#555', margin: 0 }}>Project-scoped reusable code storage.</p>
         </div>
-        {can('CREATE_SNIPPET') && (
+        {can('snippet.create') && (
           <button onClick={() => setModalSnippet(false)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
             <Plus size={14} strokeWidth={2.5} /> Save Snippet
           </button>
@@ -146,7 +146,7 @@ export default function ProjectSnippetsPage() {
         {snippets.map((s) => (
           <SnippetCard 
             key={s.id} snippet={s} onEdit={(snip) => setModalSnippet(snip)} onDelete={deleteSnippet} 
-            canEdit={can('EDIT_SNIPPET')} canDelete={can('DELETE_SNIPPET')} 
+            canEdit={can('snippet.edit')} canDelete={can('snippet.delete')} 
           />
         ))}
         {snippets.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#555', padding: '48px', fontSize: '14px' }}>No snippets found. Save your first snippet →</div>}

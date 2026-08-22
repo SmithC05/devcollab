@@ -5,9 +5,9 @@ import { Trash2, Archive, Save } from 'lucide-react';
 export default function ProjectSettingsPage() {
   const { can } = useAuthStore();
 
-  const canDelete = can('DELETE_PROJECT');
-  const canArchive = can('ARCHIVE_PROJECT');
-  const canRename = can('RENAME_PROJECT');
+  const canDelete = can('project.delete');
+  const canArchive = can('project.settings');
+  const canRename = can('project.settings');
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-12">

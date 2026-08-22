@@ -26,14 +26,14 @@ export default function KanbanView() {
   );
 
   const handleDragStart = ({ active }) => {
-    if (!can('MOVE_TASK')) return;
+    if (!can('task.move')) return;
     const task = Object.values(columns).flat().find((t) => t.id === active.id);
     setActiveTask(task || null);
   };
 
   const handleDragEnd = ({ active, over }) => {
     setActiveTask(null);
-    if (!can('MOVE_TASK') || !over) return;
+    if (!can('task.move') || !over) return;
 
     const activeId = active.id;
     const overId = over.id;
