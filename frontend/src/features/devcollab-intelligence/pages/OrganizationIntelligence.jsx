@@ -1152,7 +1152,7 @@ function EvidenceDrawer({ resp, onClose }) {
 export default function OrganizationIntelligence() {
   const navigate = useNavigate();
   const location = useLocation();
-  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
   const [data] = useState(() => getOrganizationIntelligenceState());
   const [selectedNode, setSelectedNode] = useState(null);
   const [evidenceResp, setEvidenceResp] = useState(null);

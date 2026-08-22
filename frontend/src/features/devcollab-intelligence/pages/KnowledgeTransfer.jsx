@@ -31,7 +31,7 @@ export default function KnowledgeTransfer() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
 
   const [handoffState, setHandoffState] = useState('NOT_STARTED'); // NOT_STARTED | GENERATING | REVIEW | APPROVED
   const [activeStepIdx, setActiveStepIdx] = useState(0);

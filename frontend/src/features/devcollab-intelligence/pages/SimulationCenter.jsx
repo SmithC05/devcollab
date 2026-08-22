@@ -31,7 +31,7 @@ export default function SimulationCenter() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
   
   const [baseline, setBaseline] = useState(null);
   const [scenarioConfig, setScenarioConfig] = useState({

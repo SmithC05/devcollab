@@ -152,6 +152,16 @@ export default function AppRoutes() {
         <Route path="billing" element={<WorkspaceBillingPage />} />
         <Route path="settings" element={<WorkspaceSettingsPage />} />
         <Route path="ai" element={<WorkspaceAIAssistantPage />} />
+        
+        {/* ── Phase Integration 1: Unified Intelligence Experience ── */}
+        <Route path="intelligence">
+          <Route index element={<EngineeringCommandCenter />} />
+          <Route path="organization" element={<OrganizationIntelligence />} />
+          <Route path="decision/:id" element={<DecisionPoint />} />
+          <Route path="simulation/:id" element={<SimulationCenter />} />
+          <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
+          <Route path="judge" element={<JudgeMode />} />
+        </Route>
       </Route>
 
       {/* Project routes */}
@@ -190,19 +200,6 @@ export default function AppRoutes() {
         <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
       </Route>
 
-      {/* ── Phase 2-8: Isolated Intelligence Experience ── */}
-      <Route path="/intelligence" element={<IntelligenceLayout />}>
-        <Route index element={<EngineeringCommandCenter />} />
-        <Route path="foundation-preview" element={<FoundationPreviewPage />} />
-        {/* Future routes — placeholder until Phase 2–4 */}
-        <Route path="project/:id"     element={<PlaceholderPage title="Project Intelligence" subtitle="Project-level engineering state — Phase 2" />} />
-        <Route path="organization"    element={<OrganizationIntelligence />} />
-        <Route path="member/:id"      element={<PlaceholderPage title="Member Intelligence" subtitle="Member capacity &amp; context — Phase 2" />} />
-        <Route path="decision/:id"    element={<DecisionPoint />} />
-        <Route path="simulation/:id"  element={<SimulationCenter />} />
-        <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
-        <Route path="judge"           element={<JudgeMode />} />
-      </Route>
 
       {/* Default */}
       <Route path="/" element={<Navigate to="/login" replace />} />

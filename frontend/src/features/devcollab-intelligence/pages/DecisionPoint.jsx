@@ -995,7 +995,7 @@ function EvidenceSection({ evidence }) {
 function CtaSection({ decisionId, decisionSeverity, status }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
 
   return (
     <motion.div variants={scenarioTransition} initial="hidden" animate="visible"
