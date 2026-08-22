@@ -1,3 +1,10 @@
+const statuses = [
+  { key: 'TODO', label: 'To Do', color: 'bg-[#666666]' },
+  { key: 'IN_PROGRESS', label: 'In Progress', color: 'bg-blue-500' },
+  { key: 'IN_REVIEW', label: 'In Review', color: 'bg-yellow-500' },
+  { key: 'DONE', label: 'Done', color: 'bg-green-500' }
+];
+
 export default function StatusDistribution({ distribution }) {
   const total = distribution ? Object.values(distribution).reduce((acc, curr) => acc + curr, 0) : 0;
 

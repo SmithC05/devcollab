@@ -45,7 +45,7 @@ export default function SelectWorkspacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#000000] text-white w-full flex flex-col font-sans">
+    <div className="min-h-screen bg-[var(--bg)] text-white w-full flex flex-col font-sans">
       
       {/* Header */}
       <header className="w-full flex items-center justify-between px-8 py-6 h-[72px]">
@@ -101,17 +101,17 @@ export default function SelectWorkspacePage() {
               <button
                 key={ws.id}
                 onClick={() => handleSelectWorkspace(ws.id)}
-                className="group relative w-full text-left bg-[#111111] border border-[#27272A] rounded-2xl p-7 hover:border-[#3F3F46] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[250px] flex flex-col"
+                className="group relative w-full text-left bg-[var(--surface-raised)] border border-[#27272A] rounded-2xl p-7 hover:border-[#3F3F46] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[250px] flex flex-col"
               >
                 {/* Top row: Avatar and Badge */}
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-[#1A1A1A] border border-[#27272A] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-[var(--surface-hover)] border border-[#27272A] flex items-center justify-center">
                     <span className="text-[#FAFAFA] text-[16px] font-semibold tracking-wide">
                       {getInitials(ws.name)}
                     </span>
                   </div>
                   
-                  <div className="px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#27272A] text-[11px] font-semibold text-[#A1A1AA] tracking-wide">
+                  <div className="px-3 py-1 rounded-full bg-[var(--surface-hover)] border border-[#27272A] text-[11px] font-semibold text-[#A1A1AA] tracking-wide">
                     {ws.plan?.toUpperCase() || 'FREE'}
                   </div>
                 </div>
