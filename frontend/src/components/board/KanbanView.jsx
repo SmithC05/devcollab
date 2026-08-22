@@ -12,7 +12,7 @@ import { useTaskStore, COLUMNS } from '../../stores/taskStore';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 
 export default function KanbanView() {
   const { columns, moveTask, reorderTask } = useTaskStore();

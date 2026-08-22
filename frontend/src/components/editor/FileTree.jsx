@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useEditorStore } from '../../stores/editorStore';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 import { ChevronRight, ChevronDown, Folder, FolderOpen, Edit2, Trash2, Atom, FileJson, FileText, Hash, Braces } from 'lucide-react';
 
 function getFileIcon(filename, language) {

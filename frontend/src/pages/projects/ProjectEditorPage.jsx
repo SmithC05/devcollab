@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 import EditorHeader from '../../components/editor/EditorHeader';
 import ActivityBar from '../../components/editor/ActivityBar';
 import FileExplorer from '../../components/editor/FileExplorer';

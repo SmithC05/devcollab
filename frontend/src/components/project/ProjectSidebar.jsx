@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Columns3, Activity, Users,
   BookOpen, Code2, FileCode2, MessageSquare, Sparkles, ChevronLeft, Settings
 } from 'lucide-react';
-import { useAuthStore, ROLES } from '../../stores/authStore';
+import { useAuthStore, ROLES } from '../../store/authStore';
 
 const NAV = [
   {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LayoutGrid, List, Calendar, Plus } from 'lucide-react';
 import KanbanView from '../../components/board/KanbanView';
 import TaskModal from '../../components/board/TaskModal';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 
 const VIEWS = [
   { id: 'board',    label: 'Board',    icon: LayoutGrid },

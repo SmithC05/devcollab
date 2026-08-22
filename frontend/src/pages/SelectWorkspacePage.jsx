@@ -74,6 +74,20 @@ export default function SelectWorkspacePage() {
           
           <div className="flex items-center gap-3">
             <button
+              onClick={() => {
+                useAuthStore.getState().logout();
+              }}
+              className="
+                h-12 px-5 rounded-xl
+                flex items-center justify-center gap-2
+                bg-transparent border border-red-900/30
+                text-red-500 text-sm font-semibold
+                hover:bg-red-500/10 transition-colors
+              "
+            >
+              Logout
+            </button>
+            <button
               onClick={() => setIsJoinOpen(true)}
               className="
                 h-12 px-5 rounded-xl

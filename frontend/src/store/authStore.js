@@ -5,6 +5,9 @@ import * as authService from '../services/authService';
 import * as workspaceService from '../services/workspaceService';
 import { ROLES } from '../data/mockData';
 
+// Re-export ROLES for compatibility with imported main branch components
+export { ROLES };
+
 export const useAuthStore = create(
   persist(
     (set, get) => ({
