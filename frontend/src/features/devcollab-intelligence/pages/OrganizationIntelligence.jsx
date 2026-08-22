@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Activity, AlertCircle, AlertTriangle, ArrowRight, Brain,
@@ -1149,7 +1150,8 @@ function EvidenceDrawer({ resp, onClose }) {
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function OrganizationIntelligence() {
-  const [data]            = useState(() => getOrganizationIntelligenceState());
+  const navigate = useNavigate();
+  const [data] = useState(() => getOrganizationIntelligenceState());
   const [selectedNode, setSelectedNode] = useState(null);
   const [evidenceResp, setEvidenceResp] = useState(null);
   const [depProjectFilter, setDepProjectFilter] = useState(null);
@@ -1352,8 +1354,8 @@ export default function OrganizationIntelligence() {
                   <DvCard key={dp.id} style={{
                     padding: '16px', borderColor: dp.severity === 'CRITICAL' ? 'var(--dv-danger-border)' : 'var(--dv-warning-border)',
                     background: dp.severity === 'CRITICAL' ? 'var(--dv-danger-subtle)' : 'var(--dv-warning-subtle)',
-                    position: 'relative', overflow: 'hidden',
-                  }}>
+                    position: 'relative', overflow: 'hidden', cursor: 'pointer'
+                  }} onClick={() => navigate(`/intelligence/decision/${dp.id}`)}>
                     <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: dp.severity === 'CRITICAL' ? 'var(--dv-danger)' : 'var(--dv-warning)' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <DvBadge variant={dp.severity === 'CRITICAL' ? 'danger' : 'warning'} dot size="sm">{dp.severity}</DvBadge>

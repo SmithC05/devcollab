@@ -230,14 +230,28 @@ export default function SimulationCenter() {
            />
         )}
 
-        {/* 7. Approval Flow */}
+        {/* 7. Next Steps */}
         {simState === 'DONE' && selectedRecommendation && (
-           <ApprovalPanel 
-              scenarioId={simResults.scenario_id}
-              baseline={baseline}
-              recommendation={selectedRecommendation}
-              onComplete={(payload) => setExecutionComplete(true)}
-           />
+           <motion.div variants={panelEnter} style={{ marginTop: 24 }}>
+             {selectedRecommendation.intervention.includes('KNOWLEDGE_TRANSFER') ? (
+               <DvCard style={{ padding: 24, textAlign: 'center', background: 'var(--dv-bg-elevated)', borderColor: 'var(--dv-primary-border)' }}>
+                 <div style={{ fontSize: 'var(--dv-text-lg)', fontWeight: 600, color: 'var(--dv-primary)', marginBottom: 8 }}>Knowledge Transfer Recommended</div>
+                 <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)', marginBottom: 24 }}>
+                   This intervention requires generating a structured knowledge handoff package before execution.
+                 </div>
+                 <DvButton variant="primary" onClick={() => navigate(`/intelligence/knowledge-transfer/${scenarioId}?candidate=${encodeURIComponent(selectedRecommendation.candidate)}`)}>
+                   PROCEED TO KNOWLEDGE TRANSFER <ArrowRight size={16} style={{ marginLeft: 8 }} />
+                 </DvButton>
+               </DvCard>
+             ) : (
+               <ApprovalPanel 
+                  scenarioId={simResults.scenario_id}
+                  baseline={baseline}
+                  recommendation={selectedRecommendation}
+                  onComplete={(payload) => setExecutionComplete(true)}
+               />
+             )}
+           </motion.div>
         )}
       </motion.div>
     </div>

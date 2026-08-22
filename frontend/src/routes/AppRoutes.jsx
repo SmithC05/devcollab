@@ -37,6 +37,7 @@ import DecisionPoint             from '../features/devcollab-intelligence/pages/
 import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
 import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
 import JudgeMode                 from '../features/devcollab-intelligence/pages/JudgeMode';
+import DevCollabDemoMode         from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -179,7 +180,10 @@ export default function AppRoutes() {
         <Route path="settings"  element={<ProjectSettingsPage />} />
       </Route>
 
-      {/* DevCollab Intelligence — Isolated experience */}
+      {/* ── Demo / Orchestration Mode (Standalone Layout) ── */}
+      <Route path="/intelligence/demo/*" element={<DevCollabDemoMode />} />
+
+      {/* ── Phase 2-8: Isolated Intelligence Experience ── */}
       <Route path="/intelligence" element={<IntelligenceLayout />}>
         <Route index element={<EngineeringCommandCenter />} />
         <Route path="foundation-preview" element={<FoundationPreviewPage />} />

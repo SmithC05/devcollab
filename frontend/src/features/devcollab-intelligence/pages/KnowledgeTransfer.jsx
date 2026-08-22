@@ -13,6 +13,7 @@ import { DvCard, DvButton, DvBadge, DvDivider, DvPanel, DvAvatar } from '../prim
 import { DvAgentActivity } from '../primitives/agent';
 import { fetchKnowledgeTransfer } from '../data/knowledgeAdapter';
 import { HandoffPackage } from '../components/HandoffPackage';
+import { ApprovalPanel } from '../components/ApprovalPanel';
 import { fadeUp, panelEnter, staggerChildren, slideIn } from '../motion/presets';
 
 // Helper to format hours
@@ -197,30 +198,29 @@ export default function KnowledgeTransfer() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
                   <DvButton variant="ghost" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>EDIT</DvButton>
-                  <DvButton variant="primary" onClick={() => setHandoffState('APPROVED')}>APPROVE HANDOFF & CONTINUE</DvButton>
+                  <DvButton variant="primary" onClick={() => setHandoffState('APPROVED')}>APPROVE & EXECUTE</DvButton>
                 </div>
               </DvCard>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* 6. Success State */}
+        {/* 6. Success State & Execution */}
         <AnimatePresence mode="wait">
           {handoffState === 'APPROVED' && (
             <motion.div key="success" variants={fadeUp} initial="hidden" animate="visible" style={{ marginTop: 16 }}>
-              <DvCard style={{ padding: 24, background: 'var(--dv-success-subtle)', borderColor: 'var(--dv-success-border)' }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <CheckCircle size={24} color="var(--dv-success)" />
-                    <div>
-                       <div style={{ fontSize: 'var(--dv-text-lg)', fontWeight: 700, color: 'var(--dv-success-text)' }}>
-                         Handoff Approved
-                       </div>
-                       <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)', marginTop: 4 }}>
-                         This knowledge package will be attached to the intervention and exposed to {receivingEngineer}.
-                       </div>
-                    </div>
-                 </div>
-              </DvCard>
+              <ApprovalPanel 
+                scenarioId="sim_349d"
+                baseline={{
+                  task: 'Payment API migration',
+                  trigger: { before: { member: 'Alex Smith' } }
+                }}
+                recommendation={{
+                  intervention: 'KNOWLEDGE_TRANSFER_AND_REASSIGN',
+                  candidate: receivingEngineer
+                }}
+                onComplete={() => {}}
+              />
             </motion.div>
           )}
         </AnimatePresence>

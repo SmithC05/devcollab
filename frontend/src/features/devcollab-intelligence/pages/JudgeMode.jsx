@@ -307,7 +307,7 @@ export default function JudgeMode() {
                     </div>
                     <DvButton 
                       variant="primary" 
-                      onClick={() => navigate('/intelligence/org')}
+                      onClick={() => navigate('/intelligence/organization')}
                     >
                       OPEN ENGINEERING INTELLIGENCE <ArrowRight size={16} style={{ marginLeft: 8 }} />
                     </DvButton>
