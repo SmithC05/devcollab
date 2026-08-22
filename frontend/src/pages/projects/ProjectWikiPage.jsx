@@ -68,7 +68,7 @@ export default function ProjectWikiPage() {
   const [titleEdit, setTitleEdit] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
 
-  const canEdit = can('EDIT_WIKI');
+  const canEdit = can('wiki.edit');
 
   const editor = useEditor({
     extensions: [StarterKit, Placeholder.configure({ placeholder: 'Start writing your documentation...' })],
@@ -110,7 +110,7 @@ export default function ProjectWikiPage() {
       <WikiSidebar 
         pages={pages} activePage={activePage} onSelect={handleSelectPage} 
         onCreate={handleCreatePage} onDelete={handleDeletePage} 
-        canCreate={can('CREATE_WIKI')} canDelete={can('DELETE_WIKI')}
+        canCreate={can('wiki.create')} canDelete={can('wiki.delete')}
       />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

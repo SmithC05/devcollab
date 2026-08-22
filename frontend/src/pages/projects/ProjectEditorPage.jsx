@@ -12,7 +12,7 @@ export default function ProjectEditorPage() {
   const { can } = useAuthStore();
 
   // Basic RBAC check
-  if (!can('EDITOR_VIEW')) {
+  if (!can('editor.view')) {
     return (
       <div style={{ padding: '32px', color: '#ff4a4a' }}>
         You do not have permission to view the Editor.

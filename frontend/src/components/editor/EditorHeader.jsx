@@ -24,7 +24,7 @@ export default function EditorHeader() {
             style={menuItemStyle} 
             className="hover:bg-white/10"
             onClick={() => {
-              if (can('EDITOR_CREATE_FILE')) {
+              if (can('editor.file.create')) {
                 const name = window.prompt("New File Name:");
                 if (name) createFile(null, name, 'javascript');
               }

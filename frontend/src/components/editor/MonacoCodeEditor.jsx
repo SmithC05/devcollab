@@ -11,8 +11,8 @@ export default function MonacoCodeEditor() {
   const editorRef = useRef(null);
   
   const activeFile = files.find(f => f.id === activeFileId);
-  const canEdit = can('EDITOR_EDIT');
-  const canSave = can('EDITOR_SAVE');
+  const canEdit = can('editor.edit');
+  const canSave = can('editor.edit');
 
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -84,7 +84,7 @@ export default function MonacoCodeEditor() {
           Select a file from the Explorer sidebar, use <strong style={{ color: '#ccc', background: '#333', padding: '2px 4px', borderRadius: '4px' }}>Ctrl+P</strong> to quick open, <br/> or open a folder from your system.
         </p>
         
-        {can('EDITOR_CREATE_FILE') && (
+        {can('editor.file.create') && (
           <div style={{ display: 'flex', gap: '16px' }}>
             <button 
               style={blueBtnStyle}

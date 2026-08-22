@@ -22,7 +22,7 @@ export default function TaskCard({ task, onClick }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: task.id, 
     data: { type: 'task', task },
-    disabled: !can('MOVE_TASK')
+    disabled: !can('task.move')
   });
   const p = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.P2;
 

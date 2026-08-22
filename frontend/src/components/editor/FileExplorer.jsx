@@ -100,7 +100,7 @@ export default function FileExplorer() {
           <p style={{ color: '#ccc', fontSize: '13px', margin: 0, textAlign: 'center' }}>
             No folder or file opened yet.
           </p>
-          {can('EDITOR_CREATE_FILE') && (
+          {can('editor.file.create') && (
             <>
               <button onClick={handleOpenFolder} style={blueBtnStyle}>
                 Open Folder
