@@ -110,7 +110,7 @@ export default function ProjectChatPage() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#080808', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
-      <ChatSidebar channels={channels} activeChannelId={activeChannelId} onSelect={setActiveChannel} onNewChannel={can('CREATE_CHANNEL') ? () => setShowNewChannel(true) : null} />
+      <ChatSidebar channels={channels} activeChannelId={activeChannelId} onSelect={setActiveChannel} onNewChannel={can('channel.create') ? () => setShowNewChannel(true) : null} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '8px', background: '#080808', flexShrink: 0 }}>
@@ -130,7 +130,7 @@ export default function ProjectChatPage() {
           <div ref={endRef} />
         </div>
 
-        {can('SEND_MESSAGE') && (
+        {can('chat.send') && (
           <div style={{ padding: '12px 20px 16px', borderTop: '1px solid #1a1a1a', flexShrink: 0, background: '#080808' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '8px 12px' }}>
               <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder={`Message #${activeChannel?.name || 'general'}...`} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: '13px', color: '#e5e5e5', fontFamily: 'inherit' }} />

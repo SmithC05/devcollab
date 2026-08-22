@@ -69,7 +69,7 @@ export default function ProjectBoardPage() {
           </div>
 
           {/* New Task */}
-          {can('CREATE_TASK') && (
+          {can('task.create') && (
             <button
               onClick={() => setShowNewTask(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
