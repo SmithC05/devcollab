@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Bell, Navigation } from 'lucide-react';
+import { useAuthStore } from '../../stores/authStore';
 
 const PRIORITY_OPTIONS = ['P0 Urgent', 'P1 High', 'P2 Normal'];
 const MEMBER_OPTIONS   = ['adhi (MEMBER)', 'libin (ADMIN)', 'priya (MEMBER)', 'rahul (MEMBER)'];
@@ -8,6 +9,8 @@ const DUE_OPTIONS      = ['Today', 'Tomorrow', 'This week', 'Next week', 'No dat
 
 export default function ProjectOverviewPage() {
   const { projectId } = useParams();
+  const navigate = useNavigate();
+  const { can, role } = useAuthStore();
   const [priority,  setPriority]  = useState('P1 High');
   const [assignee,  setAssignee]  = useState('adhi (MEMBER)');
   const [due,       setDue]       = useState('Tomorrow');
@@ -72,17 +75,21 @@ export default function ProjectOverviewPage() {
               border: '1px solid #2a2a2e', background: 'transparent', color: '#e5e5e5', cursor: 'pointer',
             }}
               className="hover:bg-[#1a1a1e]"
+              onClick={() => navigate(`/projects/${projectId}/board`)}
             >
               Open Board
             </button>
-            <button style={{
-              padding: '8px 18px', borderRadius: '7px', fontSize: '13px', fontWeight: 600,
-              border: '1px solid #2a2a2e', background: 'transparent', color: '#e5e5e5', cursor: 'pointer',
-            }}
-              className="hover:bg-[#1a1a1e]"
-            >
-              Manage Team
-            </button>
+            {can('ADD_MEMBER') && (
+              <button style={{
+                padding: '8px 18px', borderRadius: '7px', fontSize: '13px', fontWeight: 600,
+                border: '1px solid #2a2a2e', background: 'transparent', color: '#e5e5e5', cursor: 'pointer',
+              }}
+                className="hover:bg-[#1a1a1e]"
+                onClick={() => navigate(`/projects/${projectId}/members`)}
+              >
+                Manage Team
+              </button>
+            )}
           </div>
         </div>
 
@@ -116,149 +123,153 @@ export default function ProjectOverviewPage() {
         <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '28px' }} />
 
         {/* Work Dispatcher Card */}
-        <div style={{
-          background: '#141416', border: '1px solid #1f1f24', borderRadius: '10px',
-          padding: '24px 28px', maxWidth: '760px', position: 'relative',
-        }}>
-          {/* Card Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px' }}>
-            <div>
-              <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: '6px', margin: '0 0 5px 0' }}>
-                WORK DISPATCHER
-              </p>
-              <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#f5f5f5', margin: 0, letterSpacing: '-0.01em' }}>
-                Task Assignment Center
-              </h2>
-              <p style={{ fontSize: '13px', color: '#666', marginTop: '6px', lineHeight: 1.5 }}>
-                Create new tasks, assign them directly to project members, set priorities and due dates, and dispatch work instantly.
-              </p>
-            </div>
-            {/* Live badge */}
-            <span style={{
-              display: 'flex', alignItems: 'center', gap: '5px',
-              padding: '5px 11px', borderRadius: '6px',
-              border: '1px solid #2a2a2e', background: '#1a1a1e',
-              fontSize: '12px', fontWeight: 600, color: '#aaa', flexShrink: 0,
-              marginTop: '4px',
-            }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', flexShrink: 0 }} />
-              Live Dispatcher Ready
-            </span>
-          </div>
-
-          {/* Form Row */}
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '18px' }}>
-            {/* Task Title */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555' }}>
-                TASK TITLE / DESCRIPTION *
-              </label>
-              <input
-                value={taskTitle}
-                onChange={(e) => setTaskTitle(e.target.value)}
-                placeholder="e.g., Implement OAuth2 authentication flow..."
-                style={{
-                  background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px',
-                  padding: '9px 13px', fontSize: '14px', color: '#e5e5e5',
-                  outline: 'none', width: '100%', boxSizing: 'border-box',
-                  fontFamily: 'inherit',
-                }}
-                className="task-input"
-              />
-            </div>
-
-            {/* Assign to Member */}
-            <div style={{ minWidth: '140px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555' }}>
-                ASSIGN TO MEMBER
-              </label>
-              <select
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                style={{
-                  background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px',
-                  padding: '9px 10px', fontSize: '14px', color: '#e5e5e5',
-                  outline: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                  appearance: 'auto',
-                }}
-              >
-                {MEMBER_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-
-            {/* Due Date */}
-            <div style={{ minWidth: '120px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555' }}>
-                DUE DATE TARGET
-              </label>
-              <select
-                value={due}
-                onChange={(e) => setDue(e.target.value)}
-                style={{
-                  background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px',
-                  padding: '9px 10px', fontSize: '14px', color: '#e5e5e5',
-                  outline: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                  appearance: 'auto',
-                }}
-              >
-                {DUE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* Priority + Dispatch Row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            {/* Priority Pills */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '11px', color: '#555', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                PRIORITY:
+        {can('CREATE_TASK') && (
+          <div style={{
+            background: '#141416', border: '1px solid #1f1f24', borderRadius: '10px',
+            padding: '24px 28px', maxWidth: '760px', position: 'relative',
+          }}>
+            {/* Card Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px' }}>
+              <div>
+                <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#555', marginBottom: '6px', margin: '0 0 5px 0' }}>
+                  WORK DISPATCHER
+                </p>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#f5f5f5', margin: 0, letterSpacing: '-0.01em' }}>
+                  Task Assignment Center
+                </h2>
+                <p style={{ fontSize: '13px', color: '#666', marginTop: '6px', lineHeight: 1.5 }}>
+                  Create new tasks, assign them directly to project members, set priorities and due dates, and dispatch work instantly.
+                </p>
+              </div>
+              {/* Live badge */}
+              <span style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: '5px 11px', borderRadius: '6px',
+                border: '1px solid #2a2a2e', background: '#1a1a1e',
+                fontSize: '12px', fontWeight: 600, color: '#aaa', flexShrink: 0,
+                marginTop: '4px',
+              }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', flexShrink: 0 }} />
+                Live Dispatcher Ready
               </span>
-              {PRIORITY_OPTIONS.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPriority(p)}
+            </div>
+
+            {/* Form Row */}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '18px' }}>
+              {/* Task Title */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555' }}>
+                  TASK TITLE / DESCRIPTION *
+                </label>
+                <input
+                  value={taskTitle}
+                  onChange={(e) => setTaskTitle(e.target.value)}
+                  placeholder="e.g., Implement OAuth2 authentication flow..."
                   style={{
-                    padding: '5px 13px', borderRadius: '999px', fontSize: '12px', fontWeight: 500,
-                    border: priority === p ? '1px solid #555' : '1px solid #2a2a2e',
-                    background: priority === p ? '#2a2a2e' : 'transparent',
-                    color: priority === p ? '#f5f5f5' : '#666',
-                    cursor: 'pointer', transition: 'all 120ms',
+                    background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px',
+                    padding: '9px 13px', fontSize: '14px', color: '#e5e5e5',
+                    outline: 'none', width: '100%', boxSizing: 'border-box',
+                    fontFamily: 'inherit',
+                  }}
+                  className="task-input"
+                />
+              </div>
+
+              {/* Assign to Member */}
+              <div style={{ minWidth: '140px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555' }}>
+                  ASSIGN TO MEMBER
+                </label>
+                <select
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                  style={{
+                    background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px',
+                    padding: '9px 10px', fontSize: '14px', color: '#e5e5e5',
+                    outline: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                    appearance: 'auto',
                   }}
                 >
-                  {p}
-                </button>
-              ))}
+                  {MEMBER_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+
+              {/* Due Date */}
+              <div style={{ minWidth: '120px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555' }}>
+                  DUE DATE TARGET
+                </label>
+                <select
+                  value={due}
+                  onChange={(e) => setDue(e.target.value)}
+                  style={{
+                    background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px',
+                    padding: '9px 10px', fontSize: '14px', color: '#e5e5e5',
+                    outline: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                    appearance: 'auto',
+                  }}
+                >
+                  {DUE_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
             </div>
 
-            {/* Dispatch Button */}
-            <button style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 22px', borderRadius: '8px',
-              background: '#f5f5f5', color: '#0e0e10',
-              fontSize: '14px', fontWeight: 700,
-              border: 'none', cursor: 'pointer', letterSpacing: '-0.01em',
-            }}
-              className="hover:bg-[#ddd]"
-            >
-              <Navigation size={14} strokeWidth={2.5} />
-              Assign & Dispatch Task
-            </button>
+            {/* Priority + Dispatch Row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {/* Priority Pills */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#555', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  PRIORITY:
+                </span>
+                {PRIORITY_OPTIONS.map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPriority(p)}
+                    style={{
+                      padding: '5px 13px', borderRadius: '999px', fontSize: '12px', fontWeight: 500,
+                      border: priority === p ? '1px solid #555' : '1px solid #2a2a2e',
+                      background: priority === p ? '#2a2a2e' : 'transparent',
+                      color: priority === p ? '#f5f5f5' : '#666',
+                      cursor: 'pointer', transition: 'all 120ms',
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+
+              {/* Dispatch Button */}
+              <button style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '10px 22px', borderRadius: '8px',
+                background: '#f5f5f5', color: '#0e0e10',
+                fontSize: '14px', fontWeight: 700,
+                border: 'none', cursor: 'pointer', letterSpacing: '-0.01em',
+              }}
+                className="hover:bg-[#ddd]"
+              >
+                <Navigation size={14} strokeWidth={2.5} />
+                Assign & Dispatch Task
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Floating + Button */}
-      <button style={{
-        position: 'fixed', bottom: '24px', right: '28px',
-        width: '44px', height: '44px', borderRadius: '50%',
-        background: '#f5f5f5', color: '#0e0e10',
-        border: 'none', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '22px', fontWeight: 300, lineHeight: 1,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-      }}>
-        +
-      </button>
+      {can('CREATE_TASK') && (
+        <button style={{
+          position: 'fixed', bottom: '24px', right: '28px',
+          width: '44px', height: '44px', borderRadius: '50%',
+          background: '#f5f5f5', color: '#0e0e10',
+          border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '22px', fontWeight: 300, lineHeight: 1,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+        }}>
+          +
+        </button>
+      )}
     </div>
   );
 }

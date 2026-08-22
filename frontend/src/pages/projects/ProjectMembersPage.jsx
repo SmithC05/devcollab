@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMemberStore } from '../../stores/memberStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Search, Plus, X, UserPlus, Trash2 } from 'lucide-react';
 
 const ROLE_COLORS = {
@@ -85,6 +86,7 @@ function AddMemberModal({ onClose }) {
 
 export default function ProjectMembersPage() {
   const { members, removeMember } = useMemberStore();
+  const { can } = useAuthStore();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
 
@@ -99,9 +101,11 @@ export default function ProjectMembersPage() {
           <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Project Members</h1>
           <p style={{ fontSize: '13px', color: '#555', margin: 0 }}>Manage people working on this project.</p>
         </div>
-        <button onClick={() => setShowModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
-          <Plus size={14} strokeWidth={2.5} /> Add Member
-        </button>
+        {can('ADD_MEMBER') && (
+          <button onClick={() => setShowModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
+            <Plus size={14} strokeWidth={2.5} /> Add Member
+          </button>
+        )}
       </div>
 
       <div style={{ position: 'relative', marginBottom: '20px', maxWidth: '340px' }}>
@@ -133,11 +137,20 @@ export default function ProjectMembersPage() {
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#999', flexShrink: 0 }} />
               <span style={{ fontSize: '12px', color: '#999', fontWeight: 500 }}>Active</span>
             </div>
-            {member.role !== 'Owner' && (
-              <button onClick={() => removeMember(member.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', alignItems: 'center', borderRadius: '6px', padding: '4px', transition: 'color 150ms' }} title="Remove member">
-                <Trash2 size={14} />
-              </button>
-            )}
+            {(() => {
+              // Rule: Owner can't be removed here. 
+              if (member.role === 'Owner') return null;
+              // Rule: Admin can only be removed by someone with REMOVE_ADMIN.
+              if (member.role === 'Admin' && !can('REMOVE_ADMIN')) return null;
+              // Rule: Anyone else can be removed by someone with REMOVE_MEMBER.
+              if (!can('REMOVE_MEMBER')) return null;
+
+              return (
+                <button onClick={() => removeMember(member.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', alignItems: 'center', borderRadius: '6px', padding: '4px', transition: 'color 150ms' }} title="Remove member">
+                  <Trash2 size={14} />
+                </button>
+              );
+            })()}
           </div>
         ))}
         {filtered.length === 0 && <div style={{ padding: '32px', textAlign: 'center', color: '#555', fontSize: '13px' }}>No members found.</div>}

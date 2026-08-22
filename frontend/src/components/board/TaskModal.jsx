@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
+import { useAuthStore } from '../../stores/authStore';
 import { X, Trash2 } from 'lucide-react';
 
 const MEMBERS = ['Libin', 'Arjun', 'Priya', 'Rahul', 'Meera'];
@@ -25,6 +26,10 @@ const LABEL_STYLE = {
 export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
   const isEdit = Boolean(task);
   const { addTask, updateTask, deleteTask } = useTaskStore();
+  const { can } = useAuthStore();
+  
+  const canEdit = can('EDIT_TASK');
+  const canDelete = can('DELETE_TASK');
 
   const [form, setForm] = useState({
     title:       task?.title       || '',
@@ -64,10 +69,10 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#f5f5f5', margin: 0 }}>
-            {isEdit ? 'Edit Task' : 'Create Task'}
+            {!canEdit ? 'Task Details' : (isEdit ? 'Edit Task' : 'Create Task')}
           </h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {isEdit && (
+            {isEdit && canDelete && (
               <button onClick={handleDelete} style={{
                 background: '#1a1a1a', border: '1px solid #2a2a2a',
                 color: '#999', borderRadius: '7px', padding: '6px 10px',
@@ -83,25 +88,25 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
         </div>
 
         {/* Fields */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', opacity: canEdit ? 1 : 0.7, pointerEvents: canEdit ? 'auto' : 'none' }}>
           <div>
             <label style={LABEL_STYLE}>Title *</label>
-            <input value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Task title..." style={INPUT_STYLE} autoFocus />
+            <input disabled={!canEdit} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Task title..." style={INPUT_STYLE} autoFocus />
           </div>
           <div>
             <label style={LABEL_STYLE}>Description</label>
-            <textarea value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What needs to be done?" rows={3} style={{ ...INPUT_STYLE, resize: 'vertical' }} />
+            <textarea disabled={!canEdit} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What needs to be done?" rows={3} style={{ ...INPUT_STYLE, resize: 'vertical' }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={LABEL_STYLE}>Status</label>
-              <select value={form.columnId} onChange={(e) => set('columnId', e.target.value)} style={INPUT_STYLE}>
+              <select disabled={!canEdit} value={form.columnId} onChange={(e) => set('columnId', e.target.value)} style={INPUT_STYLE}>
                 {COLUMNS_LIST.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </div>
             <div>
               <label style={LABEL_STYLE}>Priority</label>
-              <select value={form.priority} onChange={(e) => set('priority', e.target.value)} style={INPUT_STYLE}>
+              <select disabled={!canEdit} value={form.priority} onChange={(e) => set('priority', e.target.value)} style={INPUT_STYLE}>
                 {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
@@ -109,30 +114,32 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={LABEL_STYLE}>Assignee</label>
-              <select value={form.assignee} onChange={(e) => set('assignee', e.target.value)} style={INPUT_STYLE}>
+              <select disabled={!canEdit} value={form.assignee} onChange={(e) => set('assignee', e.target.value)} style={INPUT_STYLE}>
                 <option value="">Unassigned</option>
                 {MEMBERS.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
             <div>
               <label style={LABEL_STYLE}>Due Date</label>
-              <input type="date" value={form.dueDate} onChange={(e) => set('dueDate', e.target.value)} style={INPUT_STYLE} />
+              <input disabled={!canEdit} type="date" value={form.dueDate} onChange={(e) => set('dueDate', e.target.value)} style={INPUT_STYLE} />
             </div>
           </div>
           <div>
             <label style={LABEL_STYLE}>Labels (comma separated)</label>
-            <input value={form.labels} onChange={(e) => set('labels', e.target.value)} placeholder="e.g. frontend, auth, bug" style={INPUT_STYLE} />
+            <input disabled={!canEdit} value={form.labels} onChange={(e) => set('labels', e.target.value)} placeholder="e.g. frontend, auth, bug" style={INPUT_STYLE} />
           </div>
         </div>
 
         {/* Actions */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px' }}>
           <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2a', background: 'transparent', color: '#888', cursor: 'pointer' }}>
-            Cancel
+            {canEdit ? 'Cancel' : 'Close'}
           </button>
-          <button onClick={handleSave} style={{ padding: '9px 22px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, border: 'none', background: '#f5f5f5', color: '#080808', cursor: 'pointer' }}>
-            {isEdit ? 'Save Changes' : 'Create Task'}
-          </button>
+          {canEdit && (
+            <button onClick={handleSave} style={{ padding: '9px 22px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, border: 'none', background: '#f5f5f5', color: '#080808', cursor: 'pointer' }}>
+              {isEdit ? 'Save Changes' : 'Create Task'}
+            </button>
+          )}
         </div>
       </div>
     </div>
