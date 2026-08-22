@@ -1,8 +1,9 @@
 import { NavLink, useParams } from 'react-router-dom';
 import {
   LayoutDashboard, Columns3, Activity, Users,
-  BookOpen, Code2, FileCode2, MessageSquare, Sparkles, ChevronLeft,
+  BookOpen, Code2, FileCode2, MessageSquare, Sparkles, ChevronLeft, Settings
 } from 'lucide-react';
+import { useAuthStore, ROLES } from '../../stores/authStore';
 
 const NAV = [
   {
@@ -12,6 +13,7 @@ const NAV = [
       { name: 'Board',              path: 'board',     icon: Columns3 },
       { name: 'Activity',           path: 'activity',  icon: Activity },
       { name: 'Members',            path: 'members',   icon: Users },
+      { name: 'Settings',           path: 'settings',  icon: Settings, action: 'VIEW_SETTINGS' },
     ],
   },
   {
@@ -33,6 +35,7 @@ const NAV = [
 
 export default function ProjectSidebar() {
   const { projectId } = useParams();
+  const { role, setRole, can } = useAuthStore();
   const project = { id: projectId || 'P1', name: projectId || 'P1', avatar: (projectId || 'P')[0].toUpperCase() };
 
   return (
@@ -80,32 +83,36 @@ export default function ProjectSidebar() {
             <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#3a3a3a', margin: '0 0 6px 6px' }}>
               {section.label}
             </p>
-            {section.items.map(({ name, path, icon: Icon }) => (
-              <NavLink
-                key={path}
-                to={`/projects/${project.id}/${path}`}
-                style={({ isActive }) => ({
-                  display: 'flex', alignItems: 'center', gap: '11px',
-                  height: '38px', padding: '0 10px', borderRadius: '8px',
-                  fontSize: '14px', fontWeight: isActive ? 500 : 400,
-                  color: isActive ? '#f5f5f5' : '#666',
-                  background: isActive ? '#1c1c1c' : 'transparent',
-                  textDecoration: 'none', transition: 'background 120ms, color 120ms',
-                  overflow: 'hidden', whiteSpace: 'nowrap',
-                })}
-                className="sidebar-navitem"
-              >
-                <span style={{ width: '18px', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon size={16} strokeWidth={1.75} />
-                </span>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
-              </NavLink>
-            ))}
+            {section.items.map(({ name, path, icon: Icon, action }) => {
+              if (action && !can(action)) return null;
+              
+              return (
+                <NavLink
+                  key={path}
+                  to={`/projects/${project.id}/${path}`}
+                  style={({ isActive }) => ({
+                    display: 'flex', alignItems: 'center', gap: '11px',
+                    height: '38px', padding: '0 10px', borderRadius: '8px',
+                    fontSize: '14px', fontWeight: isActive ? 500 : 400,
+                    color: isActive ? '#f5f5f5' : '#666',
+                    background: isActive ? '#1c1c1c' : 'transparent',
+                    textDecoration: 'none', transition: 'background 120ms, color 120ms',
+                    overflow: 'hidden', whiteSpace: 'nowrap',
+                  })}
+                  className="sidebar-navitem"
+                >
+                  <span style={{ width: '18px', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={16} strokeWidth={1.75} />
+                  </span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+                </NavLink>
+              );
+            })}
           </div>
         ))}
       </div>
 
-      {/* Footer */}
+      {/* Footer / Role Switcher */}
       <div style={{ borderTop: '1px solid #1a1a1a', padding: '14px', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
         <div style={{
           width: '34px', height: '34px', borderRadius: '50%',
@@ -115,9 +122,21 @@ export default function ProjectSidebar() {
         }}>
           L
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Libin</span>
-          <span style={{ fontSize: '11px', color: '#444', marginTop: '2px' }}>Role: Admin</span>
+        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Libin (Dev)</span>
+          <select 
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            style={{ 
+              fontSize: '11px', color: '#888', marginTop: '2px', background: 'transparent', 
+              border: '1px solid #333', borderRadius: '4px', padding: '2px', outline: 'none',
+              cursor: 'pointer', width: '100%'
+            }}
+          >
+            {ROLES.map(r => (
+              <option key={r} value={r} style={{ background: '#111', color: '#fff' }}>Role: {r}</option>
+            ))}
+          </select>
         </div>
       </div>
     </aside>

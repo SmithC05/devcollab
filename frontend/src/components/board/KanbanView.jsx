@@ -12,9 +12,11 @@ import { useTaskStore, COLUMNS } from '../../stores/taskStore';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function KanbanView() {
   const { columns, moveTask, reorderTask } = useTaskStore();
+  const { can } = useAuthStore();
   const [activeTask, setActiveTask] = useState(null);
   const [modalTask, setModalTask] = useState(null); // null = closed, false = new, obj = edit
   const [newTaskColumn, setNewTaskColumn] = useState('todo');
@@ -24,13 +26,14 @@ export default function KanbanView() {
   );
 
   const handleDragStart = ({ active }) => {
+    if (!can('MOVE_TASK')) return;
     const task = Object.values(columns).flat().find((t) => t.id === active.id);
     setActiveTask(task || null);
   };
 
   const handleDragEnd = ({ active, over }) => {
     setActiveTask(null);
-    if (!over) return;
+    if (!can('MOVE_TASK') || !over) return;
 
     const activeId = active.id;
     const overId = over.id;

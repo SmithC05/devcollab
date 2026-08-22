@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { LayoutGrid, List, Calendar, Plus } from 'lucide-react';
 import KanbanView from '../../components/board/KanbanView';
 import TaskModal from '../../components/board/TaskModal';
+import { useAuthStore } from '../../stores/authStore';
 import { useTaskStore } from '../../stores/taskStore';
 
 const VIEWS = [
@@ -13,6 +14,7 @@ const VIEWS = [
 
 export default function ProjectBoardPage() {
   const { projectId } = useParams();
+  const { can } = useAuthStore();
   const [activeView, setActiveView] = useState('board');
   const [showNewTask, setShowNewTask] = useState(false);
   const fetchTasks = useTaskStore(state => state.fetchTasks);
@@ -67,12 +69,14 @@ export default function ProjectBoardPage() {
           </div>
 
           {/* New Task */}
-          <button
-            onClick={() => setShowNewTask(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
-          >
-            <Plus size={15} strokeWidth={2.5} /> New Task
-          </button>
+          {can('CREATE_TASK') && (
+            <button
+              onClick={() => setShowNewTask(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
+            >
+              <Plus size={15} strokeWidth={2.5} /> New Task
+            </button>
+          )}
         </div>
       </div>
 

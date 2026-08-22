@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../../stores/chatStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Hash, Plus, Send, X } from 'lucide-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 
@@ -41,7 +42,7 @@ function ChatSidebar({ channels, activeChannelId, onSelect, onNewChannel }) {
       <div style={{ padding: '16px 14px 12px', borderBottom: '1px solid #1a1a1a' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '12px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Channels</span>
-          <button onClick={onNewChannel} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '2px', borderRadius: '4px', display: 'flex', alignItems: 'center' }} title="New channel"><Plus size={15} /></button>
+          {onNewChannel && <button onClick={onNewChannel} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '2px', borderRadius: '4px', display: 'flex', alignItems: 'center' }} title="New channel"><Plus size={15} /></button>}
         </div>
       </div>
       <div style={{ flex: 1, padding: '8px' }}>
@@ -96,6 +97,7 @@ function MessageBubble({ msg, prevMsg }) {
 
 export default function ProjectChatPage() {
   const { channels, activeChannelId, setActiveChannel, sendMessage, getMessages, getActiveChannel } = useChatStore();
+  const { can } = useAuthStore();
   const [text, setText] = useState('');
   const [showNewChannel, setShowNewChannel] = useState(false);
   const endRef = useRef(null);
@@ -108,7 +110,7 @@ export default function ProjectChatPage() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#080808', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
-      <ChatSidebar channels={channels} activeChannelId={activeChannelId} onSelect={setActiveChannel} onNewChannel={() => setShowNewChannel(true)} />
+      <ChatSidebar channels={channels} activeChannelId={activeChannelId} onSelect={setActiveChannel} onNewChannel={can('CREATE_CHANNEL') ? () => setShowNewChannel(true) : null} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid #1a1a1a', display: 'flex', alignItems: 'center', gap: '8px', background: '#080808', flexShrink: 0 }}>
@@ -128,21 +130,23 @@ export default function ProjectChatPage() {
           <div ref={endRef} />
         </div>
 
-        <div style={{ padding: '12px 20px 16px', borderTop: '1px solid #1a1a1a', flexShrink: 0, background: '#080808' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '8px 12px' }}>
-            <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder={`Message #${activeChannel?.name || 'general'}...`} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: '13px', color: '#e5e5e5', fontFamily: 'inherit' }} />
-            <button
-              onClick={handleSend} disabled={!text.trim()}
-              style={{
-                background: text.trim() ? '#eee' : '#1a1a1a', border: 'none', borderRadius: '7px',
-                color: text.trim() ? '#080808' : '#444', cursor: text.trim() ? 'pointer' : 'default',
-                display: 'flex', alignItems: 'center', padding: '6px 10px', transition: 'background 150ms',
-              }}
-            >
-              <Send size={14} />
-            </button>
+        {can('SEND_MESSAGE') && (
+          <div style={{ padding: '12px 20px 16px', borderTop: '1px solid #1a1a1a', flexShrink: 0, background: '#080808' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', padding: '8px 12px' }}>
+              <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder={`Message #${activeChannel?.name || 'general'}...`} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: '13px', color: '#e5e5e5', fontFamily: 'inherit' }} />
+              <button
+                onClick={handleSend} disabled={!text.trim()}
+                style={{
+                  background: text.trim() ? '#eee' : '#1a1a1a', border: 'none', borderRadius: '7px',
+                  color: text.trim() ? '#080808' : '#444', cursor: text.trim() ? 'pointer' : 'default',
+                  display: 'flex', alignItems: 'center', padding: '6px 10px', transition: 'background 150ms',
+                }}
+              >
+                <Send size={14} />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       {showNewChannel && <NewChannelModal onClose={() => setShowNewChannel(false)} />}
     </div>

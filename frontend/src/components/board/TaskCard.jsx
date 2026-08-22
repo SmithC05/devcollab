@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { PRIORITY_COLORS } from '../../stores/taskStore';
 import { usePresenceStore } from '../../stores/presenceStore';
 import { Calendar } from 'lucide-react';
+import { useAuthStore } from '../../stores/authStore';
 
 function AvatarInitial({ name, size = 22 }) {
   return (
@@ -18,7 +19,12 @@ function AvatarInitial({ name, size = 22 }) {
 }
 
 export default function TaskCard({ task, onClick }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id, data: { type: 'task', task } });
+  const { can } = useAuthStore();
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id: task.id, 
+    data: { type: 'task', task },
+    disabled: !can('MOVE_TASK')
+  });
   const p = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.P2;
   const taskViewers = usePresenceStore(state => state.taskViewers[task.id]) || new Set();
   const viewersArray = Array.from(taskViewers);

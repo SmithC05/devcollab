@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSnippetStore, SUPPORTED_LANGUAGES } from '../../stores/snippetStore';
+import { useAuthStore } from '../../stores/authStore';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Search, Plus, Copy, Trash2, X, Check, Pencil } from 'lucide-react';
@@ -63,7 +64,7 @@ function SnippetModal({ snippet, onClose }) {
   );
 }
 
-function SnippetCard({ snippet, onEdit, onDelete }) {
+function SnippetCard({ snippet, onEdit, onDelete, canEdit, canDelete }) {
   const [copied, setCopied] = useState(false);
   const langColor = LANG_COLORS[snippet.language] || '#888';
 
@@ -95,8 +96,8 @@ function SnippetCard({ snippet, onEdit, onDelete }) {
           </div>
           <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
             <button onClick={handleCopy} title="Copy code" style={ICON_BTN}>{copied ? <Check size={13} color="#ccc" /> : <Copy size={13} />}</button>
-            <button onClick={() => onEdit(snippet)} title="Edit" style={ICON_BTN}><Pencil size={13} /></button>
-            <button onClick={() => onDelete(snippet.id)} title="Delete" style={{ ...ICON_BTN, color: '#555' }}><Trash2 size={13} /></button>
+            {canEdit && <button onClick={() => onEdit(snippet)} title="Edit" style={ICON_BTN}><Pencil size={13} /></button>}
+            {canDelete && <button onClick={() => onDelete(snippet.id)} title="Delete" style={{ ...ICON_BTN, color: '#555' }}><Trash2 size={13} /></button>}
           </div>
         </div>
       </div>
@@ -112,6 +113,7 @@ function SnippetCard({ snippet, onEdit, onDelete }) {
 
 export default function ProjectSnippetsPage() {
   const { searchQuery, activeLanguage, setSearchQuery, setActiveLanguage, getFiltered, deleteSnippet } = useSnippetStore();
+  const { can } = useAuthStore();
   const [modalSnippet, setModalSnippet] = useState(null);
   const snippets = getFiltered();
 
@@ -122,9 +124,11 @@ export default function ProjectSnippetsPage() {
           <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Code Snippets</h1>
           <p style={{ fontSize: '13px', color: '#555', margin: 0 }}>Project-scoped reusable code storage.</p>
         </div>
-        <button onClick={() => setModalSnippet(false)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
-          <Plus size={14} strokeWidth={2.5} /> Save Snippet
-        </button>
+        {can('CREATE_SNIPPET') && (
+          <button onClick={() => setModalSnippet(false)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
+            <Plus size={14} strokeWidth={2.5} /> Save Snippet
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -139,7 +143,12 @@ export default function ProjectSnippetsPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px' }}>
-        {snippets.map((s) => <SnippetCard key={s.id} snippet={s} onEdit={(snip) => setModalSnippet(snip)} onDelete={deleteSnippet} />)}
+        {snippets.map((s) => (
+          <SnippetCard 
+            key={s.id} snippet={s} onEdit={(snip) => setModalSnippet(snip)} onDelete={deleteSnippet} 
+            canEdit={can('EDIT_SNIPPET')} canDelete={can('DELETE_SNIPPET')} 
+          />
+        ))}
         {snippets.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#555', padding: '48px', fontSize: '14px' }}>No snippets found. Save your first snippet →</div>}
       </div>
 
