@@ -15,7 +15,7 @@ class MLIntegrationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create(username="TestUser", email="test@devcollab.io")
         self.candidate = User.objects.create(username="Candidate", email="smith@devcollab.io")
-        self.workspace = Workspace.objects.create(name="Test Workspace")
+        self.workspace = Workspace.objects.create(name="Test Workspace", owner=self.user)
         self.project = Project.objects.create(name="Test Project", workspace=self.workspace)
         self.task = Task.objects.create(title="Test Task", project=self.project, assignee=self.user, status="In Progress")
         self.client = Client()

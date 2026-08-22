@@ -1,5 +1,6 @@
 import logging
 import joblib
+import xgboost as xgb
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,21 @@ class ModelLoader:
                 "mae": 0.30,
                 "r2": 0.79
             }
+        },
+        "duration": {
+            "name": "duration_model",
+            "artifact": "duration_xgb.json",
+            "artifact_type": "xgboost",
+            "preprocessor": "duration_preprocessor.pkl",
+            "feature_version": "v1",
+            "metrics": {}
+        },
+        "risk": {
+            "name": "risk_model",
+            "artifact": "risk_model.pkl",
+            "artifact_type": "joblib",
+            "feature_version": "v1",
+            "metrics": {}
         }
     }
 
@@ -47,8 +63,27 @@ class ModelLoader:
                 raise FileNotFoundError(f"Missing ML artifact: {model_path}")
             
             try:
-                model = joblib.load(model_path)
-                cls._models[model_name] = model
+                artifact_type = metadata.get("artifact_type", "joblib")
+                if artifact_type == "xgboost":
+                    model = xgb.XGBRegressor()
+                    model.load_model(model_path)
+                else:
+                    model = joblib.load(model_path)
+                
+                preprocessor = None
+                if "preprocessor" in metadata:
+                    prep_path = BASE_DIR / "models" / metadata["preprocessor"]
+                    if prep_path.exists():
+                        preprocessor = joblib.load(prep_path)
+                    else:
+                        logger.error(f"Missing preprocessor: {prep_path}")
+                        raise FileNotFoundError(f"Missing preprocessor: {prep_path}")
+                
+                if preprocessor:
+                    cls._models[model_name] = {"model": model, "preprocessor": preprocessor}
+                else:
+                    cls._models[model_name] = model
+                    
                 logger.info(f"Successfully loaded {model_name} from {model_path}")
             except Exception as e:
                 logger.error(f"Failed to load ML model {model_name}: {str(e)}")

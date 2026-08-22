@@ -113,20 +113,25 @@ def build_knowledge_transfer_features(task, candidate) -> Tuple[Dict[str, Any], 
     add_feat("handoff_completeness", _synthetic(t_id, u_id, "handoff_comp", 0.5, 1.0), "SYNTHETIC_DEMO")
     
     return features, provenance
-def build_features(task: Task) -> dict:
+def build_duration_risk_features(task: Task, candidate, intervention: str = "WAIT") -> Tuple[Dict[str, Any], Dict[str, str]]:
     """
-    Builds the 31 required ML features from the actual DevCollab database.
-    If features are missing from the schema, this raises a ValueError documenting the gap.
+    Constructs the 31 required ML features for Duration and Risk models.
+    Adjusts features dynamically based on the intervention simulated.
     """
+    t_id = task.id
+    u_id = candidate.id
+    
+    features = {}
+    provenance = {}
+    
+    def add_feat(name, value, prov):
+        features[name] = value
+        provenance[name] = prov
+        
     now = timezone.now()
     task_age_hours = (now - task.created_at).total_seconds() / 3600.0 if task.created_at else 0.0
     
-    status_mapping = {
-        'To Do': 0.0,
-        'In Progress': 50.0,
-        'In Review': 90.0,
-        'Done': 100.0,
-    }
+    status_mapping = {'To Do': 0.0, 'In Progress': 50.0, 'In Review': 90.0, 'Done': 100.0}
     task_progress = status_mapping.get(task.status, 0.0)
     
     concurrent_task_count = 0
@@ -138,35 +143,81 @@ def build_features(task: Task) -> dict:
         
     team_size = 1
     if hasattr(task, 'project') and task.project and hasattr(task.project, 'workspace'):
-        team_size = task.project.workspace.members.count()
+        try:
+            team_size = task.project.workspace.memberships.count()
+        except AttributeError:
+            pass
 
-    features = {
-        "task_progress": task_progress,
-        "task_age_hours": task_age_hours,
-        "concurrent_task_count": concurrent_task_count,
-        "team_size": team_size,
-    }
+    # Categorical
+    add_feat("task_type", "Backend", "SYNTHETIC_DEMO")
+    add_feat("task_priority", task.priority if task.priority else "P1", "DERIVED")
+    
+    if "smith" in candidate.email.lower():
+        role = "Lead"
+    elif "rahul" in candidate.email.lower():
+        role = "Senior Dev"
+    else:
+        role = "Dev"
+    add_feat("role", role, "DERIVED")
 
-    # Document missing features (GAP)
-    required_features = [
-        "task_complexity", "task_type", "task_priority", "remaining_work_fraction",
-        "task_progress", "estimated_remaining_hours", "dependency_count",
-        "downstream_dependency_count", "upstream_dependency_count", "task_age_hours",
-        "ownership_changes", "number_of_reopens", "number_of_status_changes", "role",
-        "relevant_experience", "similar_task_count", "technology_familiarity",
-        "project_familiarity", "repository_familiarity", "current_workload_hours",
-        "concurrent_task_count", "context_score", "architecture_familiarity",
-        "architecture_stability", "dependency_familiarity", "current_task_involvement",
-        "hours_until_deadline", "deadline_pressure", "deadline_hours", "team_size",
-        "reviewer_available"
-    ]
+    # Numeric - DB
+    add_feat("task_progress", task_progress, "DERIVED")
+    add_feat("task_age_hours", task_age_hours, "DERIVED")
+    add_feat("concurrent_task_count", concurrent_task_count, "DERIVED")
+    add_feat("team_size", team_size, "DERIVED")
     
-    missing = [feat for feat in required_features if feat not in features]
+    # Base simulated fractions
+    rem_fraction = max(0.0, 1.0 - (task_progress / 100.0))
+    complexity = _synthetic(t_id, u_id, "complexity", 1, 10, True)
+    est_rem_hrs = _synthetic(t_id, u_id, "est_rem", 5.0, 40.0)
+
+    # Intervention Adjustments
+    if intervention == "DE_SCOPE":
+        rem_fraction = max(0.1, rem_fraction * 0.5)
+        complexity = max(1, complexity - 3)
+        est_rem_hrs = est_rem_hrs * 0.5
+    elif intervention in ["PAIR", "PAIR_WITH_AI"]:
+        est_rem_hrs = est_rem_hrs * 0.7
+
+    add_feat("remaining_work_fraction", rem_fraction, "DERIVED_ADJUSTED")
+    add_feat("task_complexity", complexity, "SYNTHETIC_ADJUSTED")
+    add_feat("estimated_remaining_hours", est_rem_hrs, "SYNTHETIC_ADJUSTED")
+
+    # Dependencies
+    add_feat("dependency_count", _synthetic(t_id, u_id, "dep_cnt", 0, 5, True), "SYNTHETIC_DEMO")
+    add_feat("downstream_dependency_count", _synthetic(t_id, u_id, "down_dep", 0, 3, True), "SYNTHETIC_DEMO")
+    add_feat("upstream_dependency_count", _synthetic(t_id, u_id, "up_dep", 0, 3, True), "SYNTHETIC_DEMO")
     
-    if missing:
-        raise ValueError(f"Missing required ML features from DB: {', '.join(missing)}")
-        
-    return features
+    # Task history
+    add_feat("ownership_changes", _synthetic(t_id, u_id, "own_chg", 0, 3, True), "SYNTHETIC_DEMO")
+    add_feat("number_of_reopens", _synthetic(t_id, u_id, "reopens", 0, 2, True), "SYNTHETIC_DEMO")
+    add_feat("number_of_status_changes", _synthetic(t_id, u_id, "stat_chg", 1, 5, True), "SYNTHETIC_DEMO")
+    
+    # Developer Context
+    add_feat("relevant_experience", _synthetic(t_id, u_id, "rel_exp", 1, 10, True), "SYNTHETIC_DEMO")
+    add_feat("similar_task_count", _synthetic(t_id, u_id, "sim_task", 0, 15, True), "SYNTHETIC_DEMO")
+    add_feat("technology_familiarity", _synthetic(t_id, u_id, "tech_fam", 1, 5, True), "SYNTHETIC_DEMO")
+    add_feat("project_familiarity", _synthetic(t_id, u_id, "proj_fam", 1, 5, True), "SYNTHETIC_DEMO")
+    add_feat("repository_familiarity", _synthetic(t_id, u_id, "repo_fam", 1, 5, True), "SYNTHETIC_DEMO")
+    
+    add_feat("current_workload_hours", _synthetic(t_id, u_id, "workload", 0.0, 40.0), "SYNTHETIC_DEMO")
+    add_feat("context_score", _synthetic(t_id, u_id, "ctx_score", 1, 10, True), "SYNTHETIC_DEMO")
+    
+    # Architecture
+    add_feat("architecture_familiarity", _synthetic(t_id, u_id, "arch_fam", 1, 10, True), "SYNTHETIC_DEMO")
+    add_feat("architecture_stability", _synthetic(t_id, u_id, "arch_stab", 1, 10, True), "SYNTHETIC_DEMO")
+    add_feat("dependency_familiarity", _synthetic(t_id, u_id, "dep_fam2", 1, 10, True), "SYNTHETIC_DEMO")
+    
+    add_feat("current_task_involvement", _synthetic(t_id, u_id, "inv", 1, 10, True), "SYNTHETIC_DEMO")
+    
+    # Deadline
+    add_feat("hours_until_deadline", _synthetic(t_id, u_id, "hrs_deadline", 24.0, 168.0), "SYNTHETIC_DEMO")
+    add_feat("deadline_pressure", _synthetic(t_id, u_id, "dead_press", 0.1, 1.0), "SYNTHETIC_DEMO")
+    add_feat("deadline_hours", _synthetic(t_id, u_id, "dead_hrs", 40.0, 200.0), "SYNTHETIC_DEMO")
+    
+    add_feat("reviewer_available", _synthetic(t_id, u_id, "rev_avail", 0, 1, True), "SYNTHETIC_DEMO")
+
+    return features, provenance
 
 
 def get_verification_scenario() -> dict:

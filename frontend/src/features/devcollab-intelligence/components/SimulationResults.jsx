@@ -73,9 +73,9 @@ export function SimulationResults({ result }) {
                 <tr style={{ borderBottom: '1px solid var(--dv-border-subtle)' }}>
                   <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>INTERVENTION</th>
                   <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>CANDIDATE</th>
-                  <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>COMPLETION (EST)</th>
+                  <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>REMAINING TIME</th>
                   <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>TRANSFER EFFORT</th>
-                  <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>RISK</th>
+                  <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>EXECUTION RISK</th>
                   <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>DEADLINE MISS PROB</th>
                 </tr>
               </thead>
@@ -95,16 +95,23 @@ export function SimulationResults({ result }) {
                     <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-primary)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Clock size={12} color="var(--dv-text-faint)" />
-                        {fmtHrs(inv.estimated_completion)}
+                        {inv.predicted_remaining_hours !== undefined ? `${inv.predicted_remaining_hours} hours` : fmtHrs(inv.estimated_completion)}
                       </div>
                     </td>
                     <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
                        {fmtHrs(inv.predicted_transfer_effort_hours)}
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <DvBadge variant={inv.risk === 'HIGH' ? 'danger' : inv.risk === 'MEDIUM' ? 'warning' : 'success'} dot>
-                        {inv.risk}
-                      </DvBadge>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {inv.risk_probability !== undefined && (
+                          <span style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-primary)' }}>
+                            {Math.round(inv.risk_probability * 100)}%
+                          </span>
+                        )}
+                        <DvBadge variant={inv.risk === 'HIGH' ? 'danger' : inv.risk === 'MEDIUM' ? 'warning' : 'success'} dot>
+                          {inv.risk_class !== undefined ? (inv.risk_class === 1 ? 'HIGH' : (inv.risk_probability < 0.25 ? 'LOW' : 'MEDIUM')) : inv.risk}
+                        </DvBadge>
+                      </div>
                     </td>
                     <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
                        {inv.deadline_probability !== null ? `${Math.round(inv.deadline_probability * 100)}%` : '—'}

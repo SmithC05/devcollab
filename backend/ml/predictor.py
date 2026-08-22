@@ -1,6 +1,7 @@
 import pandas as pd
+import numpy as np
 from .loader import ModelLoader
-from .feature_builder import build_context_transfer_features, build_knowledge_transfer_features
+from .feature_builder import build_context_transfer_features, build_knowledge_transfer_features, build_duration_risk_features
 
 def _strip_provenance(features: dict) -> dict:
     """
@@ -53,3 +54,35 @@ def predict_knowledge_transfer(task, candidate) -> dict:
         "predicted_reduction_hours": round(predicted_reduction_hours, 2),
         "provenance": provenance
     }
+
+def predict_duration(task, candidate, intervention: str = "WAIT") -> float:
+    """Predicts task duration in hours."""
+    model_data = ModelLoader.get_model("duration")
+    model = model_data["model"]
+    preprocessor = model_data["preprocessor"]
+    
+    features, provenance = build_duration_risk_features(task, candidate, intervention)
+    inference_payload = _strip_provenance(features)
+    
+    df = pd.DataFrame([inference_payload])
+    X_transformed = preprocessor.transform(df)
+    log_pred = model.predict(X_transformed)[0]
+    
+    pred = np.expm1(log_pred)
+    if pred < 0:
+        pred = 0.0
+        
+    return round(float(pred), 2)
+
+def predict_risk(task, candidate, intervention: str = "WAIT") -> tuple:
+    """Predicts probability and risk class of execution rework."""
+    model = ModelLoader.get_model("risk")
+    
+    features, provenance = build_duration_risk_features(task, candidate, intervention)
+    inference_payload = _strip_provenance(features)
+    
+    df = pd.DataFrame([inference_payload])
+    proba = model.predict_proba(df)[0][1]
+    risk_class = 1 if proba >= 0.50 else 0
+    
+    return round(float(proba), 2), risk_class

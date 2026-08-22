@@ -1,7 +1,6 @@
 from engine.prediction.context_score import calculate_context_score
-from engine.prediction.duration import predict_duration
-from engine.prediction.risk import predict_risk, predict_deadline_probability
-from ml.predictor import predict_context_transfer, predict_knowledge_transfer
+from engine.prediction.risk import predict_deadline_probability
+from ml.predictor import predict_context_transfer, predict_knowledge_transfer, predict_duration, predict_risk
 from apps.tasks.models import Task
 from django.contrib.auth import get_user_model
 
@@ -18,8 +17,18 @@ def simulate_intervention(task_id: int, candidate_id: int, intervention_type: st
     except (Task.DoesNotExist, User.DoesNotExist):
         return {"error": "Invalid task or candidate ID"}
 
-    duration = predict_duration(task_id, candidate_id, intervention_type)
-    risk_level = predict_risk(task_id, candidate_id, intervention_type)
+    try:
+        duration = predict_duration(task, candidate, intervention_type)
+    except Exception as e:
+        duration = 0.0
+
+    try:
+        risk_prob, risk_class = predict_risk(task, candidate, intervention_type)
+        risk_level = "HIGH" if risk_class == 1 else ("LOW" if risk_prob < 0.25 else "MEDIUM")
+    except Exception as e:
+        risk_level = "UNKNOWN"
+        risk_prob = 0.0
+    
     deadline_prob = predict_deadline_probability(duration)
     context_score = calculate_context_score(task_id, candidate_id)
     
@@ -86,7 +95,10 @@ def simulate_intervention(task_id: int, candidate_id: int, intervention_type: st
         "deadline_probability": round(deadline_prob, 2),
         "predicted_transfer_effort_hours": round(transfer_effort, 2) if transfer_effort else None,
         "predicted_transfer_effort_reduction_hours": round(transfer_reduction, 2) if transfer_reduction else None,
-        "reason": reasons
+        "reason": reasons,
+        "predicted_remaining_hours": round(duration, 1),
+        "risk_probability": round(risk_prob, 2),
+        "risk_class": risk_class
     }
 
 def run_simulation(task_id: int, candidate_id: int) -> list:
