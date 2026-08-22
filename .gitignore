@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Environment variables — NEVER commit real secrets
+.env
+!.env.example
+
+# Django
+*.sqlite3
+db.sqlite3
+staticfiles/
+media/
+local_settings.py
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Coverage / test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# ML artefacts (large binary files — store in DVC or similar)
+*.pkl
+*.joblib
+*.model
+*.bin
+ml/models/*.pkl
+ml/models/*.joblib

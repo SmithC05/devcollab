@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* --------------------------------------------------------
+   Design tokens — Engineering Decision Twin
+   -------------------------------------------------------- */
+:root {
+  --color-bg:        #0a0f1e;
+  --color-surface:   #111827;
+  --color-border:    #1f2937;
+  --color-primary:   #6366f1;
+  --color-accent:    #22d3ee;
+  --color-success:   #10b981;
+  --color-error:     #ef4444;
+  --color-text:      #f9fafb;
+  --color-muted:     #6b7280;
+  --radius:          0.75rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
