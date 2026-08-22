@@ -7,7 +7,9 @@ import ProjectActivityPage  from './pages/projects/ProjectActivityPage';
 import ProjectMembersPage   from './pages/projects/ProjectMembersPage';
 import ProjectWikiPage      from './pages/projects/ProjectWikiPage';
 import ProjectSnippetsPage  from './pages/projects/ProjectSnippetsPage';
+import ProjectEditorPage    from './pages/projects/ProjectEditorPage';
 import ProjectChatPage      from './pages/projects/ProjectChatPage';
+import ProjectSettingsPage  from './pages/projects/ProjectSettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
@@ -42,11 +44,14 @@ export default function App() {
             {/* KNOWLEDGE & DEV */}
             <Route path="wiki"      element={<ProjectWikiPage />} />
             <Route path="snippets"  element={<ProjectSnippetsPage />} />
-            <Route path="editor"    element={<PlaceholderPage title="Editor" subtitle="Cloud-based code editor — coming in next phase." />} />
+            <Route path="editor"    element={<ProjectEditorPage />} />
 
             {/* TEAM & AI */}
             <Route path="chat"      element={<ProjectChatPage />} />
             <Route path="ai"        element={<PlaceholderPage title="AI Assistant" subtitle="Context-aware project intelligence — coming soon." />} />
+
+            {/* SETTINGS */}
+            <Route path="settings"  element={<ProjectSettingsPage />} />
           </Route>
         </Route>
 

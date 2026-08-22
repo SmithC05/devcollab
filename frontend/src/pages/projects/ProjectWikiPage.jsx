@@ -1,19 +1,22 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useWikiStore } from '../../stores/wikiStore';
+import { useAuthStore } from '../../stores/authStore';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Plus, Trash2, Bold, Italic, List, ListOrdered, Code, Heading2 } from 'lucide-react';
 
-function WikiSidebar({ pages, activePage, onSelect, onCreate, onDelete }) {
+function WikiSidebar({ pages, activePage, onSelect, onCreate, onDelete, canCreate, canDelete }) {
   return (
     <div style={{ width: '220px', minWidth: '220px', background: '#0e0e0e', borderRight: '1px solid #1e1e1e', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       <div style={{ padding: '16px 14px 12px', borderBottom: '1px solid #1a1a1a' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '12px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Pages</span>
-          <button onClick={onCreate} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', borderRadius: '4px', padding: '2px', transition: 'color 150ms' }} title="New page">
-            <Plus size={15} />
-          </button>
+          {canCreate && (
+            <button onClick={onCreate} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', borderRadius: '4px', padding: '2px', transition: 'color 150ms' }} title="New page">
+              <Plus size={15} />
+            </button>
+          )}
         </div>
       </div>
       <div style={{ flex: 1, padding: '8px' }}>
@@ -30,7 +33,7 @@ function WikiSidebar({ pages, activePage, onSelect, onCreate, onDelete }) {
             }}
           >
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{page.title}</span>
-            {activePage?.id === page.id && (
+            {activePage?.id === page.id && canDelete && (
               <button onClick={(e) => { e.stopPropagation(); onDelete(page.id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#555', display: 'flex', alignItems: 'center', padding: '1px', borderRadius: '3px', flexShrink: 0, marginLeft: '6px' }}>
                 <Trash2 size={12} />
               </button>
@@ -61,14 +64,24 @@ function ToolbarButton({ onClick, active, children, title }) {
 
 export default function ProjectWikiPage() {
   const { pages, activePage, setActivePage, createPage, updatePage, deletePage } = useWikiStore();
+  const { can } = useAuthStore();
   const [titleEdit, setTitleEdit] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+  const canEdit = can('EDIT_WIKI');
 
   const editor = useEditor({
     extensions: [StarterKit, Placeholder.configure({ placeholder: 'Start writing your documentation...' })],
     content: activePage?.content || '',
-    onUpdate: ({ editor }) => { if (activePage) updatePage(activePage.id, { content: editor.getHTML() }); },
-  }, [activePage?.id]);
+    editable: canEdit,
+    onUpdate: ({ editor }) => { if (activePage && canEdit) updatePage(activePage.id, { content: editor.getHTML() }); },
+  }, [activePage?.id, canEdit]);
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(canEdit);
+    }
+  }, [canEdit, editor]);
 
   const handleSelectPage = useCallback((pageId) => {
     setActivePage(pageId);
@@ -94,10 +107,14 @@ export default function ProjectWikiPage() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#080808', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
-      <WikiSidebar pages={pages} activePage={activePage} onSelect={handleSelectPage} onCreate={handleCreatePage} onDelete={handleDeletePage} />
+      <WikiSidebar 
+        pages={pages} activePage={activePage} onSelect={handleSelectPage} 
+        onCreate={handleCreatePage} onDelete={handleDeletePage} 
+        canCreate={can('CREATE_WIKI')} canDelete={can('DELETE_WIKI')}
+      />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {editor && (
+        {editor && canEdit && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '8px 16px', borderBottom: '1px solid #1a1a1a', background: '#0e0e0e', flexShrink: 0 }}>
             <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><Bold size={14} /></ToolbarButton>
             <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic"><Italic size={14} /></ToolbarButton>
@@ -111,10 +128,10 @@ export default function ProjectWikiPage() {
         )}
 
         <div style={{ padding: '24px 32px 0', flexShrink: 0 }}>
-          {isEditingTitle ? (
+          {isEditingTitle && canEdit ? (
             <input autoFocus value={titleEdit} onChange={(e) => setTitleEdit(e.target.value)} onBlur={handleTitleSave} onKeyDown={(e) => { if (e.key === 'Enter') handleTitleSave(); if (e.key === 'Escape') setIsEditingTitle(false); }} style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '26px', fontWeight: 700, color: '#f5f5f5', width: '100%', fontFamily: 'inherit', marginBottom: '4px' }} />
           ) : (
-            <h1 onClick={() => { setTitleEdit(activePage?.title || ''); setIsEditingTitle(true); }} style={{ fontSize: '26px', fontWeight: 700, color: '#f5f5f5', margin: '0 0 4px 0', cursor: 'text', letterSpacing: '-0.02em' }} title="Click to rename">
+            <h1 onClick={() => { if(canEdit) { setTitleEdit(activePage?.title || ''); setIsEditingTitle(true); } }} style={{ fontSize: '26px', fontWeight: 700, color: '#f5f5f5', margin: '0 0 4px 0', cursor: canEdit ? 'text' : 'default', letterSpacing: '-0.02em' }} title={canEdit ? "Click to rename" : ""}>
               {activePage?.title || 'No page selected'}
             </h1>
           )}
