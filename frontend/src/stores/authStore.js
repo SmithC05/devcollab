@@ -2,48 +2,57 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi } from '../api/authApi';
 
-export const ROLES = ['Owner', 'Admin', 'Lead', 'Dev', 'Viewer'];
+export const ROLES = ['Owner', 'Admin', 'Lead', 'Dev'];
 
 export const PERMISSIONS = {
-  // Project Settings
-  DELETE_PROJECT:  ['Owner'],
-  ARCHIVE_PROJECT: ['Owner', 'Admin'],
-  RENAME_PROJECT:  ['Owner', 'Admin'],
-  VIEW_SETTINGS:   ['Owner', 'Admin'],
+  // Project
+  'project.view':      ['Owner', 'Admin', 'Lead', 'Dev'],
+  'project.settings':  ['Owner', 'Admin'],
+  'project.delete':    ['Owner'],
+  'project.ownership': ['Owner'],
+
+  // Task / Board
+  'task.view':      ['Owner', 'Admin', 'Lead', 'Dev'],
+  'task.create':    ['Owner', 'Admin', 'Lead', 'Dev'],
+  'task.edit':      ['Owner', 'Admin', 'Lead', 'Dev'],
+  'task.delete':    ['Owner', 'Admin', 'Lead'],
+  'task.move':      ['Owner', 'Admin', 'Lead', 'Dev'],
+  'task.assign':    ['Owner', 'Admin', 'Lead'],
+  'board.manage':   ['Owner', 'Admin'],
 
   // Members
-  ADD_MEMBER:        ['Owner', 'Admin', 'Lead'],
-  REMOVE_ADMIN:      ['Owner'],
-  REMOVE_MEMBER:     ['Owner', 'Admin', 'Lead'],
-  CHANGE_ROLE_ADMIN: ['Owner'],
-  CHANGE_ROLE:       ['Owner', 'Admin'],
+  'member.view':        ['Owner', 'Admin', 'Lead', 'Dev'],
+  'member.add':         ['Owner', 'Admin'],
+  'member.remove':      ['Owner', 'Admin'],
+  'member.role.change': ['Owner', 'Admin'],
 
-  // Board
-  MANAGE_COLUMNS: ['Owner', 'Admin'],
-  CREATE_TASK:    ['Owner', 'Admin', 'Lead', 'Dev'],
-  EDIT_TASK:      ['Owner', 'Admin', 'Lead', 'Dev'],
-  DELETE_TASK:    ['Owner', 'Admin', 'Lead'],
-  MOVE_TASK:      ['Owner', 'Admin', 'Lead', 'Dev'],
-
-  // Knowledge & Chat
-  CREATE_WIKI:    ['Owner', 'Admin', 'Lead', 'Dev'],
-  EDIT_WIKI:      ['Owner', 'Admin', 'Lead', 'Dev'],
-  DELETE_WIKI:    ['Owner', 'Admin', 'Lead'],
+  // Knowledge (Wiki & Snippets)
+  'wiki.view':    ['Owner', 'Admin', 'Lead', 'Dev'],
+  'wiki.create':  ['Owner', 'Admin', 'Lead', 'Dev'],
+  'wiki.edit':    ['Owner', 'Admin', 'Lead', 'Dev'],
+  'wiki.delete':  ['Owner', 'Admin', 'Lead'],
   
-  CREATE_SNIPPET: ['Owner', 'Admin', 'Lead', 'Dev'],
-  EDIT_SNIPPET:   ['Owner', 'Admin', 'Lead', 'Dev'],
-  DELETE_SNIPPET: ['Owner', 'Admin', 'Lead'],
-
-  SEND_MESSAGE:   ['Owner', 'Admin', 'Lead', 'Dev'],
-  CREATE_CHANNEL: ['Owner', 'Admin', 'Lead'],
+  'snippet.view':   ['Owner', 'Admin', 'Lead', 'Dev'],
+  'snippet.create': ['Owner', 'Admin', 'Lead', 'Dev'],
+  'snippet.edit':   ['Owner', 'Admin', 'Lead', 'Dev'],
+  'snippet.delete': ['Owner', 'Admin', 'Lead'],
 
   // Editor
-  EDITOR_VIEW:        ['Owner', 'Admin', 'Lead', 'Dev', 'Viewer'],
-  EDITOR_EDIT:        ['Owner', 'Admin', 'Lead', 'Dev'],
-  EDITOR_CREATE_FILE: ['Owner', 'Admin', 'Lead', 'Dev'],
-  EDITOR_RENAME_FILE: ['Owner', 'Admin', 'Lead', 'Dev'],
-  EDITOR_DELETE_FILE: ['Owner', 'Admin', 'Lead'],
-  EDITOR_SAVE:        ['Owner', 'Admin', 'Lead', 'Dev'],
+  'editor.view':        ['Owner', 'Admin', 'Lead', 'Dev'],
+  'editor.edit':        ['Owner', 'Admin', 'Lead', 'Dev'],
+  'editor.file.create': ['Owner', 'Admin', 'Lead', 'Dev'],
+  'editor.file.rename': ['Owner', 'Admin', 'Lead', 'Dev'],
+  'editor.file.delete': ['Owner', 'Admin', 'Lead', 'Dev'],
+
+  // Chat
+  'chat.view':      ['Owner', 'Admin', 'Lead', 'Dev'],
+  'chat.send':      ['Owner', 'Admin', 'Lead', 'Dev'],
+  'channel.create': ['Owner', 'Admin', 'Lead'],
+
+  // AI
+  'ai.view':    ['Owner', 'Admin', 'Lead', 'Dev'],
+  'ai.use':     ['Owner', 'Admin', 'Lead', 'Dev'],
+  'ai.execute': ['Owner', 'Admin', 'Lead', 'Dev'],
 };
 
 export function hasPermission(role, action) {
@@ -99,7 +108,7 @@ export const useAuthStore = create(
       setRole: (role) => set({ role }),
 
       can: (action) => {
-        const currentRole = get().role || 'Viewer';
+        const currentRole = get().role || 'Dev';
         return hasPermission(currentRole, action);
       }
     }),

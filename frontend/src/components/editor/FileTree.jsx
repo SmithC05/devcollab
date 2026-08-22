@@ -105,12 +105,12 @@ function FileTreeNode({ item, level }) {
 
         {isHovered && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', zIndex: 1 }}>
-            {can('EDITOR_RENAME_FILE') && (
+            {can('editor.file.rename') && (
               <button onClick={handleRename} style={actionBtnStyle} title="Rename">
                 <Edit2 size={12} />
               </button>
             )}
-            {can('EDITOR_DELETE_FILE') && (
+            {can('editor.file.delete') && (
               <button onClick={handleDelete} style={actionBtnStyle} title="Delete">
                 <Trash2 size={12} />
               </button>

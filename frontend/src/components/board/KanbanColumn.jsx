@@ -37,7 +37,7 @@ export default function KanbanColumn({ column, tasks, onTaskClick, onAddTask }) 
             {tasks.length}
           </span>
         </div>
-        {can('CREATE_TASK') && (
+        {can('task.create') && (
           <button
             onClick={() => onAddTask(column.id)}
             style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px', borderRadius: '4px' }}

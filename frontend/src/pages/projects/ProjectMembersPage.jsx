@@ -101,7 +101,7 @@ export default function ProjectMembersPage() {
           <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Project Members</h1>
           <p style={{ fontSize: '13px', color: '#555', margin: 0 }}>Manage people working on this project.</p>
         </div>
-        {can('ADD_MEMBER') && (
+        {can('member.add') && (
           <button onClick={() => setShowModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: '#f5f5f5', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>
             <Plus size={14} strokeWidth={2.5} /> Add Member
           </button>
@@ -141,9 +141,9 @@ export default function ProjectMembersPage() {
               // Rule: Owner can't be removed here. 
               if (member.role === 'Owner') return null;
               // Rule: Admin can only be removed by someone with REMOVE_ADMIN.
-              if (member.role === 'Admin' && !can('REMOVE_ADMIN')) return null;
+              if (member.role === 'Admin' && !can('member.remove')) return null;
               // Rule: Anyone else can be removed by someone with REMOVE_MEMBER.
-              if (!can('REMOVE_MEMBER')) return null;
+              if (!can('member.remove')) return null;
 
               return (
                 <button onClick={() => removeMember(member.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', alignItems: 'center', borderRadius: '6px', padding: '4px', transition: 'color 150ms' }} title="Remove member">
