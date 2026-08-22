@@ -6,16 +6,50 @@ import {
   useSensor,
   useSensors,
   closestCorners,
+  useDroppable,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
+import { Trash2 } from 'lucide-react';
 import { useTaskStore, COLUMNS } from '../../stores/taskStore';
+import { useActivityStore } from '../../stores/activityStore';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
 import { useAuthStore } from '../../stores/authStore';
 
+function DeleteZone() {
+  const { isOver, setNodeRef } = useDroppable({ id: 'delete-zone' });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        position: 'fixed', bottom: '32px', right: '32px',
+        width: '220px', height: '140px', borderRadius: '16px',
+        background: isOver ? 'rgba(255, 74, 74, 0.15)' : 'rgba(15, 15, 15, 0.95)',
+        border: `2px dashed ${isOver ? '#ff4a4a' : '#333'}`,
+        color: isOver ? '#ff4a4a' : '#888',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
+        zIndex: 1000,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        transition: 'all 0.2s',
+        backdropFilter: 'blur(8px)',
+      }}
+    >
+      <Trash2 size={32} />
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ margin: 0, fontWeight: 700, fontSize: '15px', color: isOver ? '#ff4a4a' : '#e5e5e5' }}>
+          {isOver ? 'Release to permanently delete' : 'Delete Task'}
+        </p>
+        <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>
+          Drop to delete task
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function KanbanView() {
-  const { columns, moveTask, reorderTask } = useTaskStore();
+  const { columns, moveTask, reorderTask, deleteTask } = useTaskStore();
+  const { addEvent } = useActivityStore();
   const { can } = useAuthStore();
   const [activeTask, setActiveTask] = useState(null);
   const [modalTask, setModalTask] = useState(null); // null = closed, false = new, obj = edit
@@ -32,12 +66,21 @@ export default function KanbanView() {
   };
 
   const handleDragEnd = ({ active, over }) => {
+    const task = activeTask;
     setActiveTask(null);
     if (!can('task.move') || !over) return;
 
     const activeId = active.id;
     const overId = over.id;
     if (activeId === overId) return;
+
+    if (overId === 'delete-zone') {
+      if (can('task.delete')) {
+        deleteTask(activeId);
+        addEvent({ type: 'task', user: 'You', action: `deleted task "${task?.title}"` });
+      }
+      return;
+    }
 
     // Find source column
     const fromColId = Object.keys(columns).find((colId) =>
@@ -104,6 +147,8 @@ export default function KanbanView() {
             </div>
           )}
         </DragOverlay>
+        
+        {activeTask && can('task.delete') && <DeleteZone />}
       </DndContext>
 
       {/* Task Modal — edit (modalTask is an object) */}

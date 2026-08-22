@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Bell, Navigation } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
+import { useTaskStore } from '../../stores/taskStore';
+import { useMemberStore } from '../../stores/memberStore';
 
 const PRIORITY_OPTIONS = ['P0 Urgent', 'P1 High', 'P2 Normal'];
 const MEMBER_OPTIONS   = ['adhi (MEMBER)', 'libin (ADMIN)', 'priya (MEMBER)', 'rahul (MEMBER)'];
@@ -129,22 +131,39 @@ function PageHeader({ title, subtitle, navigate, projectId, showManageTeam }) {
 
 function OwnerOverview({ projectId }) {
   const navigate = useNavigate();
+  const columns = useTaskStore(state => state.columns);
+  const tasks = Object.values(columns).flat();
+  const totalTasks = tasks.length;
+  const doneTasks = tasks.filter(t => t.columnId === 'done').length;
+  const health = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) + '%' : '100%';
+  const activeTasks = tasks.filter(t => t.columnId === 'inprogress' || t.columnId === 'inreview').length;
+  const blockedTasks = tasks.filter(t => t.labels && (t.labels.includes('blocked') || t.labels.includes('bug'))).length;
+
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
       <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.12em', color: '#555', marginBottom: '10px' }}>OWNER VIEW</p>
       <PageHeader title={projectId} subtitle="Strategic project health and ownership metrics." navigate={navigate} projectId={projectId} showManageTeam={true} />
-      <StatRow stats={[ { value: '92%', label: 'Project Health' }, { value: '3', label: 'Active Milestones' }, { value: '0', label: 'Critical Blockers' } ]} />
+      <StatRow stats={[ { value: health, label: 'Project Health' }, { value: activeTasks.toString(), label: 'Active Tasks' }, { value: blockedTasks.toString(), label: 'Critical Blockers' } ]} />
     </div>
   );
 }
 
 function AdminOverview({ projectId }) {
   const navigate = useNavigate();
+  const columns = useTaskStore(state => state.columns);
+  const tasks = Object.values(columns).flat();
+  const members = useMemberStore(state => state.members);
+
+  const totalPoints = tasks.length * 5; // Simplified velocity approximation
+  const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.columnId !== 'done').length;
+  const activeMembers = new Set(tasks.map(t => t.assignee).filter(Boolean)).size;
+  const util = members.length > 0 ? Math.round((activeMembers / members.length) * 100) + '%' : '0%';
+
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
       <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.12em', color: '#555', marginBottom: '10px' }}>ADMIN OPERATIONS</p>
       <PageHeader title="Executive Overview" subtitle="Deep operational management, velocity tracking, and team capacity." navigate={navigate} projectId={projectId} showManageTeam={true} />
-      <StatRow stats={[ { value: '42', label: 'Velocity Points' }, { value: '8', label: 'Overdue Tasks' }, { value: '98%', label: 'Team Utilization' } ]} />
+      <StatRow stats={[ { value: totalPoints.toString(), label: 'Velocity Points' }, { value: overdueTasks.toString(), label: 'Overdue Tasks' }, { value: util, label: 'Team Utilization' } ]} />
       <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '28px' }} />
       <WorkDispatcher />
     </div>
@@ -153,11 +172,19 @@ function AdminOverview({ projectId }) {
 
 function LeadOverview({ projectId }) {
   const navigate = useNavigate();
+  const columns = useTaskStore(state => state.columns);
+  const tasks = Object.values(columns).flat();
+  const members = useMemberStore(state => state.members);
+
+  const teamMembers = members.length;
+  const remainingTasks = tasks.filter(t => t.columnId !== 'done').length;
+  const blockedItems = tasks.filter(t => t.labels && (t.labels.includes('blocked') || t.labels.includes('bug'))).length;
+
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
       <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.12em', color: '#555', marginBottom: '10px' }}>TEAM LEAD</p>
       <PageHeader title="Team Coordination" subtitle="Manage your team's sprint progress and clear blockers." navigate={navigate} projectId={projectId} showManageTeam={false} />
-      <StatRow stats={[ { value: '6', label: 'Team Members' }, { value: '14', label: 'Sprint Tasks Remaining' }, { value: '2', label: 'Blocked Items' } ]} />
+      <StatRow stats={[ { value: teamMembers.toString(), label: 'Team Members' }, { value: remainingTasks.toString(), label: 'Sprint Tasks Remaining' }, { value: blockedItems.toString(), label: 'Blocked Items' } ]} />
       <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '28px' }} />
       <WorkDispatcher />
     </div>
@@ -166,11 +193,21 @@ function LeadOverview({ projectId }) {
 
 function DevOverview({ projectId }) {
   const navigate = useNavigate();
+  const columns = useTaskStore(state => state.columns);
+  const tasks = Object.values(columns).flat();
+  
+  // Simulating the Dev user as "Arjun"
+  const myTasks = tasks.filter(t => t.assignee === 'Arjun');
+  const myActive = myTasks.filter(t => t.columnId !== 'done').length;
+  const todayStr = new Date().toDateString();
+  const myDueToday = myTasks.filter(t => t.dueDate && new Date(t.dueDate).toDateString() === todayStr && t.columnId !== 'done').length;
+  const myBlockers = myTasks.filter(t => t.labels && (t.labels.includes('blocked') || t.labels.includes('bug'))).length;
+
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
       <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.12em', color: '#555', marginBottom: '10px' }}>DEVELOPER SPACE</p>
       <PageHeader title="My Dashboard" subtitle="Your active assignments, upcoming deadlines, and personal blockers." navigate={navigate} projectId={projectId} showManageTeam={false} />
-      <StatRow stats={[ { value: '4', label: 'My Active Tasks' }, { value: '1', label: 'Due Today' }, { value: '0', label: 'My Blockers' } ]} />
+      <StatRow stats={[ { value: myActive.toString(), label: 'My Active Tasks' }, { value: myDueToday.toString(), label: 'Due Today' }, { value: myBlockers.toString(), label: 'My Blockers' } ]} />
       <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '28px' }} />
       <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '10px', padding: '32px', textAlign: 'center' }}>
         <p style={{ color: '#888', fontSize: '14px' }}>Review your personalized task list in the "My Tasks" section to start working.</p>

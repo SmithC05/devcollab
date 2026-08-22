@@ -88,16 +88,43 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
         </div>
 
         {/* Fields */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', opacity: canEdit ? 1 : 0.7, pointerEvents: canEdit ? 'auto' : 'none' }}>
-          <div>
-            <label style={LABEL_STYLE}>Title *</label>
-            <input disabled={!canEdit} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Task title..." style={INPUT_STYLE} autoFocus />
+        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px', opacity: canEdit ? 1 : 0.7, pointerEvents: canEdit ? 'auto' : 'none' }}>
+          
+          {/* Left Column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={LABEL_STYLE}>Title *</label>
+              <input disabled={!canEdit} value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Task title..." style={INPUT_STYLE} autoFocus />
+            </div>
+            <div>
+              <label style={LABEL_STYLE}>Description</label>
+              <textarea disabled={!canEdit} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What needs to be done?" rows={5} style={{ ...INPUT_STYLE, resize: 'vertical' }} />
+            </div>
+            {isEdit && (
+              <div>
+                <label style={LABEL_STYLE}>Linked Files</label>
+                <div style={{ background: '#0a0a0a', border: '1px dashed #2a2a2a', borderRadius: '8px', padding: '16px', textAlign: 'center', fontSize: '12px', color: '#555' }}>
+                  Drag & drop files here, or click to browse (Placeholder)
+                </div>
+              </div>
+            )}
+            {isEdit && (
+              <div>
+                <label style={LABEL_STYLE}>Activity</label>
+                <div style={{ background: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '8px', padding: '12px', maxHeight: '120px', overflowY: 'auto' }}>
+                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>Task created</div>
+                  {/* Real activity integration would map task events here */}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#222', color: '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>U</div>
+                    <input disabled={!canEdit} placeholder="Write a comment..." style={{ ...INPUT_STYLE, padding: '6px 10px', fontSize: '12px', flex: 1, background: '#111' }} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-          <div>
-            <label style={LABEL_STYLE}>Description</label>
-            <textarea disabled={!canEdit} value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="What needs to be done?" rows={3} style={{ ...INPUT_STYLE, resize: 'vertical' }} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+
+          {/* Right Column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <label style={LABEL_STYLE}>Status</label>
               <select disabled={!canEdit} value={form.columnId} onChange={(e) => set('columnId', e.target.value)} style={INPUT_STYLE}>
@@ -110,8 +137,6 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
                 {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={LABEL_STYLE}>Assignee</label>
               <select disabled={!canEdit} value={form.assignee} onChange={(e) => set('assignee', e.target.value)} style={INPUT_STYLE}>
@@ -123,10 +148,10 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
               <label style={LABEL_STYLE}>Due Date</label>
               <input disabled={!canEdit} type="date" value={form.dueDate} onChange={(e) => set('dueDate', e.target.value)} style={INPUT_STYLE} />
             </div>
-          </div>
-          <div>
-            <label style={LABEL_STYLE}>Labels (comma separated)</label>
-            <input disabled={!canEdit} value={form.labels} onChange={(e) => set('labels', e.target.value)} placeholder="e.g. frontend, auth, bug" style={INPUT_STYLE} />
+            <div>
+              <label style={LABEL_STYLE}>Labels (comma separated)</label>
+              <input disabled={!canEdit} value={form.labels} onChange={(e) => set('labels', e.target.value)} placeholder="e.g. frontend, auth, bug" style={INPUT_STYLE} />
+            </div>
           </div>
         </div>
 

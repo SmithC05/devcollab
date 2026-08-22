@@ -6,20 +6,26 @@ const SEED_PAGES = [
     id: 'page-1',
     title: 'Getting Started',
     content: '<h2>Getting Started</h2><p>Welcome to the DevCollab project wiki. This space is used to document project decisions, architecture notes, and team processes.</p><h3>Quick Links</h3><ul><li>Project setup instructions</li><li>Contribution guidelines</li><li>Tech stack overview</li></ul>',
-    updatedAt: new Date().toISOString(),
+    updatedAt: new Date(Date.now() - 3600000*200).toISOString(),
   },
   {
     id: 'page-2',
     title: 'API Documentation',
     content: '<h2>API Documentation</h2><p>All REST endpoints follow the <strong>DRF</strong> standard. Authentication uses JWT tokens passed in the Authorization header.</p><h3>Base URL</h3><pre><code>https://api.devcollab.io/v1/</code></pre>',
-    updatedAt: new Date().toISOString(),
+    updatedAt: new Date(Date.now() - 3600000*150).toISOString(),
   },
   {
     id: 'page-3',
-    title: 'Architecture Overview',
-    content: '<h2>Architecture Overview</h2><p>DevCollab uses a decoupled frontend/backend architecture.</p><ul><li><strong>Frontend:</strong> React + Vite + Tailwind CSS</li><li><strong>Backend:</strong> Django + DRF</li><li><strong>Database:</strong> SQLite (dev) / PostgreSQL (prod)</li></ul>',
-    updatedAt: new Date().toISOString(),
+    title: 'Authentication Guide (OAuth)',
+    content: '<h2>OAuth Authentication</h2><p>We are using Google and GitHub as OAuth providers. Flow:</p><ol><li>Frontend redirects to backend `/api/v1/auth/google/`</li><li>Backend redirects to provider</li><li>Provider returns to backend with code</li><li>Backend issues JWT tokens to frontend via cookie</li></ol>',
+    updatedAt: new Date(Date.now() - 3600000*24).toISOString(),
   },
+  {
+    id: 'page-4',
+    title: 'Payment Flow Design',
+    content: '<h2>Razorpay Integration</h2><p>The checkout flow uses Razorpay standard checkout.</p><ul><li>Order is created on backend first.</li><li>Frontend uses Razorpay.js with the order ID.</li><li>Webhook at `/api/v1/webhooks/razorpay/` verifies signature.</li></ul>',
+    updatedAt: new Date(Date.now() - 3600000*48).toISOString(),
+  }
 ];
 
 export const useWikiStore = create((set, get) => ({

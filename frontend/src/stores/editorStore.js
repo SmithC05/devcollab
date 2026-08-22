@@ -1,7 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-const SAMPLE_FILES = [];
+const SAMPLE_FILES = [
+  { id: 'f-root', name: 'devcollab', type: 'folder', parentId: null },
+  { id: 'f-backend', name: 'backend', type: 'folder', parentId: 'f-root' },
+  { id: 'f-frontend', name: 'frontend', type: 'folder', parentId: 'f-root' },
+  { id: 'f-apps', name: 'apps', type: 'folder', parentId: 'f-backend' },
+  { id: 'file-1', name: 'models.py', type: 'file', language: 'python', parentId: 'f-apps', content: 'from django.db import models\n\nclass Project(models.Model):\n    name = models.CharField(max_length=255)\n    created_at = models.DateTimeField(auto_now_add=True)\n' },
+  { id: 'file-2', name: 'views.py', type: 'file', language: 'python', parentId: 'f-apps', content: 'from rest_framework import viewsets\nfrom .models import Project\nfrom .serializers import ProjectSerializer\n\nclass ProjectViewSet(viewsets.ModelViewSet):\n    queryset = Project.objects.all()\n    serializer_class = ProjectSerializer\n' },
+  { id: 'f-src', name: 'src', type: 'folder', parentId: 'f-frontend' },
+  { id: 'f-components', name: 'components', type: 'folder', parentId: 'f-src' },
+  { id: 'file-3', name: 'App.jsx', type: 'file', language: 'javascript', parentId: 'f-src', content: 'import React from "react";\nimport { RouterProvider } from "react-router-dom";\nimport router from "./router";\n\nexport default function App() {\n  return <RouterProvider router={router} />;\n}\n' },
+  { id: 'file-4', name: 'package.json', type: 'file', language: 'json', parentId: 'f-frontend', content: '{\n  "name": "devcollab-frontend",\n  "version": "1.0.0",\n  "dependencies": {\n    "react": "^18.2.0",\n    "zustand": "^4.5.0"\n  }\n}\n' },
+];
 
 export const useEditorStore = create(
   persist(

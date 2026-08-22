@@ -13,14 +13,14 @@ function generateActivityGrid() {
 }
 
 const SEED_EVENTS = [
-  { id: 'ev-1', type: 'task',    user: 'Libin',  action: 'moved "Payment API" to In Review',         time: new Date(Date.now() - 2 * 3600000).toISOString() },
-  { id: 'ev-2', type: 'task',    user: 'Arjun',  action: 'completed "Database schema"',              time: new Date(Date.now() - 4 * 3600000).toISOString() },
-  { id: 'ev-3', type: 'task',    user: 'Priya',  action: 'created "Authentication tests"',           time: new Date(Date.now() - 6 * 3600000).toISOString() },
-  { id: 'ev-4', type: 'member',  user: 'Priya',  action: 'joined the project',                       time: new Date(Date.now() - 24 * 3600000).toISOString() },
+  { id: 'ev-1', type: 'task',    user: 'Arjun',  action: 'moved "Payment API integration" to In Progress',   time: new Date(Date.now() - 2 * 3600000).toISOString() },
+  { id: 'ev-2', type: 'task',    user: 'Arjun',  action: 'completed "Database schema"',              time: new Date(Date.now() - 40 * 3600000).toISOString() },
+  { id: 'ev-3', type: 'task',    user: 'Priya',  action: 'created "User registration API"',          time: new Date(Date.now() - 100 * 3600000).toISOString() },
+  { id: 'ev-4', type: 'member',  user: 'Rahul',  action: 'joined the project',                       time: new Date(Date.now() - 240 * 3600000).toISOString() },
   { id: 'ev-5', type: 'docs',    user: 'Libin',  action: 'updated "Getting Started" wiki page',      time: new Date(Date.now() - 26 * 3600000).toISOString() },
-  { id: 'ev-6', type: 'code',    user: 'Arjun',  action: 'saved snippet "Auth Helper"',              time: new Date(Date.now() - 30 * 3600000).toISOString() },
-  { id: 'ev-7', type: 'task',    user: 'Libin',  action: 'created "Set up CI/CD pipeline"',          time: new Date(Date.now() - 48 * 3600000).toISOString() },
-  { id: 'ev-8', type: 'comment', user: 'Arjun',  action: 'commented on "Payment API integration"',   time: new Date(Date.now() - 50 * 3600000).toISOString() },
+  { id: 'ev-6', type: 'code',    user: 'Rahul',  action: 'saved snippet "JWT Auth Header Helper"',   time: new Date(Date.now() - 30 * 3600000).toISOString() },
+  { id: 'ev-7', type: 'task',    user: 'Libin',  action: 'created "Project setup"',                  time: new Date(Date.now() - 300 * 3600000).toISOString() },
+  { id: 'ev-8', type: 'comment', user: 'Priya',  action: 'commented on "Payment API integration"',   time: new Date(Date.now() - 50 * 3600000).toISOString() },
 ];
 
 // All grayscale — type colors

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useMemberStore } from '../../stores/memberStore';
 import { useAuthStore } from '../../stores/authStore';
+import { useTaskStore } from '../../stores/taskStore';
 import { Search, Plus, X, UserPlus, Trash2 } from 'lucide-react';
 
 const ROLE_COLORS = {
   Owner:  { bg: 'rgba(255,255,255,0.08)', text: '#eee', border: 'rgba(255,255,255,0.2)' },
   Admin:  { bg: 'rgba(255,255,255,0.05)', text: '#ccc', border: 'rgba(255,255,255,0.12)' },
-  Member: { bg: 'rgba(255,255,255,0.02)', text: '#888', border: 'rgba(255,255,255,0.08)' },
+  Lead:   { bg: 'rgba(255,255,255,0.04)', text: '#bbb', border: 'rgba(255,255,255,0.10)' },
+  Dev:    { bg: 'rgba(255,255,255,0.02)', text: '#888', border: 'rgba(255,255,255,0.08)' },
 };
 
 function Avatar({ name, bg, size = 32 }) {
@@ -89,6 +91,12 @@ export default function ProjectMembersPage() {
   const { can } = useAuthStore();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const columns = useTaskStore(state => state.columns);
+  const tasks = Object.values(columns).flat();
+
+  const getActiveTaskCount = (memberName) => {
+    return tasks.filter(t => t.assignee === memberName && t.columnId !== 'done').length;
+  };
 
   const filtered = members.filter(
     (m) => m.name.toLowerCase().includes(search.toLowerCase()) || m.email.toLowerCase().includes(search.toLowerCase())
@@ -114,12 +122,14 @@ export default function ProjectMembersPage() {
       </div>
 
       <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: '10px', overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', padding: '10px 20px', borderBottom: '1px solid #1a1a1a', fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '0.09em', textTransform: 'uppercase' }}>
-          <span>User</span><span>Role</span><span>Joined</span><span>Status</span><span />
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', padding: '10px 20px', borderBottom: '1px solid #1a1a1a', fontSize: '10px', fontWeight: 700, color: '#555', letterSpacing: '0.09em', textTransform: 'uppercase' }}>
+          <span>User</span><span>Role</span><span>Joined</span><span>Tasks</span><span>Status</span><span />
         </div>
 
-        {filtered.map((member, idx) => (
-          <div key={member.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', padding: '14px 20px', borderBottom: idx < filtered.length - 1 ? '1px solid #1a1a1a' : 'none', alignItems: 'center', transition: 'background 150ms' }} className="member-row">
+        {filtered.map((member, idx) => {
+          const taskCount = getActiveTaskCount(member.name);
+          return (
+          <div key={member.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr auto', padding: '14px 20px', borderBottom: idx < filtered.length - 1 ? '1px solid #1a1a1a' : 'none', alignItems: 'center', transition: 'background 150ms' }} className="member-row">
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Avatar name={member.name} bg={member.avatarBg} size={34} />
               <div>
@@ -128,11 +138,14 @@ export default function ProjectMembersPage() {
               </div>
             </div>
             <div>
-              <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 9px', borderRadius: '999px', background: (ROLE_COLORS[member.role] || ROLE_COLORS.Member).bg, color: (ROLE_COLORS[member.role] || ROLE_COLORS.Member).text, border: `1px solid ${(ROLE_COLORS[member.role] || ROLE_COLORS.Member).border}` }}>
+              <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 9px', borderRadius: '999px', background: (ROLE_COLORS[member.role] || ROLE_COLORS.Dev).bg, color: (ROLE_COLORS[member.role] || ROLE_COLORS.Dev).text, border: `1px solid ${(ROLE_COLORS[member.role] || ROLE_COLORS.Dev).border}` }}>
                 {member.role}
               </span>
             </div>
             <div style={{ fontSize: '12px', color: '#888' }}>{member.joinedDate}</div>
+            <div style={{ fontSize: '12px', color: '#ccc', fontWeight: 500 }}>
+              {taskCount} active
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#999', flexShrink: 0 }} />
               <span style={{ fontSize: '12px', color: '#999', fontWeight: 500 }}>Active</span>
@@ -152,7 +165,8 @@ export default function ProjectMembersPage() {
               );
             })()}
           </div>
-        ))}
+          );
+        })}
         {filtered.length === 0 && <div style={{ padding: '32px', textAlign: 'center', color: '#555', fontSize: '13px' }}>No members found.</div>}
       </div>
 

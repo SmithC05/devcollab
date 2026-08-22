@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { LayoutGrid, List, Calendar, Plus } from 'lucide-react';
 import KanbanView from '../../components/board/KanbanView';
+import ListView from '../../components/board/ListView';
+import CalendarView from '../../components/board/CalendarView';
 import TaskModal from '../../components/board/TaskModal';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -14,6 +16,7 @@ export default function ProjectBoardPage() {
   const { can } = useAuthStore();
   const [activeView, setActiveView] = useState('board');
   const [showNewTask, setShowNewTask] = useState(false);
+  const [modalTask, setModalTask] = useState(null);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#080808', color: '#f5f5f5', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
@@ -59,15 +62,12 @@ export default function ProjectBoardPage() {
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '24px 28px' }}>
         {activeView === 'board' && <KanbanView />}
-        {activeView !== 'board' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#444', gap: '8px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 600, color: '#666' }}>{activeView.charAt(0).toUpperCase() + activeView.slice(1)} view</span>
-            <span style={{ fontSize: '13px' }}>Coming soon — switch to Board.</span>
-          </div>
-        )}
+        {activeView === 'list' && <ListView onTaskClick={(task) => setModalTask(task)} />}
+        {activeView === 'calendar' && <CalendarView onTaskClick={(task) => setModalTask(task)} />}
       </div>
 
       {showNewTask && <TaskModal defaultColumnId="todo" onClose={() => setShowNewTask(false)} />}
+      {modalTask && <TaskModal task={modalTask} onClose={() => setModalTask(null)} />}
     </div>
   );
 }

@@ -3,9 +3,10 @@ import { nanoid } from 'nanoid';
 
 // All grayscale avatars
 const SEED_MEMBERS = [
-  { id: 'member-1', name: 'Libin Anto E AIDS', email: 'libin@devcollab.io',  role: 'Owner',  joinedDate: '2026-08-20', status: 'active', avatar: 'L', avatarBg: '#2a2a2a' },
-  { id: 'member-2', name: 'Arjun Kumar',       email: 'arjun@devcollab.io',  role: 'Member', joinedDate: '2026-08-20', status: 'active', avatar: 'A', avatarBg: '#222' },
-  { id: 'member-3', name: 'Priya Shankar',     email: 'priya@devcollab.io',  role: 'Member', joinedDate: '2026-08-21', status: 'active', avatar: 'P', avatarBg: '#1a1a1a' },
+  { id: 'member-1', name: 'Libin',         email: 'libin@devcollab.io',  role: 'Owner',  joinedDate: '2026-08-01', status: 'active', avatar: 'L', avatarBg: '#2a2a2a' },
+  { id: 'member-2', name: 'Arjun',         email: 'arjun@devcollab.io',  role: 'Dev',    joinedDate: '2026-08-05', status: 'active', avatar: 'A', avatarBg: '#222' },
+  { id: 'member-3', name: 'Priya',         email: 'priya@devcollab.io',  role: 'Lead',   joinedDate: '2026-08-02', status: 'active', avatar: 'P', avatarBg: '#1a1a1a' },
+  { id: 'member-4', name: 'Rahul',         email: 'rahul@devcollab.io',  role: 'Dev',    joinedDate: '2026-08-10', status: 'active', avatar: 'R', avatarBg: '#333' },
 ];
 
 const WORKSPACE_USERS = [
