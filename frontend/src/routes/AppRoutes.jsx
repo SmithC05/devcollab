@@ -35,6 +35,7 @@ import EngineeringCommandCenter  from '../features/devcollab-intelligence/pages/
 import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence';
 import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
 import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
+import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {

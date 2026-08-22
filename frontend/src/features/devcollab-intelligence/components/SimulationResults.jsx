@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Zap, Clock, Shield, GitBranch, ArrowRight, CheckCircle, AlertTriangle, Eye, Info } from 'lucide-react';
-import { DvCard, DvBadge, DvPanel, DvDivider, DvProgressBar, DvAvatar } from '../primitives/core';
+import { DvCard, DvBadge, DvPanel, DvDivider, DvProgressBar, DvAvatar, DvButton } from '../primitives/core';
 import { fadeUp, slideIn, staggerChildren } from '../motion/presets';
 
 // Helper to format hours
