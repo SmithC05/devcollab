@@ -10,14 +10,10 @@ import '../styles/tokens.css';
 import '../styles/components.css';
 
 const NAV_LINKS = [
+  { to: '/intelligence',                label: 'Command Center' },
   { to: '/intelligence/foundation-preview', label: 'Foundation Preview' },
-  // Future routes (non-functional placeholders for architecture)
-  // { to: '/intelligence/organization', label: 'Organization' },
-  // { to: '/intelligence/project/:id',  label: 'Project' },
-  // { to: '/intelligence/decision/:id', label: 'Decision' },
-  // { to: '/intelligence/simulation/:id', label: 'Simulation' },
-  // { to: '/intelligence/knowledge-transfer/:id', label: 'Knowledge Transfer' },
 ];
+
 
 export default function IntelligenceLayout() {
   return (

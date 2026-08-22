@@ -29,8 +29,9 @@ import ProjectWorkloadPage  from '../components/project/ProjectWorkloadPage';
 import ProjectMyTasksPage   from '../components/project/ProjectMyTasksPage';
 import ProjectMyTeamPage    from '../components/project/ProjectMyTeamPage';
 import AuthCallbackPage     from '../pages/AuthCallbackPage';
-import IntelligenceLayout   from '../features/devcollab-intelligence/pages/IntelligenceLayout';
-import FoundationPreviewPage from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
+import IntelligenceLayout        from '../features/devcollab-intelligence/pages/IntelligenceLayout';
+import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
+import EngineeringCommandCenter  from '../features/devcollab-intelligence/pages/EngineeringCommandCenter';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
@@ -175,8 +176,13 @@ export default function AppRoutes() {
 
       {/* DevCollab Intelligence — Isolated experience */}
       <Route path="/intelligence" element={<IntelligenceLayout />}>
-        <Route index element={<FoundationPreviewPage />} />
+        <Route index element={<EngineeringCommandCenter />} />
         <Route path="foundation-preview" element={<FoundationPreviewPage />} />
+        {/* Future routes — placeholder until Phase 2–4 */}
+        <Route path="project/:id"     element={<PlaceholderPage title="Project Intelligence" subtitle="Project-level engineering state — Phase 2" />} />
+        <Route path="member/:id"      element={<PlaceholderPage title="Member Intelligence" subtitle="Member capacity & context — Phase 2" />} />
+        <Route path="decision/:id"    element={<PlaceholderPage title="Decision Center" subtitle="Agent analysis & simulation — Phase 3" />} />
+        <Route path="simulation/:id"  element={<PlaceholderPage title="Simulation" subtitle="What-if analysis — Phase 3" />} />
       </Route>
 
       {/* Default */}

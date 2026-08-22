@@ -61,18 +61,22 @@ export function DvIconButton({ icon: Icon, label, onClick, size = 'md', variant 
 }
 
 // ── DvCard ────────────────────────────────────────────────────────────────
-export function DvCard({ children, className = '', elevated = false, onClick, role, tabIndex }) {
+export function DvCard({ children, className = '', elevated = false, onClick, role, tabIndex, style, onMouseEnter, onMouseLeave }) {
   return (
     <div
       role={role}
       tabIndex={tabIndex}
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      style={style}
       className={`dv-card ${elevated ? 'dv-card-elevated' : ''} ${onClick ? 'dv-card-interactive' : ''} ${className}`}
     >
       {children}
     </div>
   );
 }
+
 
 // ── DvPanel ───────────────────────────────────────────────────────────────
 export function DvPanel({ children, className = '', title, titleRight, noPad = false }) {
