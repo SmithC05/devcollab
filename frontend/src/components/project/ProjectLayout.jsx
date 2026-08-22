@@ -30,7 +30,7 @@ export default function ProjectLayout() {
   return (
     <div
       style={{ display: 'flex', width: '100%', height: '100vh', overflow: 'hidden' }}
-      className="bg-[#0d0d0f] text-[#f5f5f5] font-sans relative"
+      className="bg-[#0d0d0f] text-[var(--text-primary)] font-sans relative"
     >
       <ProjectSidebar />
 

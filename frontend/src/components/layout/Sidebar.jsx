@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Folder,
@@ -6,110 +7,211 @@ import {
   Users,
   CreditCard,
   Settings,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  X
 } from 'lucide-react';
-import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuthStore } from '../../stores/authStore';
+import { IconButton } from '../ui';
 
-export default function Sidebar({ workspaceName }) {
-  const navItemClass = ({ isActive }) =>
-    clsx(
-      'flex items-center gap-[10px] h-[36px] px-[10px] rounded-[6px] text-[13px] leading-[1.4] transition-colors mb-0.5',
-      isActive
-        ? 'text-white bg-[#1A1A1A] font-semibold'
-        : 'text-[#888888] hover:text-gray-200 hover:bg-[#151515] font-medium'
+function SideNavLink({ to, end, onClick, icon: Icon, children, collapsed }) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onClick}
+      className="relative flex items-center h-[36px] text-[13px] font-medium outline-none transition-colors mb-[4px] select-none group"
+      style={{ padding: collapsed ? '0' : '0 12px', justifyContent: collapsed ? 'center' : 'flex-start' }}
+    >
+      {({ isActive }) => (
+        <>
+          {/* Active left border indicator */}
+          {isActive && !collapsed && (
+            <motion.div
+              layoutId="sidebar-active-border"
+              className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--text-primary)] rounded-r-md"
+              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+            />
+          )}
+
+          <div className="relative flex items-center z-10 w-full" style={{ gap: '12px', justifyContent: collapsed ? 'center' : 'flex-start' }}>
+            <Icon 
+              size={17} 
+              className="shrink-0 transition-colors" 
+              style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-muted)' }}
+            />
+            {!collapsed && (
+              <span className="truncate transition-colors" style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                {children}
+              </span>
+            )}
+          </div>
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+export default function Sidebar({ workspaceName, isOpen, onClose }) {
+  const navigate = useNavigate();
+  const { user, activeWorkspace } = useAuthStore();
+  
+  const [collapsed, setCollapsed] = useState(false);
+
+  const userName = user?.first_name
+    ? `${user.first_name} ${user.last_name}`.trim()
+    : user?.username || 'User';
+  const initial = userName.charAt(0).toLowerCase();
+
+  const navGroups = [
+    {
+      title: 'WORKSPACE',
+      items: [
+        { to: '/dashboard', end: true, icon: LayoutDashboard, label: 'Overview' },
+        { to: '/dashboard/projects', icon: Folder, label: 'Projects' },
+        { to: '/dashboard/activity', icon: Activity, label: 'Activity' },
+        { to: '/dashboard/members', icon: Users, label: 'Members' },
+        { to: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
+        { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
+      ]
+    },
+    {
+      title: 'INTELLIGENCE',
+      items: [
+        { to: '/dashboard/ai', icon: Sparkles, label: 'AI Assistant' },
+      ]
+    }
+  ];
+
+  const sidebarContent = (isMobile) => {
+    const isCollapsed = !isMobile && collapsed;
+
+    return (
+      <motion.aside
+        animate={{ width: isCollapsed ? 72 : 240 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="flex flex-col h-full shrink-0 bg-[var(--sidebar-bg)] border-r border-[var(--border-subtle)] overflow-visible relative z-30"
+      >
+        {/* Desktop collapse toggle - Placed on the border exactly like the image */}
+        {!isMobile && (
+          <button 
+            onClick={() => setCollapsed(!collapsed)}
+            className="absolute -right-3 top-[18px] w-6 h-6 bg-[var(--surface-raised)] border border-[var(--border-strong)] rounded-full flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--focus-ring)] cursor-pointer shadow-sm transition-colors z-40"
+          >
+            {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+          </button>
+        )}
+
+        {/* ── Brand ──────────────────────────────────────────── */}
+        <div className="h-[56px] px-4 flex items-center shrink-0 border-b border-[var(--border-subtle)]" style={{ justifyContent: isCollapsed ? 'center' : 'space-between' }}>
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="w-[28px] h-[28px] rounded-full bg-[var(--text-primary)] text-[var(--bg)] flex items-center justify-center text-[12px] font-bold shrink-0">
+              DC
+            </div>
+            {!isCollapsed && (
+              <motion.span 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                className="text-[15px] font-bold text-[var(--text-primary)] tracking-tight whitespace-nowrap"
+              >
+                DevCollab
+              </motion.span>
+            )}
+          </div>
+          {!isCollapsed && isMobile && (
+            <IconButton icon={X} onClick={onClose} size={16} className="md:hidden" />
+          )}
+        </div>
+
+        {/* ── Navigation ────────────────────────────────────── */}
+        <div className="flex-1 overflow-y-auto pt-6 pb-4 flex flex-col gap-8">
+          {navGroups.map((group, groupIdx) => (
+            <div key={group.title}>
+              {!isCollapsed && (
+                <div className="px-5 mb-3 flex flex-col gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                    {group.title}
+                  </span>
+                  {groupIdx === 0 && (
+                    <span className="text-[14px] font-semibold text-[var(--text-primary)] mb-2 truncate">
+                      {workspaceName || activeWorkspace?.name || 'Team Thunder'}
+                    </span>
+                  )}
+                </div>
+              )}
+              {isCollapsed && groupIdx > 0 && (
+                <div className="h-px bg-[var(--border-subtle)] my-3 mx-4" />
+              )}
+              <nav className="flex flex-col relative px-3">
+                {group.items.map((item, idx) => (
+                  <motion.div
+                    key={item.to}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: (groupIdx * 0.1) + (idx * 0.03), duration: 0.2 }}
+                  >
+                    <SideNavLink to={item.to} end={item.end} onClick={isMobile ? onClose : undefined} icon={item.icon} collapsed={isCollapsed}>
+                      {item.label}
+                    </SideNavLink>
+                  </motion.div>
+                ))}
+              </nav>
+            </div>
+          ))}
+        </div>
+
+        {/* ── User Footer ──────────────────────────────────── */}
+        <div className="shrink-0 p-4 flex items-center justify-between mt-auto">
+          <button
+            onClick={() => navigate('/dashboard/settings')}
+            className="flex items-center gap-3 min-w-0 bg-transparent border-none outline-none cursor-pointer w-full group"
+            style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}
+          >
+            <div className="w-[30px] h-[30px] rounded-full bg-[#8B6B5D] text-white flex items-center justify-center text-[13px] font-semibold shrink-0">
+              {initial}
+            </div>
+            {!isCollapsed && (
+              <span className="text-[13px] font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] truncate transition-colors">
+                {userName.toLowerCase()}
+              </span>
+            )}
+          </button>
+        </div>
+      </motion.aside>
     );
+  };
 
   return (
-    <aside
-      className="fixed top-0 left-0 bottom-0 flex flex-col z-30
-                 border-r border-[#1F1F1F]
-                 bg-[#0D0D0D]"
-      style={{ width: '220px', minWidth: '220px', maxWidth: '220px' }}
-    >
-      {/* Logo Area */}
-      <div className="h-[52px] px-4 flex items-center gap-2 border-b border-[#1F1F1F] shrink-0">
-        <div className="w-[30px] h-[30px] rounded-full bg-white text-black flex items-center justify-center text-[12px] font-bold shrink-0">
-          DC
-        </div>
-        <span className="text-[14px] font-semibold tracking-tight text-gray-100">
-          DevCollab
-        </span>
+    <>
+      <div className="hidden md:flex h-screen sticky top-0 z-30">
+        {sidebarContent(false)}
       </div>
 
-      {/* Nav Content (Scrollable) */}
-      <div className="flex-1 flex flex-col overflow-y-auto pt-4 px-4 pb-4">
-        
-        {/* Workspace section */}
-        <div className="mb-1">
-          <div className="text-[9px] uppercase tracking-[0.08em] text-[#666666] mb-[8px] font-medium px-[2px]">
-            WORKSPACE
-          </div>
-          <div className="text-[13px] font-semibold text-gray-100 mb-3 px-[2px] truncate">
-            {workspaceName || 'Team Thunder'}
-          </div>
-          <nav className="flex flex-col">
-            <NavLink to="/" end className={navItemClass}>
-              <LayoutDashboard size={17} />
-              Overview
-            </NavLink>
-            <NavLink to="/projects" className={navItemClass}>
-              <Folder size={17} />
-              Projects
-            </NavLink>
-            <NavLink to="/activity" className={navItemClass}>
-              <Activity size={17} />
-              Activity
-            </NavLink>
-            <NavLink to="/members" className={navItemClass}>
-              <Users size={17} />
-              Members
-            </NavLink>
-          </nav>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-[#1F1F1F] my-[10px]" />
-
-        {/* Billing & Settings */}
-        <div className="mb-1">
-          <nav className="flex flex-col">
-            <NavLink to="/billing" className={navItemClass}>
-              <CreditCard size={17} />
-              Billing
-            </NavLink>
-            <NavLink to="/settings" className={navItemClass}>
-              <Settings size={17} />
-              Settings
-            </NavLink>
-          </nav>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-[#1F1F1F] my-[10px]" />
-
-        {/* Intelligence */}
-        <div>
-          <div className="text-[9px] uppercase tracking-[0.08em] text-[#666666] mb-[8px] font-medium px-[2px]">
-            INTELLIGENCE
-          </div>
-          <nav className="flex flex-col">
-            <NavLink to="/ai" className={navItemClass}>
-              <Sparkles size={17} />
-              AI Assistant
-            </NavLink>
-          </nav>
-        </div>
-      </div>
-
-      {/* User Area (Pinned to bottom) */}
-      <div className="mt-auto h-[52px] px-4 flex items-center gap-3 border-t border-[#1F1F1F] shrink-0 hover:bg-[#151515] transition-colors cursor-pointer">
-        <div className="w-[28px] h-[28px] rounded-full bg-[#2A2A2A] text-[#888888] flex items-center justify-center font-medium text-[12px] shrink-0">
-          d
-        </div>
-        <span className="text-[13px] font-medium text-[#999999] truncate">
-          dev collab
-        </span>
-      </div>
-    </aside>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+              onClick={onClose}
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed left-0 top-0 h-full z-50 md:hidden flex"
+            >
+              {sidebarContent(true)}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
