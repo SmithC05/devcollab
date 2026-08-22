@@ -1,109 +1,91 @@
 // src/services/authService.js
-// Mock authentication service with localStorage persistence.
-// Structured for easy replacement with a real Django REST API later.
+// Authentication service communicating with Django REST API
 
-import { mockUsers } from '../data/mockData';
-import { read, write, STORAGE_KEYS } from './storageService';
+const API_BASE = 'http://127.0.0.1:8000/api/auth';
 
-// Simulate network latency
-const delay = (ms = 400) => new Promise(resolve => setTimeout(resolve, ms));
-
-/**
- * Strips the password from a user object before returning it.
- * We never expose passwords in state or localStorage.
- */
-function safeUser(user) {
-  const { password: _pw, ...safe } = user;
-  return safe;
-}
-
-/**
- * Helper to get the current list of users from storage.
- * Seeds with mockUsers if empty.
- */
-function getUsers() {
-  let users = read(STORAGE_KEYS.USERS);
-  if (!users) {
-    users = [...mockUsers];
-    write(STORAGE_KEYS.USERS, users);
+async function fetchWithCredentials(url, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  
+  const data = await res.json().catch(() => ({}));
+  
+  if (!res.ok) {
+    // Attempt auto-refresh if 401
+    if (res.status === 401 && !url.includes('/refresh/')) {
+      const refreshRes = await fetch(`${API_BASE}/refresh/`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (refreshRes.ok) {
+        // Retry original request
+        const retryRes = await fetch(url, {
+          ...options,
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+          }
+        });
+        if (retryRes.ok) {
+           return retryRes.json();
+        }
+      }
+    }
+    throw new Error(data.error || 'An unexpected error occurred.');
   }
-  return users;
+  
+  return data;
 }
 
-export function getUserById(id) {
-  const users = getUsers();
-  const user = users.find(u => u.id === id);
-  return user ? safeUser(user) : null;
-}
-
-/**
- * login(email, password)
- */
 export async function login(email, password) {
-  await delay();
-
   if (!email || !password) {
     throw new Error('Email and password are required.');
   }
-
-  const users = getUsers();
-  const found = users.find(
-    u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-  );
-
-  if (!found) {
-    throw new Error('Invalid email or password. Please try again.');
-  }
-
-  return {
-    user: safeUser(found)
-  };
+  return fetchWithCredentials(`${API_BASE}/login/`, {
+    method: 'POST',
+    body: JSON.stringify({ email, password })
+  });
 }
 
-/**
- * register(name, email, password)
- */
 export async function register(name, email, password) {
-  await delay();
-
-  if (!name || !name.trim()) {
-    throw new Error('Full name is required.');
-  }
-  if (!email || !email.trim()) {
-    throw new Error('Email address is required.');
-  }
-  if (!password || password.length < 6) {
-    throw new Error('Password must be at least 6 characters.');
-  }
-
-  const users = getUsers();
-  const existing = users.find(
-    u => u.email.toLowerCase() === email.toLowerCase()
-  );
-  if (existing) {
-    throw new Error('An account with this email already exists.');
-  }
-
-  const newUser = {
-    id: `user-${Date.now()}`,
-    name: name.trim(),
-    email: email.toLowerCase().trim(),
-    avatarInitials: name.trim().slice(0, 2).toUpperCase(),
-    password, // Stored in mock DB, stripped in safeUser
-  };
-
-  users.push(newUser);
-  write(STORAGE_KEYS.USERS, users);
-
-  return {
-    user: safeUser(newUser)
-  };
+  if (!name || !name.trim()) throw new Error('Full name is required.');
+  if (!email || !email.trim()) throw new Error('Email address is required.');
+  if (!password || password.length < 6) throw new Error('Password must be at least 6 characters.');
+  
+  return fetchWithCredentials(`${API_BASE}/register/`, {
+    method: 'POST',
+    body: JSON.stringify({ name, email, password })
+  });
 }
 
-/**
- * logout()
- */
 export async function logout() {
-  await delay(150);
-  return { success: true };
+  return fetchWithCredentials(`${API_BASE}/logout/`, {
+    method: 'POST'
+  });
+}
+
+export async function getCurrentUser() {
+  return fetchWithCredentials(`${API_BASE}/me/`);
+}
+
+export function loginWithGoogle() {
+  // Redirect to Django allauth Google provider login URL
+  window.location.href = 'http://127.0.0.1:8000/accounts/google/login/';
+}
+
+export function loginWithGitHub() {
+  // Redirect to Django allauth GitHub provider login URL
+  window.location.href = 'http://127.0.0.1:8000/accounts/github/login/';
+}
+
+// Deprecated mock DB function. Kept temporarily to prevent authStore crash
+// if it's called before we finish updating authStore.js
+export function getUserById() {
+  return null;
 }

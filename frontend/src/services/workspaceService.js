@@ -100,13 +100,13 @@ export async function joinWorkspace(inviteCode, userId) {
   // Add user as a member
   workspace.members.push({
     userId,
-    role: ROLES.MEMBER
+    role: ROLES.DEVELOPER
   });
 
   workspaces[workspaceIndex] = workspace;
   write(STORAGE_KEYS.WORKSPACES, workspaces);
 
-  return { workspace, role: ROLES.MEMBER };
+  return { workspace, role: ROLES.DEVELOPER };
 }
 
 export async function getWorkspaceById(id) {

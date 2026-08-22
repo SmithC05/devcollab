@@ -1,142 +1,144 @@
 // src/store/authStore.js
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import * as authService from '../services/authService';
 import * as workspaceService from '../services/workspaceService';
 import { ROLES } from '../data/mockData';
 
-// Re-export ROLES for compatibility with imported main branch components
 export { ROLES };
 
 export const useAuthStore = create(
-  persist(
-    (set, get) => ({
-      // ── State ────────────────────────────────────────────────────────────
-      user: null,
-      isAuthenticated: false,
-      activeWorkspace: null, 
-      workspaces: [],
-      role: null, // derived from activeWorkspace membership
-      isLoading: false,
-      error: null,
+  (set, get) => ({
+    // ── State ────────────────────────────────────────────────────────────
+    user: null,
+    isAuthenticated: false,
+    activeWorkspace: null, 
+    workspaces: [],
+    role: null,
+    isLoading: true, // Start true while we check session
+    error: null,
 
-      // ── Actions ──────────────────────────────────────────────────────────
+    // ── Actions ──────────────────────────────────────────────────────────
 
-      /**
-       * Used to hydrate the store properly after a page refresh,
-       * ensuring we have the latest user and workspace data.
-       */
-      init: async () => {
-        const { user, activeWorkspace } = get();
-        if (user && user.id) {
-          // Re-fetch the user to ensure we have the latest data
-          const freshUser = authService.getUserById(user.id);
-          if (freshUser) {
-            set({ user: freshUser });
-            await get().refreshWorkspaces();
-            
-            // Re-select the active workspace if it exists to refresh role
-            if (activeWorkspace) {
-              get().setActiveWorkspace(activeWorkspace.id);
-            }
-          } else {
-            // User no longer exists in mock DB
-            get().logout();
-          }
+    /**
+     * Replaces the old local storage init.
+     * Hits the backend /api/auth/me/ to validate the httpOnly cookie.
+     */
+    initFromServer: async () => {
+      set({ isLoading: true });
+      try {
+        const data = await authService.getCurrentUser();
+        if (data.success && data.user) {
+          set({ user: data.user, isAuthenticated: true });
+          await get().refreshWorkspaces();
+        } else {
+          get()._clearAuth();
         }
-      },
+      } catch (err) {
+        // Token invalid, expired, or no cookie
+        get()._clearAuth();
+      } finally {
+        set({ isLoading: false });
+      }
+    },
 
-      refreshWorkspaces: async () => {
-        const { user } = get();
-        if (user) {
-          const wss = await workspaceService.getUserWorkspaces(user.id);
-          set({ workspaces: wss });
-        }
-      },
-
-      login: async (email, password) => {
-        set({ isLoading: true, error: null });
-        try {
-          const { user } = await authService.login(email, password);
-          const workspaces = await workspaceService.getUserWorkspaces(user.id);
-          
-          set({
-            user,
-            workspaces,
-            activeWorkspace: null,
-            role: ROLES.USER, // default role before a workspace is selected
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return { success: true };
-        } catch (err) {
-          set({ isLoading: false, error: err.message });
-          return { success: false, error: err.message };
-        }
-      },
-
-      register: async (name, email, password) => {
-        set({ isLoading: true, error: null });
-        try {
-          const { user } = await authService.register(name, email, password);
-          
-          set({
-            user,
-            workspaces: [],
-            activeWorkspace: null,
-            role: ROLES.USER,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          return { success: true };
-        } catch (err) {
-          set({ isLoading: false, error: err.message });
-          return { success: false, error: err.message };
-        }
-      },
-
-      logout: async () => {
-        await authService.logout().catch(() => {});
-        set({
-          user: null,
-          role: null,
-          activeWorkspace: null,
-          workspaces: [],
-          isAuthenticated: false,
-          isLoading: false,
-          error: null,
-        });
-      },
-
-      setActiveWorkspace: (workspaceId) => {
-        const { workspaces, user } = get();
-        const workspace = workspaces.find(w => w.id === workspaceId);
+    refreshWorkspaces: async () => {
+      const { user, activeWorkspace } = get();
+      if (user) {
+        const wss = await workspaceService.getUserWorkspaces(user.id);
+        set({ workspaces: wss });
         
-        if (workspace && user) {
-          const membership = workspace.members.find(m => m.userId === user.id);
-          set({ 
-            activeWorkspace: workspace,
-            role: membership ? membership.role : ROLES.USER 
-          });
+        // Re-evaluate role if there is an active workspace
+        if (activeWorkspace) {
+          get().setActiveWorkspace(activeWorkspace.id);
         }
-      },
+      }
+    },
 
-      clearError: () => set({ error: null }),
-    }),
-    {
-      name: 'devcollab_session',
-      // Only persist safe fields — never persist passwords
-      // We persist the whole user object because we stripped passwords in authService
-      partialize: (state) => ({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-        activeWorkspace: state.activeWorkspace,
-      }),
+    login: async (email, password) => {
+      set({ isLoading: true, error: null });
+      try {
+        const { user } = await authService.login(email, password);
+        const workspaces = await workspaceService.getUserWorkspaces(user.id);
+        
+        set({
+          user,
+          workspaces,
+          activeWorkspace: null,
+          role: ROLES.USER,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return { success: true };
+      } catch (err) {
+        set({ isLoading: false, error: err.message });
+        return { success: false, error: err.message };
+      }
+    },
+
+    register: async (name, email, password) => {
+      set({ isLoading: true, error: null });
+      try {
+        const { user } = await authService.register(name, email, password);
+        
+        set({
+          user,
+          workspaces: [],
+          activeWorkspace: null,
+          role: ROLES.USER,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+        return { success: true };
+      } catch (err) {
+        set({ isLoading: false, error: err.message });
+        return { success: false, error: err.message };
+      }
+    },
+
+    loginWithGoogle: () => {
+      authService.loginWithGoogle();
+    },
+
+    loginWithGitHub: () => {
+      authService.loginWithGitHub();
+    },
+
+    logout: async () => {
+      set({ isLoading: true });
+      await authService.logout().catch(() => {});
+      get()._clearAuth();
+      set({ isLoading: false });
+    },
+
+    setActiveWorkspace: (workspaceId) => {
+      const { workspaces, user } = get();
+      const workspace = workspaces.find(w => w.id === workspaceId);
+      
+      if (workspace && user) {
+        const membership = workspace.members.find(m => m.userId === user.id);
+        set({ 
+          activeWorkspace: workspace,
+          role: membership ? membership.role : ROLES.USER 
+        });
+      }
+    },
+
+    clearError: () => set({ error: null }),
+    
+    _clearAuth: () => {
+      set({
+        user: null,
+        role: null,
+        activeWorkspace: null,
+        workspaces: [],
+        isAuthenticated: false,
+        error: null,
+      });
     }
-  )
+  })
 );
 
-// Call init once when the store is imported to hydrate from localStorage
+// Call init once when the store is imported to hydrate from the server
 if (typeof window !== 'undefined') {
-  useAuthStore.getState().init();
+  useAuthStore.getState().initFromServer();
 }

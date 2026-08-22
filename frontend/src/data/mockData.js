@@ -5,8 +5,8 @@ export const ROLES = {
   USER: 'user',
   OWNER: 'owner',
   ADMIN: 'admin',
-  MEMBER: 'member',
-  VIEWER: 'viewer',
+  LEAD: 'lead',
+  DEVELOPER: 'developer',
 };
 
 export const mockUsers = [

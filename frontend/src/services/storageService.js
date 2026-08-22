@@ -2,9 +2,7 @@
 // Small utility for safe localStorage persistence
 
 export const STORAGE_KEYS = {
-  USERS: 'devcollab_users',
   WORKSPACES: 'devcollab_workspaces',
-  SESSION: 'devcollab_session',
 };
 
 export function read(key, fallback = null) {

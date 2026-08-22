@@ -38,9 +38,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     # Third-party
     "rest_framework",
     "corsheaders",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
     # Local apps
     "apps.authentication",
     "apps.workspaces",
@@ -62,8 +68,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.authentication.middleware.JWTAuthMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -156,8 +164,72 @@ REST_FRAMEWORK = {
 # Override CORS_ALLOWED_ORIGINS in .env for other origins.
 # ---------------------------------------------------------------------------
 
+FRONTEND_URL = config("FRONTEND_URL", default="http://127.0.0.1:5173")
+
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
     default="http://localhost:5173,http://127.0.0.1:5173",
     cast=Csv(),
 )
+
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost:5173,http://127.0.0.1:5173",
+    cast=Csv(),
+)
+
+# ---------------------------------------------------------------------------
+# Allauth Config
+# ---------------------------------------------------------------------------
+
+SITE_ID = 1
+
+LOGIN_REDIRECT_URL = '/api/auth/oauth/callback/'
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": config("GOOGLE_CLIENT_ID", default=""),
+            "secret": config("GOOGLE_CLIENT_SECRET", default=""),
+            "key": ""
+        },
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    },
+    "github": {
+        "APP": {
+            "client_id": config("GITHUB_CLIENT_ID", default=""),
+            "secret": config("GITHUB_CLIENT_SECRET", default=""),
+            "key": ""
+        },
+        "SCOPE": [
+            "user:email",
+            "read:user",
+        ],
+    }
+}
+
+# ---------------------------------------------------------------------------
+# JWT & Authentication Config
+# ---------------------------------------------------------------------------
+
+JWT_SECRET = config("JWT_SECRET", default="django-insecure-jwt-secret-change-me")
+JWT_ACCESS_TOKEN_EXPIRY = 15  # Minutes
+JWT_REFRESH_TOKEN_EXPIRY = 7  # Days
+
+AUTH_COOKIE_SECURE = config("AUTH_COOKIE_SECURE", default=False, cast=bool)
+AUTH_COOKIE_SAMESITE = 'Lax'
+

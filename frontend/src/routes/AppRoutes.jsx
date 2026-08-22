@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/authStore';
 import LoginPage from '../pages/LoginPage';
 import OnboardingPage from '../pages/OnboardingPage';
 import SelectWorkspacePage from '../pages/SelectWorkspacePage';
+import AuthCallbackPage from '../pages/AuthCallbackPage';
 import WorkspaceLayout from '../components/layout/WorkspaceLayout';
 import WorkspaceOverview from '../pages/WorkspaceOverview';
 import ProjectLayout from '../components/project/ProjectLayout';
@@ -95,6 +96,9 @@ export default function AppRoutes() {
           </PublicOnlyRoute>
         }
       />
+
+      {/* Auth Callback (Public) */}
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       {/* Onboarding — needs auth, no workspaces yet */}
       <Route
