@@ -21,6 +21,15 @@ export const apiClient = async (endpoint, options = {}) => {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      // Token expired or invalid, force logout
+      useAuthStore.setState({ isAuthenticated: false, user: null, accessToken: null, sessionToken: null });
+      // Redirect to login (unless we are already there)
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    
     const errorBody = await response.json().catch(() => ({}));
     throw new Error(errorBody.error || errorBody.message || 'API request failed');
   }

@@ -3,7 +3,9 @@ import { Plus, FolderOpen, MoreHorizontal, Users, CheckSquare, LayoutGrid, List 
 import { motion, AnimatePresence } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
 import { Button, Spinner, EmptyState, Badge, SearchInput, IconButton, Card, Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '../ui/index';
-
+import { useNavigate } from 'react-router-dom';
+import CreateProjectModal from '../project/CreateProjectModal';
+import LaunchScreen from '../project/LaunchScreen';
 // --- Utilities ---
 const formatRelativeTime = (dateString) => {
   if (!dateString) return 'Updated recently';
@@ -60,6 +62,27 @@ export default function WorkspaceProjectsPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  
+  const navigate = useNavigate();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [launchingProject, setLaunchingProject] = useState(null);
+
+  const handleCreateProject = async (name) => {
+    const response = await fetch('/api/workspace/projects/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to create project.');
+    }
+    
+    const newProject = await response.json();
+    setProjects(prev => [newProject, ...prev]);
+    setIsCreateModalOpen(false);
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -140,7 +163,7 @@ export default function WorkspaceProjectsPage() {
           </p>
         </div>
         <div className="shrink-0 pt-1">
-          <Button variant="primary" icon={Plus} iconSize={15}>New Project</Button>
+          <Button variant="primary" icon={Plus} iconSize={15} onClick={() => setIsCreateModalOpen(true)}>New Project</Button>
         </div>
       </div>
 
@@ -217,7 +240,7 @@ export default function WorkspaceProjectsPage() {
           icon={FolderOpen}
           title="No projects yet"
           description="Create your first project to start organizing your team's work."
-          action={<Button variant="primary" icon={Plus} iconSize={15}>New Project</Button>}
+          action={<Button variant="primary" icon={Plus} iconSize={15} onClick={() => setIsCreateModalOpen(true)}>New Project</Button>}
         />
       ) : filteredProjects.length === 0 ? (
         <div className="py-24 flex flex-col items-center justify-center text-center">
@@ -237,7 +260,8 @@ export default function WorkspaceProjectsPage() {
               as={motion.div}
               variants={itemVariants}
               key={project.id}
-              className="p-6 flex flex-col min-h-[300px] hover:border-[var(--border-focus)] transition-all duration-200 group relative bg-[var(--surface-card)] shadow-sm hover:shadow-md"
+              onClick={() => setLaunchingProject(project)}
+              className="p-6 flex flex-col min-h-[300px] hover:border-[var(--border-focus)] transition-all duration-200 group relative bg-[var(--surface-card)] shadow-sm hover:shadow-md cursor-pointer"
               style={{ '--tw-translate-y': '0px' }}
               whileHover={{ y: -2 }}
             >
@@ -322,7 +346,7 @@ export default function WorkspaceProjectsPage() {
             </TableHeader>
             <TableBody>
               {filteredProjects.map(project => (
-                <TableRow key={project.id} className="group cursor-pointer">
+                <TableRow key={project.id} className="group cursor-pointer" onClick={() => setLaunchingProject(project)}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-[var(--surface-raised)] border border-[var(--border-strong)] flex items-center justify-center text-[var(--text-secondary)] font-semibold text-[12px] group-hover:text-blue-400 group-hover:bg-blue-500/5 group-hover:border-blue-500/20 transition-colors shrink-0">
@@ -362,6 +386,23 @@ export default function WorkspaceProjectsPage() {
             </TableBody>
           </Table>
         </motion.div>
+      )}
+
+      {/* Modals & Overlays */}
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateProject}
+      />
+      
+      {launchingProject && (
+        <LaunchScreen
+          project={launchingProject}
+          onComplete={() => {
+            setLaunchingProject(null);
+            navigate(`/projects/${launchingProject.id}/overview`);
+          }}
+        />
       )}
     </PageContainer>
   );
