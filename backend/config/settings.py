@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "apps.simulations",
     "apps.scenarios",
     "apps.realtime",
+    "apps.ai",
 ]
 
 # ---------------------------------------------------------------------------

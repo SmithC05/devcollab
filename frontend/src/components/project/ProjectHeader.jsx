@@ -35,6 +35,20 @@ export default function ProjectHeader() {
 
       {/* Right Actions */}
       <div className="flex items-center space-x-5">
+        {/* Agent Shortcut */}
+        <button 
+          onClick={() => {
+            // Dispatch a custom event that ProjectLayout can optionally listen to, 
+            // or just use window dispatch. Let's just use window dispatch for simplicity 
+            // since we didn't pass a prop down. Wait, we can pass an event!
+            document.dispatchEvent(new CustomEvent('open_agent_panel'));
+          }}
+          className="flex items-center space-x-2 px-3 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 transition-colors text-indigo-400 text-xs"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="font-medium tracking-widest text-[10px] uppercase">Agent</span>
+        </button>
+
         {/* Search Shortcut */}
         <button className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full border border-[#333] hover:bg-[#222] transition-colors text-zinc-400 text-xs">
           <Search className="w-3.5 h-3.5" />

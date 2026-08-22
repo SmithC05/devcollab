@@ -27,4 +27,5 @@ urlpatterns = [
     path("api/realtime/", include("apps.realtime.urls")),
     path("api/simulations/", include("apps.simulations.urls")),
     path("api/scenarios/", include("apps.scenarios.urls")),
+    path("api/ai/", include("apps.ai.urls")),
 ]

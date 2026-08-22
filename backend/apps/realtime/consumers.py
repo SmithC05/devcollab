@@ -59,6 +59,20 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
                     'status': 'OFFLINE'
                 }
             )
+            
+            # Trigger Decision Analysis Event if the user holds a critical task
+            has_critical = await self.check_critical_tasks()
+            if has_critical:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'engine_event',
+                        'payload': {
+                            'event_type': 'DECISION_TRIGGER',
+                            'message': 'Potential decision point detected: A developer owning a critical task has gone offline.'
+                        }
+                    }
+                )
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -151,3 +165,15 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
             session.save()
         except PresenceSession.DoesNotExist:
             pass
+    @database_sync_to_async
+    def check_critical_tasks(self):
+        # We need to import Task inside the method to avoid circular imports 
+        # if not done properly at the top, or just at the top. Let's import at top.
+        from apps.tasks.models import Task
+        # Check if the user is assigned to any High/Urgent task that is not completed
+        critical_tasks = Task.objects.filter(
+            assignee_id=self.user_id,
+            priority__in=['HIGH', 'URGENT'],
+            status__in=['TODO', 'IN_PROGRESS', 'IN_REVIEW']
+        ).exists()
+        return critical_tasks
