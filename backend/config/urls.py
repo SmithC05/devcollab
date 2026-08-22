@@ -19,6 +19,8 @@ urlpatterns = [
     path("api/health/", health, name="health"),
 
     # App API routes (empty routers wired in — expand as apps grow)
+    path("api/auth/", include("apps.authentication.urls")),
+    path("api/workspaces/", include("apps.workspaces.urls")),
     path("api/projects/", include("apps.projects.urls")),
     path("api/developers/", include("apps.developers.urls")),
     path("api/tasks/", include("apps.tasks.urls")),

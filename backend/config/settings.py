@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     # Local apps
+    "apps.authentication",
+    "apps.workspaces",
     "apps.projects",
     "apps.developers",
     "apps.tasks",
