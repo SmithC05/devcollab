@@ -10,7 +10,8 @@ import '../styles/tokens.css';
 import '../styles/components.css';
 
 const NAV_LINKS = [
-  { to: '/intelligence',                label: 'Command Center' },
+  { to: '/intelligence',              label: 'Command Center' },
+  { to: '/intelligence/organization', label: 'Organization Intelligence' },
   { to: '/intelligence/foundation-preview', label: 'Foundation Preview' },
 ];
 
