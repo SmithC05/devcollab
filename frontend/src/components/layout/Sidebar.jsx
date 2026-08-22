@@ -12,7 +12,7 @@ import {
   Sun
 } from 'lucide-react';
 import clsx from 'clsx';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { useTheme } from '../../hooks/useTheme';
 
 export default function Sidebar({ workspaceName }) {

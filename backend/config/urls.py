@@ -37,6 +37,7 @@ urlpatterns = [
 
     # App API routes (empty routers wired in — expand as apps grow)
     path("api/auth/", include("apps.authentication.urls")),
+    path("accounts/", include("allauth.urls")), # Allauth (Google OAuth)
     path("api/workspaces/", include("apps.workspaces.urls")),
     path("api/projects/", include("apps.projects.urls")),
     path("api/developers/", include("apps.developers.urls")),

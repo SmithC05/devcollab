@@ -16,7 +16,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
 
-  const { register, isLoading } = useAuthStore();
+  const { register, loginWithGoogle, loginWithGitHub, workspaces, isLoading } = useAuthStore();
   const navigate = useNavigate();
 
   const validate = () => {
@@ -37,7 +37,12 @@ export default function RegisterForm({ onSwitchToLogin }) {
 
     const result = await register(name, email, password);
     if (result.success) {
-      navigate('/onboarding');
+      const { workspaces: freshWorkspaces } = useAuthStore.getState();
+      if (freshWorkspaces && freshWorkspaces.length > 0) {
+        navigate('/select-workspace');
+      } else {
+        navigate('/onboarding');
+      }
     } else {
       setErrors({ form: result.error });
     }
@@ -59,8 +64,8 @@ export default function RegisterForm({ onSwitchToLogin }) {
 
       {/* Social */}
       <div className="flex gap-[16px]">
-        <SocialButton provider="google" />
-        <SocialButton provider="github" />
+        <SocialButton provider="google" onClick={loginWithGoogle} />
+        <SocialButton provider="github" onClick={loginWithGitHub} />
       </div>
 
       <AuthDivider />
