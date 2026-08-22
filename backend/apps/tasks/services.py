@@ -6,19 +6,16 @@ from .serializers import TaskSerializer
 
 class TaskService:
     @staticmethod
-    def move_task(task_id, new_status, new_position, user):
+    def move_task(task_id, new_status, user):
         try:
             task = Task.objects.get(id=task_id)
         except Task.DoesNotExist:
             return None
 
         old_status = task.status
-        old_position = task.position
 
-        if new_status and new_status in dict(Task.STATUS_CHOICES):
+        if new_status and new_status in dict(Task.StatusChoices.choices):
             task.status = new_status
-        if new_position is not None:
-            task.position = float(new_position)
         
         task.save()
         
@@ -27,8 +24,6 @@ class TaskService:
             'task_id': task.id,
             'old_status': old_status,
             'new_status': task.status,
-            'old_position': old_position,
-            'new_position': task.position,
             'task_data': TaskSerializer(task).data
         }
         
@@ -51,43 +46,3 @@ class TaskService:
         )
         
         return task
-
-    @staticmethod
-    def add_comment(task_id, user, content):
-        from .models import Comment
-        from .serializers import CommentSerializer
-        
-        try:
-            task = Task.objects.get(id=task_id)
-        except Task.DoesNotExist:
-            return None
-
-        comment = Comment.objects.create(
-            task=task,
-            author=user if user and user.is_authenticated else None,
-            content=content
-        )
-        
-        event_payload = {
-            'task_id': task.id,
-            'comment_data': CommentSerializer(comment).data
-        }
-
-        event = EngineEvent.objects.create(
-            event_type='COMMENT_ADDED',
-            actor=user if user and user.is_authenticated else None,
-            project=task.project,
-            task=task,
-            payload=event_payload
-        )
-        
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            'workspace_global',
-            {
-                'type': 'engine_event',
-                'payload': event_payload
-            }
-        )
-        
-        return comment

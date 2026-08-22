@@ -1,14 +1,16 @@
 import datetime
 from django.utils import timezone
-from apps.tasks.models import Task, TaskDependency
+from apps.tasks.models import Task
 from apps.realtime.models import PresenceSession
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from apps.projects.models import Project
+
+User = get_user_model()
 
 def get_project_engineering_state(project_id):
     """
     Constructs a real-time engineering state snapshot for the Decision Engine.
-    This aggregates tasks, their dependencies, and the live presence/availability 
+    This aggregates tasks and the live presence/availability 
     of the developers working on them.
     """
     try:
@@ -33,25 +35,8 @@ def get_project_engineering_state(project_id):
                 "current_task_id": session.current_task_id
             }
 
-    # 2. Fetch tasks and dependencies
+    # 2. Fetch tasks
     tasks = Task.objects.filter(project_id=project_id)
-    dependencies = TaskDependency.objects.filter(from_task__project_id=project_id)
-
-    # Build dependency graph
-    task_blocks = {} # task_id -> list of task_ids it blocks
-    task_blocked_by = {} # task_id -> list of task_ids blocking it
-    
-    for dep in dependencies:
-        from_id = dep.from_task_id
-        to_id = dep.to_task_id
-        
-        if from_id not in task_blocks:
-            task_blocks[from_id] = []
-        task_blocks[from_id].append(to_id)
-        
-        if to_id not in task_blocked_by:
-            task_blocked_by[to_id] = []
-        task_blocked_by[to_id].append(from_id)
 
     # 3. Aggregate state
     tasks_state = {}
@@ -62,27 +47,24 @@ def get_project_engineering_state(project_id):
         assignee_status = user_presence_map.get(assignee_id, {}).get("status", "OFFLINE") if assignee_id else "UNASSIGNED"
         
         # Determine if this task is a risk
-        # E.g. A CRITICAL or HIGH priority task that is IN_PROGRESS but assignee is OFFLINE or UNAVAILABLE
+        # E.g. A task that is IN_PROGRESS but assignee is OFFLINE or UNAVAILABLE
         is_risk = False
-        if task.status in ['TODO', 'IN_PROGRESS']:
-            if task.priority in ['HIGH', 'CRITICAL'] and assignee_status in ['OFFLINE', 'UNAVAILABLE']:
+        if task.status in ['To Do', 'In Progress']:
+            if assignee_status in ['OFFLINE', 'UNAVAILABLE']:
                 is_risk = True
                 risks.append({
-                    "type": "OFFLINE_CRITICAL_ASSIGNEE",
+                    "type": "OFFLINE_ASSIGNEE",
                     "task_id": task.id,
                     "assignee_id": assignee_id,
-                    "description": f"Critical task '{task.title}' is assigned to {task.assignee.username if task.assignee else 'None'} who is {assignee_status}."
+                    "description": f"Task '{task.title}' is assigned to {task.assignee.username if task.assignee else 'None'} who is {assignee_status}."
                 })
         
         tasks_state[task.id] = {
             "id": task.id,
             "title": task.title,
             "status": task.status,
-            "priority": task.priority,
             "assignee_id": assignee_id,
             "assignee_status": assignee_status,
-            "blocks": task_blocks.get(task.id, []),
-            "blocked_by": task_blocked_by.get(task.id, []),
             "is_risk": is_risk
         }
 

@@ -1,7 +1,7 @@
 import json
 from engine.context.state import get_project_engineering_state
 from apps.realtime.models import PresenceSession, EngineEvent
-from apps.tasks.models import Task, TaskDependency
+from apps.tasks.models import Task
 from engine.simulation.core import run_simulation
 
 def get_project_state(project_id: int) -> str:
@@ -31,7 +31,6 @@ def get_task_context(task_id: int) -> str:
             "id": task.id,
             "title": task.title,
             "status": task.status,
-            "priority": task.priority,
             "assignee_id": task.assignee_id,
             "project_id": task.project_id
         })
@@ -63,13 +62,10 @@ def get_developer_profile(user_id: int, project_id: int) -> str:
 
 def get_task_dependencies(task_id: int) -> str:
     """Returns upstream and downstream dependencies for a task."""
-    blocks = TaskDependency.objects.filter(from_task_id=task_id)
-    blocked_by = TaskDependency.objects.filter(to_task_id=task_id)
-    
     return json.dumps({
         "task_id": task_id,
-        "blocks": [b.to_task_id for b in blocks],
-        "blocked_by": [b.from_task_id for b in blocked_by]
+        "blocks": [],
+        "blocked_by": []
     })
 
 def get_recent_activity(project_id: int, task_id: int = None) -> str:

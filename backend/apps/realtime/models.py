@@ -38,7 +38,7 @@ class EngineEvent(models.Model):
         return f"{self.event_type} at {self.timestamp}"
 
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='realtime_notifications')
     title = models.CharField(max_length=255)
     content = models.TextField(blank=True)
     event_type = models.CharField(max_length=100)

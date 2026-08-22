@@ -1,10 +1,11 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from apps.workspaces.models import Workspace, WorkspaceMembership
-from apps.projects.models import Project, ProjectMembership
-from apps.tasks.models import Task, TaskDependency
+from apps.projects.models import Project
+from apps.tasks.models import Task
 from django.utils import timezone
-from datetime import timedelta
+
+User = get_user_model()
 
 class Command(BaseCommand):
     help = 'Seeds the database with a realistic DevCollab demo workspace'
@@ -13,9 +14,7 @@ class Command(BaseCommand):
         self.stdout.write('Seeding devcollab database...')
 
         # Clear existing data
-        TaskDependency.objects.all().delete()
         Task.objects.all().delete()
-        ProjectMembership.objects.all().delete()
         Project.objects.all().delete()
         WorkspaceMembership.objects.all().delete()
         Workspace.objects.all().delete()
@@ -47,21 +46,17 @@ class Command(BaseCommand):
         project = Project.objects.create(
             workspace=workspace,
             name='Payments',
-            description='Core payments infrastructure and gateway integrations.',
-            created_by=users['Smith']
+            description='Core payments infrastructure and gateway integrations.'
         )
-        for username, user in users.items():
-            role = 'OWNER' if username == 'Smith' else 'ADMIN' if username == 'Rahul' else 'MEMBER'
-            ProjectMembership.objects.create(project=project, user=user, role=role)
-        self.stdout.write('Created Payments project and memberships')
+        self.stdout.write('Created Payments project')
 
         # Tasks
         tasks_data = [
-            {'title': 'Payment API', 'assignee': 'Smith', 'status': 'IN_PROGRESS', 'priority': 'CRITICAL', 'pos': 1.0},
-            {'title': 'Frontend Integration', 'assignee': 'Rahul', 'status': 'IN_PROGRESS', 'priority': 'HIGH', 'pos': 2.0},
-            {'title': 'Gateway Tests', 'assignee': 'Ankush', 'status': 'TODO', 'priority': 'MEDIUM', 'pos': 1.0},
-            {'title': 'Security Review', 'assignee': 'Riya', 'status': 'TODO', 'priority': 'HIGH', 'pos': 2.0},
-            {'title': 'Deployment', 'assignee': 'Karthik', 'status': 'TODO', 'priority': 'CRITICAL', 'pos': 3.0},
+            {'title': 'Payment API', 'assignee': 'Smith', 'status': 'In Progress'},
+            {'title': 'Frontend Integration', 'assignee': 'Rahul', 'status': 'In Progress'},
+            {'title': 'Gateway Tests', 'assignee': 'Ankush', 'status': 'To Do'},
+            {'title': 'Security Review', 'assignee': 'Riya', 'status': 'To Do'},
+            {'title': 'Deployment', 'assignee': 'Karthik', 'status': 'To Do'},
         ]
 
         tasks = {}
@@ -70,20 +65,9 @@ class Command(BaseCommand):
                 project=project,
                 title=t['title'],
                 assignee=users[t['assignee']],
-                status=t['status'],
-                priority=t['priority'],
-                position=t['pos'],
-                due_date=timezone.now().date() + timedelta(days=7),
-                created_by=users['Smith']
+                status=t['status']
             )
             tasks[t['title']] = task
             self.stdout.write(f'Created task {t["title"]}')
-
-        # Dependencies
-        TaskDependency.objects.create(from_task=tasks['Payment API'], to_task=tasks['Frontend Integration'])
-        TaskDependency.objects.create(from_task=tasks['Frontend Integration'], to_task=tasks['Gateway Tests'])
-        TaskDependency.objects.create(from_task=tasks['Gateway Tests'], to_task=tasks['Security Review'])
-        TaskDependency.objects.create(from_task=tasks['Security Review'], to_task=tasks['Deployment'])
-        self.stdout.write('Created task dependencies')
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded DevCollab database!'))

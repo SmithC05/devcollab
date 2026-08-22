@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
-    queryset = Task.objects.all().order_by('position')
+    queryset = Task.objects.all()
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -25,40 +25,12 @@ class TaskViewSet(viewsets.ModelViewSet):
     def move(self, request, pk=None):
         from .services import TaskService
         new_status = request.data.get('status')
-        new_position = request.data.get('position')
         
         user = request.user if request.user.is_authenticated else None
         
-        task = TaskService.move_task(pk, new_status, new_position, user)
+        task = TaskService.move_task(pk, new_status, user)
         if not task:
             return Response({'error': 'Task not found or invalid'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(task)
         return Response(serializer.data)
-
-    @action(detail=True, methods=['get', 'post'])
-    def comments(self, request, pk=None):
-        from .services import TaskService
-        from .serializers import CommentSerializer
-        from .models import Comment
-        
-        task = get_object_or_404(Task, pk=pk)
-        
-        if request.method == 'GET':
-            comments = Comment.objects.filter(task=task).order_by('created_at')
-            serializer = CommentSerializer(comments, many=True)
-            return Response(serializer.data)
-            
-        elif request.method == 'POST':
-            content = request.data.get('content')
-            if not content:
-                return Response({'error': 'Content is required'}, status=status.HTTP_400_BAD_REQUEST)
-                
-            user = request.user if request.user.is_authenticated else None
-            comment = TaskService.add_comment(pk, user, content)
-            
-            if not comment:
-                return Response({'error': 'Failed to add comment'}, status=status.HTTP_400_BAD_REQUEST)
-                
-            serializer = CommentSerializer(comment)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
