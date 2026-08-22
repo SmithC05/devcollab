@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMemberStore } from '../../stores/memberStore';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 import { useTaskStore } from '../../stores/taskStore';
 import { Search, Plus, X, UserPlus, Trash2 } from 'lucide-react';
 
