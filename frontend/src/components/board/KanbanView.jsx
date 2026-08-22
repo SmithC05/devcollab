@@ -14,7 +14,7 @@ import { useActivityStore } from '../../stores/activityStore';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 
 function DeleteZone() {
   const { isOver, setNodeRef } = useDroppable({ id: 'delete-zone' });

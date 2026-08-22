@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTaskStore } from '../../stores/taskStore';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../store/authStore';
 import { X, Trash2 } from 'lucide-react';
 
 const MEMBERS = ['Libin', 'Arjun', 'Priya', 'Rahul', 'Meera'];
