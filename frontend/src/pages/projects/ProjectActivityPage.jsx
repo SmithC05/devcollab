@@ -40,10 +40,25 @@ function groupEventsByDay(events) {
   return groups;
 }
 
-export default function ProjectActivityPage() {
-  const { activityGrid, activeFilter, setFilter, getFilteredEvents } = useActivityStore();
+export default function ProjectActivityPage({ projectId = 1 }) {
+  const { activityGrid, activeFilter, setFilter, getFilteredEvents, fetchEvents, isLoaded, addEvent } = useActivityStore();
   const filteredEvents = getFilteredEvents();
   const grouped = useMemo(() => groupEventsByDay(filteredEvents), [filteredEvents]);
+
+  import('react').then(({ useEffect }) => {
+    useEffect(() => {
+      if (!isLoaded) {
+        fetchEvents(projectId);
+      }
+      
+      const handleEngineEvent = (e) => {
+        addEvent(e.detail);
+      };
+      
+      document.addEventListener('engine_event', handleEngineEvent);
+      return () => document.removeEventListener('engine_event', handleEngineEvent);
+    }, [projectId, isLoaded, fetchEvents, addEvent]);
+  });
 
   const weeks = useMemo(() => {
     const result = [];

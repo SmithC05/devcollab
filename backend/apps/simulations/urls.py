@@ -1,4 +1,6 @@
 from django.urls import path
+from .views import project_state
 
-app_name = "simulations"
-urlpatterns = []
+urlpatterns = [
+    path('state/<int:project_id>/', project_state, name='project-state'),
+]

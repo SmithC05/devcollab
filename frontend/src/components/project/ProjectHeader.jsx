@@ -1,10 +1,28 @@
 import { Search, Bell, Settings } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNotificationStore } from '../../stores/notificationStore';
 
 export default function ProjectHeader() {
   const { projectId } = useParams();
-
   const projectName = projectId || "P1";
+  
+  const { unreadCount, fetchNotifications, isLoaded, addNotification } = useNotificationStore();
+  
+  useEffect(() => {
+    if (!isLoaded) {
+      fetchNotifications();
+    }
+    
+    // Listen for incoming notifications from WS (if we implemented a notification_event)
+    // For now we can also listen to engine_event as a stand-in if we want, but typically 
+    // notifications would be sent to a user-specific group. We'll leave the hook ready.
+    const handleNotification = (e) => {
+      addNotification(e.detail);
+    };
+    document.addEventListener('notification_event', handleNotification);
+    return () => document.removeEventListener('notification_event', handleNotification);
+  }, [isLoaded, fetchNotifications, addNotification]);
 
   return (
     <header className="h-16 border-b border-[#222] bg-[#161616] flex items-center justify-between px-6">
@@ -26,7 +44,11 @@ export default function ProjectHeader() {
         {/* Action Icons */}
         <button className="text-zinc-400 hover:text-zinc-200 transition-colors relative">
           <Bell className="w-4 h-4" />
-          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-[#161616]"></span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#161616] text-[8px] text-white flex items-center justify-center font-bold">
+              {unreadCount}
+            </span>
+          )}
         </button>
       </div>
     </header>
