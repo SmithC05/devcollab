@@ -1,17 +1,29 @@
 from engine.prediction.context_score import calculate_context_score
 from engine.prediction.duration import predict_duration
 from engine.prediction.risk import predict_risk, predict_deadline_probability
+from ml.predictor import predict_context_transfer, predict_knowledge_transfer
+from apps.tasks.models import Task
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 def simulate_intervention(task_id: int, candidate_id: int, intervention_type: str) -> dict:
     """
     Simulates the outcome of applying a specific intervention.
+    Integrates ML predictions for context transfer and knowledge transfer.
     """
+    try:
+        task = Task.objects.get(id=task_id)
+        candidate = User.objects.get(id=candidate_id)
+    except (Task.DoesNotExist, User.DoesNotExist):
+        return {"error": "Invalid task or candidate ID"}
+
     duration = predict_duration(task_id, candidate_id, intervention_type)
     risk_level = predict_risk(task_id, candidate_id, intervention_type)
     deadline_prob = predict_deadline_probability(duration)
     context_score = calculate_context_score(task_id, candidate_id)
     
-    # Generate some structured reasoning for transparency
+    # Generate structured reasoning for transparency
     reasons = []
     
     if context_score < 0.5:
@@ -19,16 +31,52 @@ def simulate_intervention(task_id: int, candidate_id: int, intervention_type: st
     else:
         reasons.append(f"Candidate has good project/task context ({int(context_score*100)}%).")
         
-    if intervention_type == "WAIT":
-        reasons.append("Waiting incurs no transfer cost but adds dead time to delivery.")
+    # ML Integration
+    transfer_effort = 0.0
+    transfer_reduction = 0.0
+    
+    # We predict context transfer for relevant interventions
+    if intervention_type in ["REASSIGN", "PAIR", "KNOWLEDGE_TRANSFER"]:
+        try:
+            ctx_pred = predict_context_transfer(task, candidate)
+            transfer_effort = ctx_pred.get("prediction_hours", 0.0)
+            reasons.append(f"Predicted base context transfer effort: {transfer_effort}h.")
+        except Exception as e:
+            reasons.append(f"Failed to predict transfer effort: {e}")
+
+    if intervention_type == "KNOWLEDGE_TRANSFER":
+        try:
+            kt_pred = predict_knowledge_transfer(task, candidate)
+            transfer_reduction = kt_pred.get("predicted_reduction_hours", 0.0)
+            reasons.append(f"Predicted effort reduction from knowledge handoff: {transfer_reduction}h.")
+            
+            # The net transfer effort is the base minus the reduction
+            net_effort = max(0.0, transfer_effort - transfer_reduction)
+            reasons.append(f"Net post-handoff transfer effort: {round(net_effort, 1)}h.")
+            # Factor this into the duration/risk in a real deterministic engine
+            duration += net_effort
+            
+        except Exception as e:
+            reasons.append(f"Failed to predict knowledge transfer reduction: {e}")
+            
     elif intervention_type == "REASSIGN":
         reasons.append("Direct reassignment incurs full transfer cost/ramp-up time.")
-    elif intervention_type == "PAIR" or intervention_type == "PAIR_WITH_AI":
+        duration += transfer_effort
+        
+    elif intervention_type == "WAIT":
+        reasons.append("Waiting incurs no transfer cost but adds dead time to delivery.")
+        
+    elif intervention_type in ["PAIR", "PAIR_WITH_AI"]:
         reasons.append("Pairing mitigates transfer cost and reduces overall risk.")
+        # In a real engine, PAIR mitigates but doesn't eliminate transfer effort
+        duration += transfer_effort * 0.5 
+        
     elif intervention_type == "AI_ASSIST":
         reasons.append("AI Assist speeds up execution but ramp-up is still required for new developers.")
+        
     elif intervention_type == "DE_SCOPE":
         reasons.append("De-scoping reduces base duration significantly.")
+        duration = duration * 0.5
         
     return {
         "type": intervention_type,
@@ -36,6 +84,8 @@ def simulate_intervention(task_id: int, candidate_id: int, intervention_type: st
         "estimated_completion": round(duration, 1),
         "risk": risk_level,
         "deadline_probability": round(deadline_prob, 2),
+        "predicted_transfer_effort_hours": round(transfer_effort, 2) if transfer_effort else None,
+        "predicted_transfer_effort_reduction_hours": round(transfer_reduction, 2) if transfer_reduction else None,
         "reason": reasons
     }
 
@@ -50,7 +100,8 @@ def run_simulation(task_id: int, candidate_id: int) -> list:
         "AI_ASSIST", 
         "PAIR_WITH_AI", 
         "DE_SCOPE", 
-        "PARALLELIZE"
+        "PARALLELIZE",
+        "KNOWLEDGE_TRANSFER"
     ]
     
     results = []
