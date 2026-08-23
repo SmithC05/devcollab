@@ -5,12 +5,15 @@ This is a read-only, non-mutating endpoint for the Intelligence UI.
 """
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from apps.projects.models import Project
 from apps.workspaces.models import Workspace, WorkspaceMembership
 from apps.tasks.models import Task
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from .capacity import calculate_capacity
 
 User = get_user_model()
@@ -355,3 +358,96 @@ def summarize_member_evidence(request, pk):
         return Response({"summary": summary_text, "cached": False})
     except Exception as e:
         return Response({"summary": "Could not generate summary at this time.", "error": str(e)})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def recommend_and_assign(request):
+    """
+    POST /api/intelligence/recommend-assign/
+    Body: { task_id: int, developer_id: int }
+
+    Assigns the given developer to the task and broadcasts a TASK_UPDATED
+    WebSocket event so the Kanban board and Intelligence view refresh live.
+    """
+    task_id = request.data.get('task_id')
+    developer_id = request.data.get('developer_id')
+
+    if not task_id or not developer_id:
+        return Response({'error': 'task_id and developer_id are required.'}, status=400)
+
+    task = get_object_or_404(Task, id=task_id)
+    developer = get_object_or_404(User, id=developer_id)
+
+    task.assignee = developer
+    task.save(update_fields=['assignee'])
+
+    # Broadcast so Kanban + Intelligence views refresh in real-time
+    try:
+        from apps.realtime.models import EngineEvent
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+        from apps.tasks.serializers import TaskSerializer
+
+        event_payload = {
+            'task_id': task.id,
+            'new_status': task.status,
+            'new_assignee_id': developer.id,
+            'new_assignee_name': developer.get_full_name() or developer.username,
+            'task_data': TaskSerializer(task).data,
+        }
+        EngineEvent.objects.create(
+            event_type='TASK_UPDATED',
+            actor=request.user,
+            project=task.project,
+            task=task,
+            payload=event_payload,
+        )
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            'workspace_global',
+            {'type': 'engine_event', 'payload': {'event_type': 'TASK_UPDATED', **event_payload}}
+        )
+    except Exception as e:
+        # Don't fail the assignment if the broadcast fails
+        pass
+
+    return Response({
+        'success': True,
+        'task_id': task.id,
+        'assignee_id': developer.id,
+        'assignee_name': developer.get_full_name() or developer.username,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_unassigned_tasks(request):
+    """
+    GET /api/intelligence/unassigned-tasks/
+    Returns all tasks with no assignee in the current workspace.
+    """
+    from apps.workspaces.permissions import get_current_workspace
+    workspace = get_current_workspace(request)
+    if not workspace:
+        return Response({'tasks': []})
+
+    projects = Project.objects.filter(workspace=workspace)
+    tasks = Task.objects.filter(project__in=projects, assignee__isnull=True).exclude(
+        status='DONE'
+    ).select_related('project').order_by('priority', 'created_at')
+
+    return Response({
+        'tasks': [
+            {
+                'id': t.id,
+                'title': t.title,
+                'priority': t.priority,
+                'status': t.status,
+                'project_id': t.project_id,
+                'project_name': t.project.name,
+            }
+            for t in tasks
+        ]
+    })
+

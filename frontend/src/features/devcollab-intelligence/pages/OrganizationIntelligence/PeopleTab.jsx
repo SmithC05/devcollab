@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, GitBranch, GitMerge, Loader2, ArrowLeft, Code2, CheckCircle2 } from 'lucide-react';
 import { SectionLabel, cap } from './shared';
 import { DvCard, DvBadge, DvAvatar, DvProgressBar, DvProgressRing, DvButton } from '../../primitives/core';
-import { availabilityToVariant, contextLabelToVariant, getMemberEvidence, summarizeMemberEvidence, compareTaskCandidates } from '../../data/organizationAdapter';
+import { availabilityToVariant, contextLabelToVariant, getMemberEvidence, summarizeMemberEvidence, compareTaskCandidates, getUnassignedTasks, recommendAndAssignTask } from '../../data/organizationAdapter';
 import EngineeringGraph from './EngineeringGraph';
 import { fadeUp, staggerChildren, slideIn } from '../../motion/presets';
 
@@ -87,17 +88,21 @@ function MemberIntelligenceCard({ member, responsibilities, onClick }) {
   );
 }
 
-function TaskComparisonSection({ selectedMember }) {
+function TaskComparisonSection({ selectedMember, onAssigned }) {
+  const navigate = useNavigate();
   const [selectedTaskId, setSelectedTaskId] = useState('');
   const [loading, setLoading] = useState(false);
   const [comparison, setComparison] = useState(null);
+  const [unassignedTasks, setUnassignedTasks] = useState([]);
+  const [assigning, setAssigning] = useState(null); // developer id being assigned
+  const [assignedId, setAssignedId] = useState(null); // developer id that was just assigned
 
-  // In a real scenario, we'd fetch unassigned tasks from the backend. 
-  // For the demo, we assume the backend knows about task ID 1 (Payment API) which should be unassigned.
-  // We hardcode the options here to guide the demo flow.
-  const unassignedTasks = [
-    { id: 1, title: 'Payment API', project_name: 'Payments Platform' }
-  ];
+  // Load real unassigned tasks from the DB
+  useEffect(() => {
+    getUnassignedTasks().then(res => {
+      if (res?.tasks) setUnassignedTasks(res.tasks);
+    });
+  }, []);
 
   useEffect(() => {
     if (!selectedTaskId) {
@@ -115,6 +120,31 @@ function TaskComparisonSection({ selectedMember }) {
     return () => { cancelled = true; };
   }, [selectedTaskId]);
 
+  const handleAssign = async (developer) => {
+    setAssigning(developer.id);
+    try {
+      await recommendAndAssignTask(Number(selectedTaskId), developer.id);
+      // Find the project_id for this task to redirect to its Kanban board
+      const assignedTask = unassignedTasks.find(t => String(t.id) === String(selectedTaskId));
+      const projectId = assignedTask?.project_id;
+      setAssignedId(developer.id);
+      // Remove the assigned task from the local unassigned list
+      setUnassignedTasks(prev => prev.filter(t => String(t.id) !== String(selectedTaskId)));
+      setSelectedTaskId('');
+      setComparison(null);
+      // Trigger full refresh so Intelligence stats update
+      onAssigned?.();
+      // Redirect to the project's Kanban board after a brief moment
+      if (projectId) {
+        setTimeout(() => navigate(`/projects/${projectId}/board`), 800);
+      }
+    } catch (err) {
+      alert('Failed to assign task. Please try again.');
+    } finally {
+      setAssigning(null);
+    }
+  };
+
   return (
     <motion.div variants={fadeUp} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 24 }}>
       <SectionLabel label="Evaluate For Task" icon={GitMerge} />
@@ -128,13 +158,24 @@ function TaskComparisonSection({ selectedMember }) {
             fontSize: 'var(--dv-text-sm)', flex: 1, maxWidth: 400
           }}
         >
-          <option value="">-- Select an Unassigned Task --</option>
+          <option value="">{unassignedTasks.length === 0 ? '-- No unassigned tasks --' : '-- Select an Unassigned Task --'}</option>
           {unassignedTasks.map(t => (
-            <option key={t.id} value={t.id}>{t.project_name} → {t.title}</option>
+            <option key={t.id} value={t.id}>[{t.priority}] {t.project_name} → {t.title}</option>
           ))}
         </select>
         {loading && <Loader2 className="dv-spinner" size={16} color="var(--dv-accent)" />}
       </div>
+
+      {assignedId && (
+        <div style={{
+          padding: '12px 16px', background: 'var(--dv-success-subtle)',
+          border: '1px solid var(--dv-success-border)', borderRadius: 'var(--dv-radius-md)',
+          display: 'flex', alignItems: 'center', gap: 8, color: 'var(--dv-success)', fontSize: 'var(--dv-text-sm)', fontWeight: 600
+        }}>
+          <CheckCircle2 size={16} />
+          Task assigned! The Kanban board and capacity stats have been updated.
+        </div>
+      )}
 
       {comparison && comparison.candidates && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16, marginTop: 16 }}>
@@ -180,7 +221,22 @@ function TaskComparisonSection({ selectedMember }) {
               </div>
               
               <div style={{ marginTop: 'auto', paddingTop: 16 }}>
-                <DvButton variant="primary" style={{ width: '100%' }}>Recommend for Task</DvButton>
+                {assignedId === c.developer.id ? (
+                  <DvButton variant="success" style={{ width: '100%', opacity: 0.8 }} disabled>
+                    <CheckCircle2 size={14} style={{ marginRight: 6 }} /> Assigned!
+                  </DvButton>
+                ) : (
+                  <DvButton
+                    variant="primary"
+                    style={{ width: '100%' }}
+                    onClick={() => handleAssign(c.developer)}
+                    disabled={!!assigning}
+                  >
+                    {assigning === c.developer.id ? (
+                      <><Loader2 size={14} className="dv-spinner" style={{ marginRight: 6 }} /> Assigning...</>
+                    ) : 'Recommend for Task'}
+                  </DvButton>
+                )}
               </div>
             </DvCard>
           ))}
@@ -293,7 +349,7 @@ function AnalyzeEvidenceView({ member, onBack, onEvaluate }) {
   );
 }
 
-export default function PeopleTab({ data, onSelectNode }) {
+export default function PeopleTab({ data, onSelectNode, onSyncSuccess }) {
   const { members, responsibilities, projects, decisionPoints } = data;
   
   const [step, setStep] = useState('SELECT_MEMBER'); // SELECT_MEMBER, ANALYZE_EVIDENCE, COMPARE_TASKS
@@ -360,7 +416,7 @@ export default function PeopleTab({ data, onSelectNode }) {
               <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)', marginTop: 4 }}>Comparing {selectedMember.name}'s context against task requirements</div>
             </div>
           </div>
-          <TaskComparisonSection selectedMember={selectedMember} />
+          <TaskComparisonSection selectedMember={selectedMember} onAssigned={onSyncSuccess} />
         </motion.div>
       )}
     </div>

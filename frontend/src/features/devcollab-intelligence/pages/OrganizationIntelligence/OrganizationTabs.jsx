@@ -77,7 +77,7 @@ export default function OrganizationTabs({ data, onSelectNode, onSyncSuccess }) 
           <OverviewTab data={data} onSelectNode={onSelectNode} onSyncSuccess={onSyncSuccess} />
         )}
         {activeTab === 'people' && (
-          <PeopleTab data={data} onSelectNode={onSelectNode} />
+          <PeopleTab data={data} onSelectNode={onSelectNode} onSyncSuccess={onSyncSuccess} />
         )}
         {activeTab === 'projects' && (
           <ProjectsTab data={data} onSelectNode={onSelectNode} />
