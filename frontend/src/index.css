@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -13,9 +13,38 @@
   --font-mono: 'JetBrains Mono', monospace;
 }
 
+:root {
+  /* Strictly Monochrome UI Tokens */
+  --bg: #050505;
+  --app-bg: #050505;
+  --surface: #0A0A0A;
+  --surface-raised: #0A0A0A;
+  --surface-item: #111111;
+  --surface-card: #0A0A0A;
+  --surface-hover: #151515;
+  
+  --border-subtle: #242424;
+  --border-default: #242424;
+  --border-strong: #303030;
+  --border-focus: #404040;
+  
+  --text-primary: #F5F5F5;
+  --fg: #F5F5F5;
+  --text-secondary: #A1A1A1;
+  --text-muted: #666666;
+  --text-white: #FFFFFF;
+
+  --focus-ring: #303030;
+  
+  /* Status Colors (Green only) */
+  --status-success: #22C55E;
+  --status-success-bg: rgba(34, 197, 94, 0.1);
+  --status-success-border: rgba(34, 197, 94, 0.2);
+}
+
 body {
-  background: linear-gradient(to bottom, var(--color-brand-bg-start), var(--color-brand-bg-end));
-  color: var(--color-brand-ink);
+  background: var(--bg);
+  color: var(--text-primary);
   font-family: var(--font-body);
   margin: 0;
   min-height: 100vh;

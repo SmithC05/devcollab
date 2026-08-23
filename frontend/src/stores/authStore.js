@@ -216,7 +216,17 @@ export const useAuthStore = create(
         try {
           const wsData = await workspaceApi.getWorkspaces();
           if (wsData.success) {
-            set({ workspaces: wsData.workspaces });
+            const freshWorkspaces = wsData.workspaces;
+            set((state) => {
+              // Keep activeWorkspace if it still exists in the refreshed list
+              const stillExists = freshWorkspaces.some(
+                (w) => w.id === state.activeWorkspace?.id
+              );
+              return {
+                workspaces: freshWorkspaces,
+                activeWorkspace: stillExists ? state.activeWorkspace : null,
+              };
+            });
           }
         } catch (e) {
           console.error("Failed to refresh workspaces", e);
@@ -248,6 +258,12 @@ export const useAuthStore = create(
       can: (action) => {
         const currentRole = get().role || 'Dev';
         return hasPermission(currentRole, action);
+      },
+      
+      updateUser: (userData) => {
+        set((state) => ({
+          user: { ...state.user, ...userData }
+        }));
       }
     }),
     {

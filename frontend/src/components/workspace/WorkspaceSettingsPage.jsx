@@ -5,23 +5,26 @@ import PageContainer from '../layout/PageContainer';
 import { Card, Button, Spinner, Input, SectionHeader, Tabs, Tab } from '../ui/index';
 import DeveloperProfileSettings from './DeveloperProfileSettings';
 import { useAuthStore } from '../../stores/authStore';
-import { workspaceApi } from '../../api/workspaceApi';
+import { apiClient } from '../../api/client';
 
 export default function WorkspaceSettingsPage() {
   const { activeWorkspace } = useAuthStore();
   const [activeTab, setActiveTab] = useState('Workspace');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [data, setData] = useState({ name: '', slug: '', description: '' });
+  const [profileData, setProfileData] = useState({ name: '', email: '', bio: '', github_url: '', avatar_url: '' });
   const [error, setError] = useState(null);
   const { theme, toggleTheme } = useTheme();
+  
+  const { user, updateUser } = useAuthStore();
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        // BUG-18 FIX: Use workspaceApi.getSettings with workspace_id
-        const json = await workspaceApi.getSettings(activeWorkspace?.id);
-        setData(json);
+        const data = await apiClient('/workspace/settings/');
+        setData(data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -29,18 +32,67 @@ export default function WorkspaceSettingsPage() {
       }
     };
     fetchSettings();
-  }, [activeWorkspace?.id]);
+  }, []);
+
+  // Initialize profile data from global store when it loads or changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || user.first_name || '',
+        email: user.email || '',
+        bio: user.bio || '',
+        github_url: user.github_url || '',
+        avatar_url: user.avatar_url || ''
+      });
+    }
+  }, [user]);
 
   const handleSaveWorkspace = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      // BUG-18 FIX: Use workspaceApi.updateSettings with workspace_id
-      await workspaceApi.updateSettings(activeWorkspace?.id, data);
+      const res = await fetch('/api/workspace/settings/', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to save');
     } catch (err) {
       alert(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    try {
+      const { authApi } = await import('../../api/authApi');
+      
+      let payload;
+      if (profileData.avatar_file) {
+        payload = new FormData();
+        payload.append('name', profileData.name);
+        payload.append('bio', profileData.bio);
+        payload.append('github_url', profileData.github_url);
+        payload.append('avatar_file', profileData.avatar_file);
+      } else {
+        payload = {
+          name: profileData.name,
+          bio: profileData.bio,
+          github_url: profileData.github_url,
+          avatar_url: profileData.avatar_url
+        };
+      }
+      
+      const res = await authApi.updateProfile(payload);
+      if (!res.success) throw new Error(res.error || 'Failed to update profile');
+      updateUser(res.user);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSavingProfile(false);
     }
   };
 
@@ -138,11 +190,96 @@ export default function WorkspaceSettingsPage() {
                 <h2 className="text-[16px] font-semibold text-[var(--fg)] mb-1">Profile</h2>
                 <p className="text-[13px] text-[var(--text-secondary)]">Manage your personal developer profile.</p>
               </div>
-              <div className="py-12 border border-dashed border-[var(--border-strong)] rounded-xl text-center text-[var(--text-muted)] text-[13px]">
-                Profile fields (Avatar, Bio) — backend schema update pending.
-              </div>
+              
+              <form onSubmit={handleSaveProfile} className="space-y-6">
+                {/* Avatar Section */}
+                <div className="flex items-center gap-5 pb-5 border-b border-[var(--border-subtle)]">
+                  <div className="w-[60px] h-[60px] rounded-full bg-[var(--surface-item)] border border-[var(--border-strong)] flex items-center justify-center overflow-hidden shrink-0">
+                    {profileData.avatar_url ? (
+                      <img src={profileData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[20px] font-medium text-[var(--text-secondary)]">
+                        {(profileData.name || 'User').charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[14px] font-medium text-[var(--fg)]">{profileData.name || 'User'}</span>
+                    <span className="text-[13px] text-[var(--text-muted)]">{profileData.email}</span>
+                    <div className="flex gap-3 mt-1">
+                      <button 
+                        type="button" 
+                        onClick={() => document.getElementById('avatar-upload').click()}
+                        className="text-[12px] font-medium text-[var(--text-primary)] hover:underline"
+                      >
+                        Change Avatar
+                      </button>
+                      {profileData.avatar_url && (
+                        <button type="button" onClick={() => setProfileData({ ...profileData, avatar_url: '', avatar_file: null })} className="text-[12px] font-medium text-red-400 hover:underline">Remove</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hidden file input */}
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const tempUrl = URL.createObjectURL(file);
+                      setProfileData({ ...profileData, avatar_url: tempUrl, avatar_file: file });
+                    }
+                  }}
+                />
+
+                <div>
+                  <label className={labelClass}>Full Name</label>
+                  <Input
+                    type="text"
+                    required
+                    value={profileData.name || ''}
+                    onChange={e => setProfileData({ ...profileData, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Email</label>
+                  <Input
+                    type="email"
+                    value={profileData.email || ''}
+                    disabled
+                    className="opacity-60 cursor-not-allowed"
+                  />
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1.5">Email address is managed by your authentication provider.</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[12px] font-medium text-[var(--text-secondary)]">Bio</label>
+                    <span className="text-[11px] text-[var(--text-muted)]">{(profileData.bio || '').length} / 500</span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    maxLength={500}
+                    placeholder="Tell your team a little about yourself..."
+                    value={profileData.bio || ''}
+                    onChange={e => setProfileData({ ...profileData, bio: e.target.value })}
+                    className="w-full bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-md px-3 py-2 text-[13px] text-[var(--fg)] placeholder-[var(--text-muted)] focus:border-[var(--border-focus)] transition-colors outline-none resize-none"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <Button type="submit" variant="primary" disabled={savingProfile} icon={Save} iconSize={14}>
+                    {savingProfile ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              </form>
             </Card>
-            
+
             <DeveloperProfileSettings />
           </div>
         )}

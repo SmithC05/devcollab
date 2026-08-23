@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Plus, CheckCircle2, ArrowRight, Circle, Check, Bell } from 'lucide-react';
+import { apiClient } from '../../api/client';
 import TasksCompletedChart from '../dashboard/TasksCompletedChart';
 import StatusDistribution from '../dashboard/StatusDistribution';
 import PageContainer from '../layout/PageContainer';
@@ -15,9 +16,9 @@ export default function WorkspaceOverview() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // BUG-18 FIX: Use workspaceApi.getOverview with workspace_id
-        const json = await workspaceApi.getOverview(activeWorkspace?.id);
-        setData(json);
+        const data = await apiClient('/workspace/overview/');
+        setData(data);
+
       } catch (err) {
         console.error('Error fetching workspace data:', err);
       } finally {

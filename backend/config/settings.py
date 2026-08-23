@@ -139,7 +139,11 @@ USE_TZ = True
 # Static files
 # ---------------------------------------------------------------------------
 
-STATIC_URL = "static/"
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # ---------------------------------------------------------------------------
 # ASGI
@@ -201,6 +205,11 @@ CSRF_TRUSTED_ORIGINS = config(
     default="http://localhost:5173,http://127.0.0.1:5173",
     cast=Csv(),
 )
+
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "x-workspace-id",
+]
 
 # ---------------------------------------------------------------------------
 # Allauth Config

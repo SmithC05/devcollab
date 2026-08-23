@@ -56,13 +56,19 @@ export default function InvitationPage() {
       // Fetch latest workspaces so the app knows the user is now in a workspace
       await useAuthStore.getState().refreshWorkspaces();
       
-      setActionSuccess(`Successfully joined ${result.workspace.name}!`);
+      // Set the newly joined workspace as the active workspace
+      const { workspaces, setActiveWorkspace } = useAuthStore.getState();
+      const joinedWorkspace = workspaces.find(w => w.id === result.workspace.id);
+      if (joinedWorkspace) {
+        setActiveWorkspace(joinedWorkspace.id);
+      } else if (workspaces.length > 0) {
+        setActiveWorkspace(workspaces[0].id);
+      }
+      
+      setActionSuccess(`Successfully joined ${result.workspace.name}! Redirecting...`);
       setTimeout(() => {
-        // According to user request: "once they login they need to be redirected to the workspace"
-        // Wait, usually they'd go to /workspace/:slug or /dashboard
-        // We'll send them to dashboard for now, or if the app uses select-workspace, to there.
-        navigate('/');
-      }, 2000);
+        navigate('/dashboard');
+      }, 1500);
     } catch (err) {
       setError(err.message || 'Failed to accept invitation.');
     } finally {

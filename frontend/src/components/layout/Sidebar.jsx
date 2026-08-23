@@ -14,7 +14,10 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
-  X
+  ChevronDown,
+  X,
+  MoreVertical,
+  LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../../stores/authStore';
@@ -26,28 +29,27 @@ function SideNavLink({ to, end, onClick, icon: Icon, children, collapsed }) {
       to={to}
       end={end}
       onClick={onClick}
-      className="relative flex items-center h-[36px] text-[13px] font-medium outline-none transition-colors mb-[4px] select-none group"
-      style={{ padding: collapsed ? '0' : '0 12px', justifyContent: collapsed ? 'center' : 'flex-start' }}
+      className="relative flex items-center h-[34px] text-[13px] font-medium outline-none transition-all duration-150 mb-[2px] select-none rounded-[6px] group"
+      style={{ padding: collapsed ? '0' : '0 10px', justifyContent: collapsed ? 'center' : 'flex-start' }}
     >
       {({ isActive }) => (
         <>
-          {/* Active left border indicator */}
-          {isActive && !collapsed && (
-            <motion.div
-              layoutId="sidebar-active-border"
-              className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--text-primary)] rounded-r-md"
-              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            />
-          )}
+          <div 
+            className={`absolute inset-0 rounded-[6px] transition-colors duration-150 ${
+              isActive 
+                ? 'bg-[var(--surface-item)] border border-[var(--border-strong)]' 
+                : 'bg-transparent border border-transparent group-hover:bg-[var(--surface-hover)]'
+            }`} 
+          />
 
-          <div className="relative flex items-center z-10 w-full" style={{ gap: '12px', justifyContent: collapsed ? 'center' : 'flex-start' }}>
+          <div className="relative flex items-center z-10 w-full" style={{ gap: '10px', justifyContent: collapsed ? 'center' : 'flex-start' }}>
             <Icon 
-              size={17} 
-              className="shrink-0 transition-colors" 
+              size={16} 
+              className="shrink-0 transition-colors duration-150" 
               style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-muted)' }}
             />
             {!collapsed && (
-              <span className="truncate transition-colors" style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+              <span className="truncate transition-colors duration-150" style={{ color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                 {children}
               </span>
             )}
@@ -67,7 +69,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const userName = user?.first_name
     ? `${user.first_name} ${user.last_name}`.trim()
     : user?.username || 'User';
-  const initial = userName.charAt(0).toLowerCase();
+  const initial = userName.charAt(0).toUpperCase();
 
   const navGroups = [
     {
@@ -80,51 +82,53 @@ export default function Sidebar({ isOpen, onClose }) {
         { to: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
         { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
       ]
-    },
-    {
-      title: 'INTELLIGENCE',
-      items: [
-        { to: '/dashboard/intelligence/organization', icon: Globe, label: 'Organization' },
-        { to: '/dashboard/intelligence/decision/dp1', icon: Target, label: 'Decision Points' },
-        { to: '/dashboard/intelligence/simulation/demo/sc1', icon: PlayCircle, label: 'Simulations' },
-        { to: '/dashboard/intelligence/knowledge-transfer/kt1', icon: Share2, label: 'Knowledge Transfer' },
-      ]
     }
   ];
+  
+  const intelGroup = {
+    title: 'INTELLIGENCE',
+    items: [
+      { to: '/dashboard/ai', icon: Sparkles, label: 'AI Assistant' },
+    ]
+  };
+
+  const handleSignOut = async () => {
+    // If there is a confirmation needed, we could add it, but requirement said:
+    // "Do not create unnecessary confirmation if the existing application consistently uses immediate logout without confirmation."
+    // We will do immediate logout as requested.
+    await useAuthStore.getState().logout();
+    navigate('/login');
+  };
 
   const sidebarContent = (isMobile) => {
     const isCollapsed = !isMobile && collapsed;
 
     return (
       <motion.aside
-        animate={{ width: isCollapsed ? 72 : 240 }}
+        animate={{ width: isCollapsed ? 64 : 240 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="flex flex-col h-full shrink-0 bg-[var(--sidebar-bg)] border-r border-[var(--border-subtle)] overflow-visible relative z-30"
+        className="flex flex-col h-full shrink-0 bg-[var(--bg)] border-r border-[var(--border-subtle)] overflow-visible relative z-30"
       >
-        {/* Desktop collapse toggle - Placed on the border exactly like the image */}
+        {/* Desktop collapse toggle */}
         {!isMobile && (
           <button 
             onClick={() => setCollapsed(!collapsed)}
-            className="absolute -right-3 top-[18px] w-6 h-6 bg-[var(--surface-raised)] border border-[var(--border-strong)] rounded-full flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--focus-ring)] cursor-pointer shadow-sm transition-colors z-40"
+            className="absolute -right-[13px] top-[24px] w-[26px] h-[26px] bg-[var(--surface)] border border-[var(--border-strong)] rounded-full flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--focus-ring)] cursor-pointer shadow-sm transition-all z-40"
           >
             {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
           </button>
         )}
 
         {/* ── Brand ──────────────────────────────────────────── */}
-        <div className="h-[56px] px-4 flex items-center shrink-0 border-b border-[var(--border-subtle)]" style={{ justifyContent: isCollapsed ? 'center' : 'space-between' }}>
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-[28px] h-[28px] rounded-full bg-[var(--text-primary)] text-[var(--bg)] flex items-center justify-center text-[12px] font-bold shrink-0">
+        <div className="h-[64px] px-4 flex items-center shrink-0" style={{ justifyContent: isCollapsed ? 'center' : 'space-between' }}>
+          <div className="flex items-center gap-2 overflow-hidden cursor-pointer group">
+            <div className="w-[24px] h-[24px] rounded-[6px] bg-[var(--text-primary)] text-[var(--bg)] flex items-center justify-center text-[11px] font-bold shrink-0 transition-transform group-hover:scale-105">
               DC
             </div>
             {!isCollapsed && (
-              <motion.span 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                className="text-[15px] font-bold text-[var(--text-primary)] tracking-tight whitespace-nowrap"
-              >
+              <span className="text-[14px] font-bold text-[var(--text-primary)] tracking-tight whitespace-nowrap">
                 DevCollab
-              </motion.span>
+              </span>
             )}
           </div>
           {!isCollapsed && isMobile && (
@@ -132,58 +136,100 @@ export default function Sidebar({ isOpen, onClose }) {
           )}
         </div>
 
+        {/* ── Workspace Selector ────────────────────────────────────── */}
+        {!isCollapsed && (
+          <div className="px-3 mb-4">
+            <button
+              onClick={() => navigate('/select-workspace')}
+              className="w-full flex items-center justify-between h-[36px] px-3 rounded-[8px] border border-[var(--border-subtle)] bg-[var(--surface-item)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)] transition-colors duration-150 cursor-pointer"
+              title="Switch workspace"
+            >
+              <span className="text-[13px] font-medium text-[var(--text-primary)] truncate">
+                {activeWorkspace?.name || 'Team Workspace'}
+              </span>
+              <ChevronDown size={14} className="text-[var(--text-muted)] shrink-0 ml-2" />
+            </button>
+          </div>
+        )}
+        {isCollapsed && (
+          <div className="w-full h-px bg-[var(--border-subtle)] mb-4" />
+        )}
+
         {/* ── Navigation ────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto pt-6 pb-4 flex flex-col gap-8">
+        <div className="flex-1 overflow-y-auto px-3 pb-4 flex flex-col">
           {navGroups.map((group, groupIdx) => (
-            <div key={group.title}>
+            <div key={group.title} className="mb-6">
               {!isCollapsed && (
-                <div className="px-5 mb-3 flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                <div className="px-2 mb-2">
+                  <span className="text-[11px] font-semibold text-[var(--text-muted)] tracking-wider">
                     {group.title}
                   </span>
-                  {groupIdx === 0 && (
-                    <span className="text-[14px] font-semibold text-[var(--text-primary)] mb-2 truncate">
-                      {activeWorkspace?.name || 'Team Thunder'}
-                    </span>
-                  )}
                 </div>
               )}
-              {isCollapsed && groupIdx > 0 && (
-                <div className="h-px bg-[var(--border-subtle)] my-3 mx-4" />
-              )}
-              <nav className="flex flex-col relative px-3">
+              <nav className="flex flex-col relative">
                 {group.items.map((item, idx) => (
-                  <motion.div
-                    key={item.to}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: (groupIdx * 0.1) + (idx * 0.03), duration: 0.2 }}
-                  >
-                    <SideNavLink to={item.to} end={item.end} onClick={isMobile ? onClose : undefined} icon={item.icon} collapsed={isCollapsed}>
-                      {item.label}
-                    </SideNavLink>
-                  </motion.div>
+                  <SideNavLink key={item.to} to={item.to} end={item.end} onClick={isMobile ? onClose : undefined} icon={item.icon} collapsed={isCollapsed}>
+                    {item.label}
+                  </SideNavLink>
                 ))}
               </nav>
             </div>
           ))}
+          
+          <div className="h-px bg-[var(--border-subtle)] w-full mb-6" />
+          
+          {/* Intelligence Group */}
+          <div>
+            {!isCollapsed && (
+              <div className="px-2 mb-2">
+                <span className="text-[11px] font-semibold text-[var(--text-muted)] tracking-wider">
+                  {intelGroup.title}
+                </span>
+              </div>
+            )}
+            <nav className="flex flex-col relative">
+              {intelGroup.items.map((item, idx) => (
+                <SideNavLink key={item.to} to={item.to} end={item.end} onClick={isMobile ? onClose : undefined} icon={item.icon} collapsed={isCollapsed}>
+                  {item.label}
+                </SideNavLink>
+              ))}
+            </nav>
+          </div>
         </div>
 
         {/* ── User Footer ──────────────────────────────────── */}
-        <div className="shrink-0 p-4 flex items-center justify-between mt-auto">
+        <div className="shrink-0 p-3 flex flex-col gap-1 border-t border-[var(--border-subtle)] bg-[var(--bg)]">
           <button
             onClick={() => navigate('/dashboard/settings')}
-            className="flex items-center gap-3 min-w-0 bg-transparent border-none outline-none cursor-pointer w-full group"
-            style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}
+            className={`w-full flex items-center h-[44px] rounded-[8px] bg-transparent hover:bg-[var(--surface-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-colors duration-150 cursor-pointer ${isCollapsed ? 'justify-center px-0' : 'justify-between px-2'}`}
           >
-            <div className="w-[30px] h-[30px] rounded-full bg-[#8B6B5D] text-white flex items-center justify-center text-[13px] font-semibold shrink-0">
-              {initial}
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="w-[26px] h-[26px] rounded-full bg-[var(--surface-item)] border border-[var(--border-strong)] text-[var(--text-secondary)] flex items-center justify-center text-[11px] font-medium shrink-0 overflow-hidden">
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt={initial} className="w-full h-full object-cover" />
+                ) : (
+                  initial
+                )}
+              </div>
+              {!isCollapsed && (
+                <div className="flex flex-col items-start overflow-hidden text-left">
+                  <span className="text-[13px] font-medium text-[var(--text-primary)] truncate w-full leading-tight">
+                    {userName}
+                  </span>
+                  <span className="text-[11px] text-[var(--text-muted)] leading-tight mt-[1px]">
+                    View profile
+                  </span>
+                </div>
+              )}
             </div>
-            {!isCollapsed && (
-              <span className="text-[13px] font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] truncate transition-colors">
-                {userName.toLowerCase()}
-              </span>
-            )}
+            {!isCollapsed && <MoreVertical size={14} className="text-[var(--text-muted)] shrink-0" />}
+          </button>
+          <button
+            onClick={handleSignOut}
+            className={`w-full flex items-center h-[32px] rounded-[8px] bg-transparent hover:bg-[var(--surface-hover)] border border-transparent hover:border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-150 cursor-pointer ${isCollapsed ? 'justify-center px-0' : 'px-2'}`}
+          >
+            <LogOut size={14} className={isCollapsed ? "" : "mr-2.5"} />
+            {!isCollapsed && <span className="text-[12px] font-medium">Sign out</span>}
           </button>
         </div>
       </motion.aside>
@@ -204,7 +250,7 @@ export default function Sidebar({ isOpen, onClose }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+              className="fixed inset-0 bg-[#000000] bg-opacity-70 backdrop-blur-sm z-40 md:hidden"
               onClick={onClose}
             />
             <motion.div

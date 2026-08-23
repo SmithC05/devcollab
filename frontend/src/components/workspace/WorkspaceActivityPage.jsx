@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Activity, Clock, Filter, Zap } from 'lucide-react';
+import { apiClient } from '../../api/client';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
 import { Card, CardHeader, Spinner, SectionHeader, StatCard, EmptyState } from '../ui/index';
@@ -16,9 +17,8 @@ export default function WorkspaceActivityPage() {
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        // BUG-18 FIX: Use workspaceApi.getActivity with workspace_id
-        const json = await workspaceApi.getActivity(activeWorkspace?.id);
-        setData(json);
+        const response = await apiClient('/workspace/activity/');
+        setData(response);
       } catch (err) {
         setError(err.message);
       } finally {

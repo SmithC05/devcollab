@@ -81,7 +81,9 @@ function RequireSelectWorkspace({ children }) {
   if (isLoading) return null;  // BUG-20 FIX: wait for hydration
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // If user has NO workspaces at all, send them to onboarding
   if (!workspaces || workspaces.length === 0) return <Navigate to="/onboarding" replace />;
+  // Otherwise allow — user might be here to switch workspaces
 
   return children;
 }
