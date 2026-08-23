@@ -91,7 +91,7 @@ export default function InvitationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center text-[var(--text-primary)]">
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={32} className="animate-spin text-[var(--text-muted)]" />
           <p className="text-[14px] text-[var(--text-muted)]">Loading invitation...</p>
@@ -101,10 +101,10 @@ export default function InvitationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#171717] rounded-[20px] border border-[#292929] overflow-hidden shadow-2xl p-8">
+    <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[var(--surface-card)] rounded-[20px] border border-[var(--border-subtle)] overflow-hidden shadow-2xl p-8">
         
-        <h1 className="text-2xl font-bold text-white mb-6 text-center">DevCollab</h1>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-6 text-center">DevCollab</h1>
         
         {error && (
           <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
@@ -122,16 +122,16 @@ export default function InvitationPage() {
           <div className="text-center">
             {invitation.status === 'PENDING' ? (
               <>
-                <p className="text-[15px] text-[#A3A3A3] mb-2">
-                  <strong className="text-white">{invitation.invitedBy}</strong> invited you to join
+                <p className="text-[15px] text-[var(--text-secondary)] mb-2">
+                  <strong className="text-[var(--text-primary)]">{invitation.invitedBy}</strong> invited you to join
                 </p>
-                <h2 className="text-[22px] font-semibold text-white mb-4">
+                <h2 className="text-[22px] font-semibold text-[var(--text-primary)] mb-4">
                   {invitation.workspace.name}
                 </h2>
                 
-                <div className="bg-[#0F0F0F] border border-[#292929] rounded-xl py-3 mb-8 inline-block px-6 mx-auto">
-                  <p className="text-[13px] text-[#A3A3A3]">Role</p>
-                  <p className="text-[15px] font-medium text-white">{invitation.role}</p>
+                <div className="bg-[var(--surface)] border border-[var(--border-subtle)] rounded-xl py-3 mb-8 inline-block px-6 mx-auto">
+                  <p className="text-[13px] text-[var(--text-secondary)]">Role</p>
+                  <p className="text-[15px] font-medium text-[var(--text-primary)]">{invitation.role}</p>
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -146,7 +146,7 @@ export default function InvitationPage() {
                   <button
                     onClick={handleReject}
                     disabled={actionLoading}
-                    className="w-full h-[48px] rounded-[14px] bg-transparent text-white border border-[#292929] font-semibold text-[15px] hover:bg-[var(--border-default)] transition-colors disabled:opacity-50"
+                    className="w-full h-[48px] rounded-[14px] bg-transparent text-[var(--text-primary)] border border-[var(--border-subtle)] font-semibold text-[15px] hover:bg-[var(--border-default)] transition-colors disabled:opacity-50"
                   >
                     Reject Invitation
                   </button>
@@ -154,7 +154,7 @@ export default function InvitationPage() {
               </>
             ) : (
               <div className="py-8">
-                <p className="text-[16px] text-white">
+                <p className="text-[16px] text-[var(--text-primary)]">
                   Invitation {invitation.status.toLowerCase()}
                 </p>
                 <button

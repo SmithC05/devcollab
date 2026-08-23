@@ -100,21 +100,21 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
               <div style={{ padding: '24px' }}>
                 {/* Header */}
                 <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-[18px] sm:text-[20px] font-bold text-white tracking-tight leading-tight">
+                  <h2 className="text-[18px] sm:text-[20px] font-bold text-[var(--text-primary)] tracking-tight leading-tight">
                     Invite Team Member
                   </h2>
                   <button
                     type="button"
                     onClick={onClose}
                     disabled={isLoading}
-                    className="p-1 rounded-lg text-[#a3a3a3] hover:text-white hover:bg-[var(--border-default)] transition-colors focus-visible:outline-none"
+                    className="p-1 rounded-lg text-[#a3a3a3] hover:text-[var(--text-primary)] hover:bg-[var(--border-default)] transition-colors focus-visible:outline-none"
                     aria-label="Close modal"
                   >
                     <X size={20} strokeWidth={2.5} />
                   </button>
                 </div>
 
-                <p className="text-[13px] sm:text-[14px] leading-[1.5] text-[#A3A3A3] mb-6">
+                <p className="text-[13px] sm:text-[14px] leading-[1.5] text-[var(--text-secondary)] mb-6">
                   Invite a colleague to collaborate in {activeWorkspace?.name || 'this workspace'}.
                   They will receive an email invitation.
                 </p>
@@ -129,7 +129,7 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                   {/* Name Input */}
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="invite-name" className="text-[13px] sm:text-[14px] font-semibold text-white">
+                    <label htmlFor="invite-name" className="text-[13px] sm:text-[14px] font-semibold text-[var(--text-primary)]">
                       Full Name (Optional)
                     </label>
                     <input
@@ -141,8 +141,8 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
                       disabled={isLoading}
                       className="
                         w-full h-[52px] px-4 rounded-[14px] text-[14px] sm:text-[15px]
-                        bg-[#0F0F0F] text-white placeholder:text-[var(--text-muted)]
-                        border border-[#292929] transition-colors outline-none
+                        bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
+                        border border-[var(--border-subtle)] transition-colors outline-none
                         focus:border-[var(--text-muted)]
                       "
                     />
@@ -150,7 +150,7 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
 
                   {/* Email Input */}
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="invite-email" className="text-[13px] sm:text-[14px] font-semibold text-white">
+                    <label htmlFor="invite-email" className="text-[13px] sm:text-[14px] font-semibold text-[var(--text-primary)]">
                       Email Address *
                     </label>
                     <input
@@ -165,10 +165,10 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
                       disabled={isLoading}
                       className={`
                         w-full h-[52px] px-4 rounded-[14px] text-[14px] sm:text-[15px]
-                        bg-[#0F0F0F] text-white placeholder:text-[var(--text-muted)]
+                        bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
                         border transition-colors outline-none
                         focus:border-[var(--text-muted)]
-                        ${errors.email ? 'border-[#f87171]' : 'border-[#292929]'}
+                        ${errors.email ? 'border-[#f87171]' : 'border-[var(--border-subtle)]'}
                       `}
                     />
                     {errors.email && <p className="text-[12px] text-[#f87171]">{errors.email}</p>}
@@ -176,7 +176,7 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
 
                   {/* Role Select */}
                   <div className="flex flex-col gap-2 relative">
-                    <label htmlFor="invite-role" className="text-[13px] sm:text-[14px] font-semibold text-white">
+                    <label htmlFor="invite-role" className="text-[13px] sm:text-[14px] font-semibold text-[var(--text-primary)]">
                       Workspace Role
                     </label>
                     <div className="relative">
@@ -187,7 +187,7 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
                         disabled={isLoading}
                         className="
                           appearance-none w-full h-[52px] px-4 rounded-[14px] text-[14px] sm:text-[15px]
-                          bg-[#0F0F0F] text-white border border-[#292929] transition-colors outline-none
+                          bg-[var(--surface)] text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors outline-none
                           focus:border-[var(--text-muted)] cursor-pointer disabled:cursor-not-allowed
                         "
                       >
@@ -202,7 +202,7 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
                       </div>
                     </div>
                     {/* Role description */}
-                    <p className="text-[12px] text-[#A3A3A3]">
+                    <p className="text-[12px] text-[var(--text-secondary)]">
                       {ROLE_OPTIONS.find(r => r.value === role)?.description}
                     </p>
                   </div>
@@ -214,8 +214,8 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, cu
                       onClick={onClose}
                       disabled={isLoading}
                       className="
-                        h-[44px] px-5 rounded-[12px] text-[13px] sm:text-[14px] font-semibold text-white
-                        bg-transparent border border-[#292929]
+                        h-[44px] px-5 rounded-[12px] text-[13px] sm:text-[14px] font-semibold text-[var(--text-primary)]
+                        bg-transparent border border-[var(--border-subtle)]
                         hover:bg-[var(--border-default)] transition-colors
                         disabled:opacity-50 disabled:cursor-not-allowed
                       "

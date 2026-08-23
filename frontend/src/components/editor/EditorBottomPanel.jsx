@@ -25,7 +25,7 @@ export default function EditorBottomPanel() {
                 borderBottom: activeTab === tab ? '1px solid #007acc' : '1px solid transparent',
                 display: 'flex', alignItems: 'center', gap: '6px'
               }}
-              className="hover:text-white"
+              className="hover:text-[var(--text-primary)]"
             >
               {tab}
               {tab === 'Problems' && (
@@ -42,11 +42,11 @@ export default function EditorBottomPanel() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingRight: '8px', color: '#888' }}>
           {activeTab === 'Terminal' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11px' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }} className="hover:text-white">bash <X size={12} /></span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }} className="hover:text-white"><Plus size={14} /><ChevronDown size={14} /></span>
-              <SplitSquareVertical size={14} style={{ cursor: 'pointer' }} className="hover:text-white" />
-              <Trash2 size={14} style={{ cursor: 'pointer' }} className="hover:text-white" />
-              <X size={14} style={{ cursor: 'pointer' }} className="hover:text-white" />
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }} className="hover:text-[var(--text-primary)]">bash <X size={12} /></span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }} className="hover:text-[var(--text-primary)]"><Plus size={14} /><ChevronDown size={14} /></span>
+              <SplitSquareVertical size={14} style={{ cursor: 'pointer' }} className="hover:text-[var(--text-primary)]" />
+              <Trash2 size={14} style={{ cursor: 'pointer' }} className="hover:text-[var(--text-primary)]" />
+              <X size={14} style={{ cursor: 'pointer' }} className="hover:text-[var(--text-primary)]" />
             </div>
           )}
         </div>

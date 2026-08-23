@@ -1,5 +1,5 @@
 # Core
-Django>=6.1,<7.0
+Django>=5.0,<6.0
 djangorestframework>=3.18,<4.0
 django-cors-headers>=4.9,<5.0
 channels>=4.0,<5.0
@@ -21,3 +21,4 @@ google-genai>=0.2.0,<1.0
 django-allauth[socialaccount]>=64.2.0,<65.0
 PyJWT>=2.8.0,<3.0
 cryptography>=42.0,<43.0
+razorpay>=1.4.0

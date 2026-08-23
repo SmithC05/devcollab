@@ -69,6 +69,7 @@ export const useAuthStore = create(
       // Previously 'Owner' was hardcoded, bypassing all real permission checks.
       role: null,
       activeWorkspace: null,
+      workspacePlan: 'FREE',
       sessionToken: null,
       accessToken: null,
       isAuthenticated: false,
@@ -89,10 +90,24 @@ export const useAuthStore = create(
               console.error("Failed to fetch workspaces during init", e);
             }
 
+            // Auto-select workspace: if there's only one, pick it automatically.
+            // If the previously active workspace still exists in the list, keep it.
+            const currentActive = get().activeWorkspace;
+            let nextActive = currentActive;
+            if (currentActive) {
+              const stillExists = fetchedWorkspaces.some((w) => w.id === currentActive.id);
+              if (!stillExists) nextActive = null;
+            }
+            if (!nextActive && fetchedWorkspaces.length === 1) {
+              nextActive = fetchedWorkspaces[0];
+            }
+
             set({
               isAuthenticated: true,
               user: data.user,
               workspaces: fetchedWorkspaces,
+              activeWorkspace: nextActive,
+              role: nextActive?.role ?? get().role,
               isLoading: false,
             });
           } else {
@@ -122,10 +137,16 @@ export const useAuthStore = create(
             console.error("Failed to fetch workspaces during login", e);
           }
 
+          // Auto-select the workspace if there is exactly one — so the X-Workspace-Id
+          // header is sent immediately without requiring the user to visit /select-workspace.
+          const autoWorkspace = fetchedWorkspaces.length === 1 ? fetchedWorkspaces[0] : null;
+
           set({
             isAuthenticated: true,
             user: data.user,
             workspaces: fetchedWorkspaces,
+            activeWorkspace: autoWorkspace,
+            role: autoWorkspace?.role ?? null,
             sessionToken: data.session_token,
             accessToken: data.access_token,
             isLoading: false,
@@ -156,10 +177,15 @@ export const useAuthStore = create(
             console.error("Failed to fetch workspaces during register", e);
           }
 
+          // Auto-select if exactly one workspace exists (e.g., invited before registering)
+          const autoWorkspace = fetchedWorkspaces.length === 1 ? fetchedWorkspaces[0] : null;
+
           set({
             isAuthenticated: true,
             user: data.user,
             workspaces: fetchedWorkspaces,
+            activeWorkspace: autoWorkspace,
+            role: autoWorkspace?.role ?? null,
             sessionToken: data.session_token,
             accessToken: data.access_token,
             isLoading: false,
@@ -193,6 +219,7 @@ export const useAuthStore = create(
             user: null,
             role: null,
             activeWorkspace: null,
+            workspacePlan: 'FREE',
             workspaces: [],
             sessionToken: null,
             accessToken: null,
@@ -236,9 +263,6 @@ export const useAuthStore = create(
       setActiveWorkspace: (workspaceId) => {
         const ws = get().workspaces.find(w => w.id === workspaceId);
         if (ws) {
-          // BUG-08 FIX: Backend sends uppercase roles (OWNER, DEVELOPER, ADMIN, LEAD)
-          // but the PERMISSIONS map uses title-case (Owner, Dev, Admin, Lead).
-          // Normalize here so hasPermission() actually works.
           const roleMap = {
             OWNER: 'Owner',
             ADMIN: 'Admin',
@@ -247,13 +271,57 @@ export const useAuthStore = create(
             MEMBER: 'Dev',
           };
           const normalizedRole = roleMap[ws.role?.toUpperCase()] || ws.role || 'Dev';
-          set({ activeWorkspace: { ...ws, role: normalizedRole }, role: normalizedRole });
+          set({ 
+            activeWorkspace: { ...ws, role: normalizedRole }, 
+            role: normalizedRole, 
+            workspacePlan: (ws.plan || 'FREE').toUpperCase() 
+          });
         }
       },
 
-      setWorkspace: (workspace) => set({ activeWorkspace: workspace, role: workspace?.role }),
+      setWorkspace: (workspace) => set({
+        activeWorkspace: workspace,
+        role: workspace?.role,
+        workspacePlan: (workspace?.plan || 'FREE').toUpperCase(),
+      }),
       
       setRole: (role) => set({ role }),
+
+      upgradeWorkspaceToPro: () => set((state) => {
+        const activeWorkspace = state.activeWorkspace
+          ? { ...state.activeWorkspace, plan: 'PRO' }
+          : state.activeWorkspace;
+
+        const workspaces = state.workspaces.map((workspace) => (
+          state.activeWorkspace && workspace.id === state.activeWorkspace.id
+            ? { ...workspace, plan: 'PRO' }
+            : workspace
+        ));
+
+        return {
+          activeWorkspace,
+          workspaces,
+          workspacePlan: 'PRO',
+        };
+      }),
+
+      downgradeWorkspaceToFree: () => set((state) => {
+        const activeWorkspace = state.activeWorkspace
+          ? { ...state.activeWorkspace, plan: 'FREE' }
+          : state.activeWorkspace;
+
+        const workspaces = state.workspaces.map((workspace) => (
+          state.activeWorkspace && workspace.id === state.activeWorkspace.id
+            ? { ...workspace, plan: 'FREE' }
+            : workspace
+        ));
+
+        return {
+          activeWorkspace,
+          workspaces,
+          workspacePlan: 'FREE',
+        };
+      }),
 
       can: (action) => {
         const currentRole = get().role || 'Dev';
