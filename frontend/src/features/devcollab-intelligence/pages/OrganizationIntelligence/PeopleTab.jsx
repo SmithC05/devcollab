@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, GitBranch, GitMerge, Loader2, ArrowLeft, Code2, CheckCircle2 } from 'lucide-react';
@@ -247,18 +247,24 @@ function TaskComparisonSection({ selectedMember, onAssigned }) {
 }
 
 function AnalyzeEvidenceView({ member, onBack, onEvaluate }) {
-  const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [summary, setSummary] = useState(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
   
   const handleAnalyze = async () => {
     setAnalyzing(true);
-    // Simulate a brief delay for syncing from Github
-    setTimeout(async () => {
+    try {
       const res = await summarizeMemberEvidence(member.id);
+      if (!mountedRef.current) return; // Component unmounted while waiting — discard
       setSummary(res?.summary || 'No summary available.');
-      setAnalyzing(false);
-    }, 1500);
+    } finally {
+      if (mountedRef.current) setAnalyzing(false);
+    }
   };
 
   return (

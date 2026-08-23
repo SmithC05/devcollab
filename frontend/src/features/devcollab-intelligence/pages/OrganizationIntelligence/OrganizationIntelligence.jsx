@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
@@ -49,15 +49,19 @@ export default function OrganizationIntelligence() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [decisionPoint, setDecisionPoint] = useState(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const isFetchingRef = useRef(false);
+  const debounceRef = useRef(null);
+
+  // background=true means: don't flip the loading spinner (used for WebSocket-triggered refetches)
+  const fetchData = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
     try {
       const state = await getOrganizationIntelligenceState(mode);
       setData(state);
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [mode]);
 
@@ -65,18 +69,25 @@ export default function OrganizationIntelligence() {
     fetchData();
   }, [fetchData]);
 
-  // Wire realtime event engine_event
+  // Wire realtime event engine_event — debounced so rapid WS messages
+  // (presence pings, status updates) don't hammer the API or disrupt child state
   useEffect(() => {
     if (mode !== 'LIVE') return;
     const handleEngineEvent = (e) => {
-      fetchData(); // Invalidate and refetch
+      // Always handle modal-level decision points immediately
       if (e.detail && e.detail.event_type === 'DECISION_POINT_CREATED') {
         setDecisionPoint(e.detail);
       }
+      // Debounce the data refetch — wait 1.5s of silence before hitting the API
+      clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        fetchData(true); // background=true: no loading spinner
+      }, 1500);
     };
     document.addEventListener('engine_event', handleEngineEvent);
     return () => {
       document.removeEventListener('engine_event', handleEngineEvent);
+      clearTimeout(debounceRef.current);
     };
   }, [mode, fetchData]);
 
