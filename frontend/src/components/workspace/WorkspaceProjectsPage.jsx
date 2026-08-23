@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiClient } from '../../api/client';
 import { Plus, FolderOpen, MoreHorizontal, Users, CheckSquare, LayoutGrid, List as ListIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
@@ -68,28 +69,22 @@ export default function WorkspaceProjectsPage() {
   const [launchingProject, setLaunchingProject] = useState(null);
 
   const handleCreateProject = async (name) => {
-    const response = await fetch('/api/workspace/projects/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
-    });
-    
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to create project.');
+    try {
+      const newProject = await apiClient('/workspace/projects/', {
+        method: 'POST',
+        body: JSON.stringify({ name })
+      });
+      setProjects(prev => [newProject, ...prev]);
+      setIsCreateModalOpen(false);
+    } catch (err) {
+      throw new Error(err.message || 'Failed to create project.');
     }
-    
-    const newProject = await response.json();
-    setProjects(prev => [newProject, ...prev]);
-    setIsCreateModalOpen(false);
   };
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/workspace/projects/');
-        if (!response.ok) throw new Error('Failed to load projects');
-        const data = await response.json();
+        const data = await apiClient('/workspace/projects/');
         setProjects(data);
       } catch (err) {
         setError(err.message);

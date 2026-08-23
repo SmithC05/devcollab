@@ -6,6 +6,9 @@ from apps.tasks.models import Task
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class WorkspaceOverviewView(APIView):
     def get(self, request):
@@ -145,9 +148,13 @@ class ProjectListView(APIView):
     def post(self, request):
         workspace = Workspace.objects.first()
         if not workspace:
-            workspace = Workspace.objects.create(name="Default Workspace")
+            workspace = Workspace.objects.create(
+                name="Default Workspace",
+                owner=request.user if request.user.is_authenticated else User.objects.first()
+            )
             if request.user.is_authenticated:
-                workspace.members.add(request.user)
+                from apps.workspaces.models import WorkspaceMembership
+                WorkspaceMembership.objects.create(workspace=workspace, user=request.user, role='OWNER')
         
         # Enforce free plan limit
         current_project_count = Project.objects.filter(workspace=workspace).count()
@@ -171,7 +178,7 @@ class ProjectListView(APIView):
             "name": project.name,
             "description": f"Project for {project.name}",
             "status": "Active",
-            "members_count": workspace.members.count(),
+            "members_count": workspace.memberships.count(),
             "tasks_count": 0,
             "progress": 0,
             "updated_at": project.updated_at

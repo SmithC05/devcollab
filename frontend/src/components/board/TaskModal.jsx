@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTaskStore } from '../../stores/taskStore';
 import { wsClient } from '../../api/websocketClient';
 import { useAuthStore } from '../../stores/authStore';
+import { useOutletContext, useParams } from 'react-router-dom';
 import { X, Trash2, Sparkles } from 'lucide-react';
-
 import { useMemberStore } from '../../stores/memberStore';
 const PRIORITIES = ['P0', 'P1', 'P2'];
 const COLUMNS_LIST = [
@@ -26,6 +26,10 @@ const LABEL_STYLE = {
 };
 
 export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
+  const { project } = useOutletContext() || {};
+  const { projectId: routeProjectId } = useParams();
+  // Use outlet project.id first, fallback to route param
+  const resolvedProjectId = project?.id || routeProjectId;
   const isEdit = Boolean(task);
   const navigate = useNavigate();
   const { members } = useMemberStore();
@@ -110,8 +114,11 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
   const handleSave = () => {
     if (!form.title.trim()) return;
     const data = { ...form, labels: form.labels ? form.labels.split(',').map((l) => l.trim()).filter(Boolean) : [] };
+    if (data.assignee === '') {
+      data.assignee = null;
+    }
     if (isEdit) updateTask(task.id, data);
-    else addTask(data.columnId, data);
+    else addTask(data.columnId, data, resolvedProjectId);
     onClose();
   };
 
@@ -180,7 +187,7 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
               <label style={LABEL_STYLE}>Assignee</label>
               <select disabled={!canEdit} value={form.assignee} onChange={(e) => set('assignee', e.target.value)} style={INPUT_STYLE}>
                 <option value="">Unassigned</option>
-                {members.map((m) => <option key={m.id} value={m.name}>{m.name}</option>)}
+                {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </select>
             </div>
             <div>
