@@ -3,7 +3,9 @@ import { Settings2, User, Bell, Palette, AlertTriangle, Save } from 'lucide-reac
 import { useTheme } from '../../hooks/useTheme';
 import { useAuthStore } from '../../stores/authStore';
 import PageContainer from '../layout/PageContainer';
-import { Card, Button, Spinner, Input } from '../ui/index';
+import { Card, Button, Spinner, Input, SuccessModal, ConfirmModal } from '../ui/index';
+import { apiClient } from '../../api/client';
+import DeveloperProfileSettings from './DeveloperProfileSettings';
 
 export default function WorkspaceSettingsPage() {
   const { activeWorkspace } = useAuthStore();
@@ -14,10 +16,13 @@ export default function WorkspaceSettingsPage() {
   const [data, setData] = useState({ name: '', slug: '', description: '' });
   const [profileData, setProfileData] = useState({ name: '', email: '', bio: '', github_url: '', avatar_url: '' });
   const [error, setError] = useState(null);
+  const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, title: '', message: '', confirmText: '', isDanger: false });
   const { theme, toggleTheme } = useTheme();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
 
   useEffect(() => {
+    if (!activeWorkspace?.id) return;
     const fetchSettings = async () => {
       try {
         const data = await apiClient('/workspace/settings/');
@@ -29,7 +34,7 @@ export default function WorkspaceSettingsPage() {
       }
     };
     fetchSettings();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   // Initialize profile data from global store when it loads or changes
   useEffect(() => {
@@ -48,12 +53,11 @@ export default function WorkspaceSettingsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch('/api/workspace/settings/', {
+      const res = await apiClient('/workspace/settings/', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error('Failed to save');
+      setSuccessModal({ isOpen: true, title: 'Workspace Saved', message: 'Your workspace settings have been successfully updated.' });
     } catch (err) {
       alert(err.message);
     } finally {
@@ -86,10 +90,51 @@ export default function WorkspaceSettingsPage() {
       const res = await authApi.updateProfile(payload);
       if (!res.success) throw new Error(res.error || 'Failed to update profile');
       updateUser(res.user);
+      setSuccessModal({ isOpen: true, title: 'Profile Saved', message: 'Your personal developer profile has been successfully updated.' });
     } catch (err) {
       alert(err.message);
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleLeaveWorkspace = () => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'leave',
+      title: 'Leave Workspace',
+      message: 'Are you sure you want to leave this workspace? You will lose access to its projects and tasks.',
+      confirmText: 'Leave',
+      isDanger: false
+    });
+  };
+
+  const executeLeaveWorkspace = async () => {
+    try {
+      await apiClient('/workspace/leave/', { method: 'POST' });
+      window.location.href = '/';
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteWorkspace = () => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'delete',
+      title: 'Delete Workspace',
+      message: 'Are you sure you want to delete this workspace? This action is permanent and cannot be undone.',
+      confirmText: 'Delete Workspace',
+      isDanger: true
+    });
+  };
+
+  const executeDeleteWorkspace = async () => {
+    try {
+      await apiClient('/workspace/settings/', { method: 'DELETE' });
+      window.location.href = '/';
+    } catch (err) {
+      alert(err.message);
     }
   };
 
@@ -416,15 +461,15 @@ export default function WorkspaceSettingsPage() {
             </div>
             <div className="space-y-4">
               {[
-                { title: 'Leave Workspace', desc: 'Revoke your access to this workspace.', label: 'Leave', variant: 'secondary' },
-                { title: 'Delete Workspace', desc: 'Permanently delete this workspace and all data.', label: 'Delete', variant: 'danger' },
-              ].map(({ title, desc, label, variant }, index) => (
+                { title: 'Leave Workspace', desc: 'Revoke your access to this workspace.', label: 'Leave', variant: 'secondary', onClick: handleLeaveWorkspace },
+                { title: 'Delete Workspace', desc: 'Permanently delete this workspace and all data.', label: 'Delete', variant: 'danger', onClick: handleDeleteWorkspace },
+              ].map(({ title, desc, label, variant, onClick }, index) => (
                 <div key={index} className="p-5 bg-red-500/5 border border-red-500/20 rounded-lg grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-4">
                   <div className="min-w-0">
                     <p className="text-[15px] font-semibold text-[var(--fg)] mb-1">{title}</p>
                     <p className="text-[13px] text-red-400/80 leading-relaxed">{desc}</p>
                   </div>
-                  <Button variant={variant} size="sm" className="h-9 min-w-[84px] px-4 text-[12px] justify-center shrink-0 justify-self-start sm:justify-self-end">
+                  <Button onClick={onClick} variant={variant} size="sm" className="h-9 min-w-[84px] px-4 text-[12px] justify-center shrink-0 justify-self-start sm:justify-self-end">
                     {label}
                   </Button>
                 </div>
@@ -433,6 +478,23 @@ export default function WorkspaceSettingsPage() {
           </Card>
         )}
       </div>
+
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+        title={successModal.title}
+        message={successModal.message}
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.type === 'leave' ? executeLeaveWorkspace : executeDeleteWorkspace}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        isDanger={confirmModal.isDanger}
+      />
     </PageContainer>
   );
 }

@@ -516,8 +516,35 @@ class WorkspaceSettingsView(APIView):
         workspace = get_current_workspace(request)
         if workspace:
             workspace.name = request.data.get('name', workspace.name)
+            if 'slug' in request.data:
+                workspace.slug = request.data['slug']
             workspace.save()
         return Response({"status": "success"})
+
+    def delete(self, request):
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if workspace:
+            if workspace.owner != request.user:
+                return Response({"error": "Only the workspace owner can delete it."}, status=403)
+            workspace.delete()
+        return Response(status=204)
+
+class WorkspaceLeaveView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace: return Response(status=404)
+        
+        from apps.workspaces.models import WorkspaceMembership
+        membership = WorkspaceMembership.objects.filter(workspace=workspace, user=request.user).first()
+        if membership:
+            if membership.role == 'OWNER':
+                return Response({"error": "Owner cannot leave workspace. Transfer ownership or delete it instead."}, status=400)
+            membership.delete()
+        return Response(status=204)
 
 class CreateRazorpayOrderView(APIView):
     def post(self, request):

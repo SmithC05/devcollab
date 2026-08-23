@@ -38,7 +38,7 @@ export default function EditorTabs() {
             
             <div 
               style={{ padding: '2px', borderRadius: '4px', display: 'flex', color: isActive ? '#ccc' : '#666' }}
-              className="hover:bg-white/10 hover:text-white"
+              className="hover:bg-white/10 hover:text-[var(--text-primary)]"
               onClick={(e) => {
                 e.stopPropagation();
                 closeTab(tabId);

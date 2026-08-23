@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Activity, Clock, Filter, Zap } from 'lucide-react';
+import { Activity, Clock, Zap } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
@@ -12,9 +12,9 @@ export default function WorkspaceActivityPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('All');
 
   useEffect(() => {
+    if (!activeWorkspace?.id) return;
     const fetchActivity = async () => {
       try {
         const response = await apiClient('/workspace/activity/');
@@ -39,21 +39,6 @@ export default function WorkspaceActivityPage() {
             Real-time activity and historical audit across your workspace.
           </p>
         </div>
-        <div className="flex items-center gap-2 pt-1">
-          <div className="flex items-center gap-2 bg-[var(--surface-raised)] border border-[var(--border-strong)] rounded-lg px-3 h-[36px]">
-            <Filter size={13} className="text-[var(--text-muted)]" />
-            <select
-              value={filter}
-              onChange={e => setFilter(e.target.value)}
-              className="bg-transparent text-[13px] font-medium text-[var(--text-primary)] focus:outline-none appearance-none pr-2 cursor-pointer"
-            >
-              <option value="All">All Activity</option>
-              <option value="Projects">Projects</option>
-              <option value="Tasks">Tasks</option>
-              <option value="Members">Members</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       {loading ? (
@@ -64,10 +49,10 @@ export default function WorkspaceActivityPage() {
         <div className="flex flex-col gap-6">
           {/* Summary Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-            <ActivityStatCard label="Total Events" value={data?.total_events || 0} icon={Activity} />
-            <ActivityStatCard label="Today" value={data?.today_events || 0} icon={Clock} />
-            <ActivityStatCard label="Active Projects" value={data?.active_projects || 0} icon={Zap} />
-            <ActivityStatCard label="Recent Activity" value={data?.recent_activity?.length || 0} icon={Activity} />
+            <StatCard label="Total Events" value={data?.total_events || 0} icon={Activity} />
+            <StatCard label="Today" value={data?.today_events || 0} icon={Clock} />
+            <StatCard label="Active Projects" value={data?.active_projects || 0} icon={Zap} />
+            <StatCard label="Recent Activity" value={data?.recent_activity?.length || 0} icon={Activity} />
           </div>
 
           {/* 14-Day Heatmap */}

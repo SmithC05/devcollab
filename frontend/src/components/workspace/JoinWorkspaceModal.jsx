@@ -60,21 +60,21 @@ export default function JoinWorkspaceModal({ isOpen, onClose, onJoin }) {
               <div style={{ padding: '32px' }}>
                 {/* Header */}
                 <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-[24px] font-bold text-white tracking-tight leading-tight">
+                  <h2 className="text-[24px] font-bold text-[var(--text-primary)] tracking-tight leading-tight">
                     Join a Workspace
                   </h2>
                   <button
                     type="button"
                     onClick={onClose}
                     disabled={isLoading}
-                    className="p-1.5 rounded-lg text-[#a3a3a3] hover:text-white hover:bg-[var(--border-default)] transition-colors focus-visible:outline-none"
+                    className="p-1.5 rounded-lg text-[#a3a3a3] hover:text-[var(--text-primary)] hover:bg-[var(--border-default)] transition-colors focus-visible:outline-none"
                     aria-label="Close modal"
                   >
                     <X size={20} strokeWidth={2.5} />
                   </button>
                 </div>
 
-                <p className="text-[14px] leading-[1.6] text-[#A3A3A3] mb-8 pr-8">
+                <p className="text-[14px] leading-[1.6] text-[var(--text-secondary)] mb-8 pr-8">
                   Enter your team's invite code to join an existing workspace.
                 </p>
 
@@ -88,7 +88,7 @@ export default function JoinWorkspaceModal({ isOpen, onClose, onJoin }) {
                 <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                   {/* Code Input */}
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="ws-code" className="text-[14px] font-semibold text-white">
+                    <label htmlFor="ws-code" className="text-[14px] font-semibold text-[var(--text-primary)]">
                       Workspace Invite Code
                     </label>
                     <input
@@ -103,10 +103,10 @@ export default function JoinWorkspaceModal({ isOpen, onClose, onJoin }) {
                       disabled={isLoading}
                       className={`
                         w-full h-[56px] px-4 rounded-[14px] text-[15px] tracking-wide font-medium
-                        bg-[#0F0F0F] text-white placeholder:text-[var(--text-muted)]
+                        bg-[var(--surface)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
                         border transition-colors outline-none
                         focus:border-[var(--text-muted)]
-                        ${errors.code ? 'border-[#f87171]' : 'border-[#292929]'}
+                        ${errors.code ? 'border-[#f87171]' : 'border-[var(--border-subtle)]'}
                       `}
                     />
                     {errors.code && <p className="text-[12px] text-[#f87171]">{errors.code}</p>}
@@ -119,8 +119,8 @@ export default function JoinWorkspaceModal({ isOpen, onClose, onJoin }) {
                       onClick={onClose}
                       disabled={isLoading}
                       className="
-                        h-[48px] px-6 rounded-[14px] text-[14px] font-semibold text-white
-                        bg-transparent border border-[#292929]
+                        h-[48px] px-6 rounded-[14px] text-[14px] font-semibold text-[var(--text-primary)]
+                        bg-transparent border border-[var(--border-subtle)]
                         hover:bg-[var(--border-default)] transition-colors
                         disabled:opacity-50 disabled:cursor-not-allowed
                       "

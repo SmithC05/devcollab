@@ -14,6 +14,7 @@ export default function WorkspaceBillingPage() {
   const { workspacePlan, upgradeWorkspaceToPro, downgradeWorkspaceToFree } = useAuthStore();
 
   useEffect(() => {
+    if (!activeWorkspace?.id) return;
     const fetchBilling = async () => {
       try {
         const response = await apiClient('/workspace/billing/');

@@ -81,16 +81,16 @@ export default function SelectWorkspacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-white w-full flex flex-col font-sans">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)] w-full flex flex-col font-sans">
 
       {/* Header */}
-      <header className="w-full flex items-center justify-between px-8 py-6 h-[72px] border-b border-[#1a1a1a]">
-        <div className="flex items-center gap-2 text-white font-bold text-xl">
+      <header className="w-full flex items-center justify-between px-8 py-6 h-[72px] border-b border-[var(--border-subtle)]">
+        <div className="flex items-center gap-2 text-[var(--text-primary)] font-bold text-xl">
           DevCollab
         </div>
         <button
           onClick={() => { logout(); navigate('/login'); }}
-          className="text-[#A1A1AA] hover:text-white transition-colors text-sm flex items-center gap-2 font-medium"
+          className="text-[#A1A1AA] hover:text-[var(--text-primary)] transition-colors text-sm flex items-center gap-2 font-medium"
         >
           <LogOut size={16} />
           Sign out
@@ -106,7 +106,7 @@ export default function SelectWorkspacePage() {
         {/* Header Row */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-[44px] font-bold mb-2 tracking-tight text-white leading-tight">
+            <h1 className="text-[44px] font-bold mb-2 tracking-tight text-[var(--text-primary)] leading-tight">
               Select Workspace
             </h1>
             <p className="text-[16px] text-[#A1A1AA]">
@@ -121,7 +121,7 @@ export default function SelectWorkspacePage() {
               {/* Join — always available */}
               <button
                 onClick={() => setIsJoinOpen(true)}
-                className="px-5 py-2.5 rounded-full border border-[#27272A] bg-transparent hover:bg-[#27272A]/50 transition-colors text-[14px] font-medium text-[#FAFAFA] whitespace-nowrap shrink-0"
+                className="px-5 py-2.5 rounded-full border border-[var(--border-strong)] bg-transparent hover:bg-[var(--border-strong)]/50 transition-colors text-[14px] font-medium text-[var(--text-primary)] whitespace-nowrap shrink-0"
               >
                 Join Workspace
               </button>
@@ -131,7 +131,7 @@ export default function SelectWorkspacePage() {
                 onClick={handleCreateClick}
                 className={`px-5 py-2.5 rounded-full text-[14px] font-medium flex items-center gap-2 whitespace-nowrap shrink-0 transition-colors ${
                   isFreePlanLimitReached
-                    ? 'bg-[#1a1a1a] border border-[#27272A] text-[#737373] cursor-not-allowed'
+                    ? 'bg-[var(--surface-hover)] border border-[var(--border-strong)] text-[var(--text-muted)] cursor-not-allowed'
                     : 'bg-white hover:bg-gray-200 text-black'
                 }`}
               >
@@ -142,9 +142,9 @@ export default function SelectWorkspacePage() {
 
             {/* FREE plan limit notice */}
             {isFreePlanLimitReached && (
-              <p className="text-[12px] text-[#737373] text-right">
+              <p className="text-[12px] text-[var(--text-muted)] text-right">
                 Free plan: 1 workspace creation limit.{' '}
-                <button className="text-white underline hover:no-underline" onClick={() => navigate('/dashboard/billing')}>
+                <button className="text-[var(--text-primary)] underline hover:no-underline" onClick={() => navigate('/dashboard/billing')}>
                   Upgrade to Pro
                 </button>
               </p>
@@ -166,23 +166,23 @@ export default function SelectWorkspacePage() {
                 <button
                   key={ws.id}
                   onClick={() => handleSelectWorkspace(ws.id)}
-                  className="group relative w-full text-left bg-[#0d0d0d] border border-[#1f1f1f] rounded-2xl p-6 hover:border-[#333] hover:bg-[#111] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 min-h-[220px] flex flex-col"
+                  className="group relative w-full text-left bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-2xl p-6 hover:border-[var(--border-strong)] hover:bg-[var(--surface-item)] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 min-h-[220px] flex flex-col"
                 >
                   {/* Top row: Avatar + Plan badge */}
                   <div className="flex justify-between items-start mb-5">
-                    <div className="w-11 h-11 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center shrink-0">
-                      <span className="text-[#FAFAFA] text-[15px] font-bold tracking-wide">
+                    <div className="w-11 h-11 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
+                      <span className="text-[var(--text-primary)] text-[15px] font-bold tracking-wide">
                         {getInitials(ws.name)}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       {ws.created_by_me && (
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--surface-hover)] border border-[var(--border-subtle)]">
                           <Crown size={10} className="text-[#f59e0b]" />
                           <span className="text-[10px] font-semibold text-[#f59e0b] tracking-wide">CREATED</span>
                         </div>
                       )}
-                      <div className="px-2.5 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-[10px] font-semibold text-[#737373] tracking-wide">
+                      <div className="px-2.5 py-0.5 rounded-full bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-[10px] font-semibold text-[var(--text-muted)] tracking-wide">
                         {ws.plan?.toUpperCase() || 'FREE'}
                       </div>
                     </div>
@@ -190,7 +190,7 @@ export default function SelectWorkspacePage() {
 
                   {/* Workspace name + role */}
                   <div className="mb-auto">
-                    <h3 className="text-[18px] font-semibold text-white mb-1.5 truncate">
+                    <h3 className="text-[18px] font-semibold text-[var(--text-primary)] mb-1.5 truncate">
                       {ws.name}
                     </h3>
                     <div className="flex items-center gap-1.5">
@@ -208,7 +208,7 @@ export default function SelectWorkspacePage() {
                   </div>
 
                   {/* Stats footer */}
-                  <div className="mt-6 pt-4 border-t border-[#1f1f1f] flex items-center gap-5 text-[#737373]">
+                  <div className="mt-6 pt-4 border-t border-[var(--border-strong)] flex items-center gap-5 text-[var(--text-muted)]">
                     <div className="flex items-center gap-1.5">
                       <Users size={14} />
                       <span className="text-[13px] font-medium">{ws.memberCount ?? 1}</span>
@@ -228,9 +228,9 @@ export default function SelectWorkspacePage() {
 
         {/* Empty state */}
         {workspaces.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-[#27272A] rounded-2xl mt-4">
+          <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-[var(--border-strong)] rounded-2xl mt-4">
             <FolderOpen size={32} className="text-[#52525B] mb-4" />
-            <h3 className="text-[17px] font-semibold text-white mb-2">No workspaces yet</h3>
+            <h3 className="text-[17px] font-semibold text-[var(--text-primary)] mb-2">No workspaces yet</h3>
             <p className="text-[14px] text-[#A1A1AA] max-w-sm">
               Create a new workspace for your team or join one using an invite code.
             </p>

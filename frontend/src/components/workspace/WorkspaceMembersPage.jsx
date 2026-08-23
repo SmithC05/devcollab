@@ -28,8 +28,9 @@ export default function WorkspaceMembersPage() {
   };
 
   useEffect(() => {
+    if (!activeWorkspace?.id) return;
     fetchMembers();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   const handleInviteSuccess = () => {
     setInviteSuccessMsg('Invitation sent successfully! Pending invitations will appear soon.');
@@ -85,10 +86,10 @@ export default function WorkspaceMembersPage() {
       {/* Top Header & Actions */}
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h1 className="text-[36px] font-bold leading-[1.1] tracking-[-1px] text-white">
+          <h1 className="text-[36px] font-bold leading-[1.1] tracking-[-1px] text-[var(--text-primary)]">
             Team Members
           </h1>
-          <p className="text-[14px] text-[#737373] mt-2">
+          <p className="text-[14px] text-[var(--text-muted)] mt-2">
             {members.length} member{members.length !== 1 && 's'} in <span className="font-medium">{activeWorkspace?.name || 'Workspace'}</span>
           </p>
         </div>
@@ -101,9 +102,9 @@ export default function WorkspaceMembersPage() {
                   setInviteSuccessMsg('Workspace invite code copied to clipboard!');
                   setTimeout(() => setInviteSuccessMsg(''), 3000);
                 }}
-                className="flex items-center gap-2 h-[42px] px-[16px] rounded-[10px] bg-[#111111] border border-[#242424] text-white font-medium text-[14px] hover:bg-[#1a1a1a] transition-colors"
+                className="flex items-center gap-2 h-[42px] px-[16px] rounded-[10px] bg-[var(--surface-item)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-medium text-[14px] hover:bg-[var(--surface-hover)] transition-colors"
               >
-                <Copy size={15} className="text-[#A3A3A3]" />
+                <Copy size={15} className="text-[var(--text-secondary)]" />
                 Copy Invite Code
               </button>
               <button 
@@ -126,33 +127,33 @@ export default function WorkspaceMembersPage() {
 
       {/* Search Field */}
       <div className="mt-10 mb-10 relative w-full max-w-[400px]">
-        <Search className="absolute left-[14px] top-1/2 -translate-y-1/2 text-[#737373]" size={16} />
+        <Search className="absolute left-[14px] top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
         <input 
           type="text"
           placeholder="Search members..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full h-[44px] bg-[#111111] border border-[#242424] rounded-[12px] pl-[42px] pr-4 text-[14px] text-white placeholder-[#737373] focus:outline-none focus:border-[#404040] transition-colors"
+          className="w-full h-[44px] bg-[var(--surface-item)] border border-[var(--border-subtle)] rounded-[12px] pl-[42px] pr-4 text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--border-focus)] transition-colors"
         />
       </div>
 
       {/* Table / Member List */}
       {loading ? (
-        <div className="flex items-center justify-center py-24 text-[#737373]">Loading members...</div>
+        <div className="flex items-center justify-center py-24 text-[var(--text-muted)]">Loading members...</div>
       ) : error ? (
         <div className="text-center py-20 text-red-400 text-sm">{error}</div>
       ) : (
         <div className="w-full">
           {filteredMembers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 border border-[#1F1F1F] rounded-2xl bg-[#0B0B0B]">
+            <div className="flex flex-col items-center justify-center py-24 border border-[var(--border-strong)] rounded-2xl bg-[var(--surface-card)]">
               <Users size={32} className="text-[#404040] mb-4" />
-              <p className="text-white text-[16px] font-medium mb-1">No members found</p>
-              <p className="text-[#737373] text-[14px]">Try adjusting your search or invite a new member.</p>
+              <p className="text-[var(--text-primary)] text-[16px] font-medium mb-1">No members found</p>
+              <p className="text-[var(--text-muted)] text-[14px]">Try adjusting your search or invite a new member.</p>
             </div>
           ) : (
             <div className="w-full">
               {/* Header Row */}
-              <div className="flex items-center pb-4 text-[11px] font-semibold tracking-[0.08em] text-[#737373] uppercase border-b border-[#1F1F1F]">
+              <div className="flex items-center pb-4 text-[11px] font-semibold tracking-[0.08em] text-[var(--text-muted)] uppercase border-b border-[var(--border-subtle)]">
                 <div className="w-[45%] lg:w-[50%]">USER</div>
                 <div className="w-[20%] lg:w-[18%]">ROLE</div>
                 <div className="w-[20%] lg:w-[18%]">JOINED</div>
@@ -168,13 +169,13 @@ export default function WorkspaceMembersPage() {
                   // Extract initials for avatar if no image (using green/brown based on initials or role)
                   const initials = member.name ? member.name.substring(0, 1).toUpperCase() : '?';
                   const avatarColor = member.role === 'OWNER' ? 'bg-[#5e4933] text-[#ebd2ba]' : 
-                                      isPending ? 'bg-[#292929] text-[#a3a3a3]' : 
+                                      isPending ? 'bg-[var(--border-subtle)] text-[#a3a3a3]' : 
                                       'bg-[#2A4B29] text-[#A6CCA4]'; // matching the green in screenshot
 
                   const canRemove = canRemoveMember(currentUserRole, member.role) && !isYou && !isPending;
 
                   return (
-                    <div key={member.id} className="flex items-center py-[14px] border-b border-[#1F1F1F] hover:bg-[#0f0f0f] transition-colors -mx-4 px-4 rounded-lg group">
+                    <div key={member.id} className="flex items-center py-[14px] border-b border-[var(--border-subtle)] hover:bg-[var(--surface)] transition-colors -mx-4 px-4 rounded-lg group">
                       
                       {/* USER Column */}
                       <div className="w-[45%] lg:w-[50%] flex items-center gap-4">
@@ -187,15 +188,15 @@ export default function WorkspaceMembersPage() {
                         </div>
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
-                            <span className="text-[14px] font-semibold text-white">{member.name}</span>
+                            <span className="text-[14px] font-semibold text-[var(--text-primary)]">{member.name}</span>
                             {isYou && (
-                              <span className="px-1.5 py-[2px] rounded bg-[#242424] text-[10px] font-bold text-[#A3A3A3]">YOU</span>
+                              <span className="px-1.5 py-[2px] rounded bg-[var(--surface-hover)] text-[10px] font-bold text-[var(--text-secondary)]">YOU</span>
                             )}
                             {isPending && (
                               <span className="px-1.5 py-[2px] rounded bg-[#4a3f12] text-[10px] font-bold text-[#e6c735]">PENDING</span>
                             )}
                           </div>
-                          <span className="text-[13px] text-[#737373] mt-[2px]">{member.email}</span>
+                          <span className="text-[13px] text-[var(--text-muted)] mt-[2px]">{member.email}</span>
                         </div>
                       </div>
 
@@ -203,16 +204,16 @@ export default function WorkspaceMembersPage() {
                       <div className="w-[20%] lg:w-[18%] flex items-center">
                         {currentUserRole === 'OWNER' && member.role !== 'OWNER' && !isPending ? (
                           <div className="relative dropdown-container">
-                            <button className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#161616] border border-[#242424] text-[11px] font-semibold text-[#D4D4D4] uppercase hover:border-[#404040] transition-colors peer">
+                            <button className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-[11px] font-semibold text-[var(--text-secondary)] uppercase hover:border-[var(--border-focus)] transition-colors peer">
                               {member.role}
-                              <ChevronDown size={12} className="text-[#737373]" />
+                              <ChevronDown size={12} className="text-[var(--text-muted)]" />
                             </button>
-                            <div className="absolute left-0 top-full mt-1 w-36 bg-[#111] border border-[#242424] rounded-lg shadow-xl opacity-0 invisible peer-focus:opacity-100 peer-focus:visible hover:opacity-100 hover:visible transition-all z-10 overflow-hidden">
+                            <div className="absolute left-0 top-full mt-1 w-36 bg-[var(--surface-item)] border border-[var(--border-subtle)] rounded-lg shadow-xl opacity-0 invisible peer-focus:opacity-100 peer-focus:visible hover:opacity-100 hover:visible transition-all z-10 overflow-hidden">
                               {['ADMIN', 'LEAD', 'DEVELOPER'].map(r => (
                                 <button 
                                   key={r}
                                   onClick={() => handleChangeRole(member.id, r)}
-                                  className={`w-full text-left px-3 py-2 text-[11px] font-semibold uppercase ${member.role === r ? 'bg-[#1a1a1a] text-white' : 'text-[#737373] hover:bg-[#1a1a1a] hover:text-[#D4D4D4]'} transition-colors`}
+                                  className={`w-full text-left px-3 py-2 text-[11px] font-semibold uppercase ${member.role === r ? 'bg-[var(--surface-hover)] text-[var(--text-primary)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-secondary)]'} transition-colors`}
                                 >
                                   {r}
                                 </button>
@@ -220,7 +221,7 @@ export default function WorkspaceMembersPage() {
                             </div>
                           </div>
                         ) : (
-                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#161616] border border-[#242424] text-[11px] font-semibold text-[#D4D4D4] uppercase">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-[11px] font-semibold text-[var(--text-secondary)] uppercase">
                             {member.role === 'OWNER' && <Shield size={10} className="text-[#e8b56f]" />}
                             {member.role}
                           </div>
@@ -228,7 +229,7 @@ export default function WorkspaceMembersPage() {
                       </div>
 
                       {/* JOINED Column */}
-                      <div className="w-[20%] lg:w-[18%] text-[13px] text-[#737373]">
+                      <div className="w-[20%] lg:w-[18%] text-[13px] text-[var(--text-muted)]">
                         {isPending ? 'Pending' : formatDate(member.joined_at || member.created_at)}
                       </div>
 
@@ -237,14 +238,14 @@ export default function WorkspaceMembersPage() {
                         {canRemove ? (
                           <div className="relative dropdown-container">
                             <button 
-                              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#737373] hover:text-white hover:bg-[#242424] transition-colors peer"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-colors peer"
                             >
                               <MoreHorizontal size={16} />
                             </button>
-                            <div className="absolute right-0 top-full mt-1 w-48 bg-[#111] border border-[#242424] rounded-lg shadow-xl opacity-0 invisible peer-focus:opacity-100 peer-focus:visible hover:opacity-100 hover:visible transition-all z-10 overflow-hidden">
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-[var(--surface-item)] border border-[var(--border-subtle)] rounded-lg shadow-xl opacity-0 invisible peer-focus:opacity-100 peer-focus:visible hover:opacity-100 hover:visible transition-all z-10 overflow-hidden">
                               <button 
                                 onClick={() => handleRemoveMember(member.id)}
-                                className="w-full text-left px-4 py-2.5 text-[13px] text-red-400 hover:bg-[#1a1a1a] transition-colors"
+                                className="w-full text-left px-4 py-2.5 text-[13px] text-red-400 hover:bg-[var(--surface-hover)] transition-colors"
                               >
                                 Remove from workspace
                               </button>

@@ -8,13 +8,11 @@ import { useAuthStore } from '../../stores/authStore';
 
 // BUG-15 FIX: workspaceName prop removed; read from store directly
 export default function Topbar({ onMenuClick }) {
-  const { user, activeWorkspace } = useAuthStore();
+  const { user, activeWorkspace, workspacePlan } = useAuthStore();
   const workspaceName = activeWorkspace?.name || 'Workspace';
   const [isFocused, setIsFocused] = useState(false);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
->>>>>>> 1bd0419a17ed342f97d20fcc693629ddc26eff4f
-  
   const userName = user?.first_name
     ? `${user.first_name} ${user.last_name}`.trim()
     : user?.username || 'User';
@@ -53,9 +51,6 @@ export default function Topbar({ onMenuClick }) {
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-<<<<<<< HEAD
-      className="sticky top-0 z-20 shrink-0 flex items-center justify-center h-16 bg-[var(--topbar-bg)] border-b border-[var(--border-subtle)] w-full"
-=======
       className="sticky top-0 z-20 shrink-0 flex items-center justify-center h-[56px] bg-[var(--bg)] border-b border-[var(--border-subtle)] w-full"
     >
       <div 
