@@ -56,14 +56,14 @@ export default function ProjectSettingsPage() {
       <section className="space-y-4">
         <h2 className="text-xl font-semibold border-b border-[var(--border-subtle)] pb-2">General</h2>
         
-        <div className="bg-[var(--surface-raised)113] p-6 rounded-lg border border-[var(--border-subtle)] space-y-4">
+        <div className="bg-[var(--surface-raised)] p-6 rounded-lg border border-[var(--border-subtle)] space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Project Name</label>
             <input 
               type="text" 
               defaultValue="Alpha Release"
               disabled={!canRename}
-              className="w-full bg-[#18181c] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[var(--surface-item)] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
           
@@ -73,13 +73,13 @@ export default function ProjectSettingsPage() {
               rows={3}
               defaultValue="Core platform modernization phase 1."
               disabled={!canRename}
-              className="w-full bg-[#18181c] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[var(--surface-item)] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
           {canRename && (
             <div className="flex justify-end">
-              <button className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-md hover:bg-gray-200 transition-colors">
+              <button className="flex items-center gap-2 bg-[var(--text-primary)] text-[var(--bg)] px-4 py-2 rounded-md hover:opacity-90 transition-colors">
                 <Save size={16} /> Save Changes
               </button>
             </div>
@@ -90,7 +90,7 @@ export default function ProjectSettingsPage() {
       {/* GitHub Integration */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold border-b border-[var(--border-subtle)] pb-2">GitHub Integration</h2>
-        <div className="bg-[var(--surface-raised)113] p-6 rounded-lg border border-[var(--border-subtle)] space-y-4">
+        <div className="bg-[var(--surface-raised)] p-6 rounded-lg border border-[var(--border-subtle)] space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">GitHub Repository</label>
             <p className="text-xs text-gray-500 mb-2">Link a GitHub repository to this project for code context (e.g., owner/repo).</p>
@@ -101,13 +101,13 @@ export default function ProjectSettingsPage() {
                 onChange={(e) => setRepoName(e.target.value)}
                 placeholder="e.g. facebook/react"
                 disabled={!canRename}
-                className="w-full bg-[#18181c] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[var(--surface-item)] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
               {canRename && (
                 <button 
                   onClick={handleSaveRepo}
                   disabled={isSavingRepo}
-                  className="whitespace-nowrap flex items-center gap-2 bg-[#2a2a2e] text-[var(--text-primary)] px-4 py-2 rounded-md hover:bg-[#3a3a3e] transition-colors disabled:opacity-50"
+                  className="whitespace-nowrap flex items-center gap-2 bg-[var(--text-primary)] text-[var(--bg)] px-4 py-2 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {isSavingRepo ? 'Saving...' : 'Link Repository'}
                 </button>
@@ -122,7 +122,7 @@ export default function ProjectSettingsPage() {
         <section className="space-y-4">
           <h2 className="text-xl font-semibold text-red-500 border-b border-red-900/50 pb-2">Danger Zone</h2>
           
-          <div className="bg-[#1a0f0f] p-6 rounded-lg border border-red-900/50 space-y-6">
+          <div className="bg-red-500/5 p-6 rounded-lg border border-red-500/20 space-y-6">
             
             {canArchive && (
               <div className="flex items-center justify-between">

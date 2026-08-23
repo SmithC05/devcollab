@@ -41,7 +41,7 @@ export default function LaunchScreen({ project, onComplete }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
-        className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center cursor-pointer select-none"
+        className="fixed inset-0 z-[9999] bg-[var(--bg)] flex flex-col items-center justify-center cursor-pointer select-none"
         onClick={onComplete}
         role="button"
         tabIndex={0}
@@ -93,12 +93,12 @@ export default function LaunchScreen({ project, onComplete }) {
           </motion.div>
 
           {/* Progress Bar */}
-          <div className="w-[80vw] max-w-[380px] md:max-w-[420px] h-[2px] bg-[#222222] rounded-full overflow-hidden mb-12">
+          <div className="w-[80vw] max-w-[380px] md:max-w-[420px] h-[2px] bg-[var(--surface-hover)] rounded-full overflow-hidden mb-12">
             <motion.div
               initial={{ width: '0%' }}
               animate={step >= 3 ? { width: '100%' } : { width: '0%' }}
               transition={{ duration: 1.2, ease: "linear" }}
-              className="h-full bg-white"
+              className="h-full bg-[var(--text-primary)]"
             />
           </div>
 

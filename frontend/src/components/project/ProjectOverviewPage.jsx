@@ -12,20 +12,20 @@ function PageTopBar({ projectName }) {
   const navigate = useNavigate();
   return (
     <div style={{
-      height: '48px', borderBottom: '1px solid #1a1a1e', flexShrink: 0,
+      height: '48px', borderBottom: '1px solid var(--border-strong)', flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 24px', background: '#0e0e10',
+      padding: '0 24px', background: 'var(--bg)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <button
           onClick={() => navigate('/dashboard/projects')}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, transition: 'background 120ms' }}
-          onMouseEnter={e => e.currentTarget.style.background = '#1c1c1c'}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
           onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
           <ArrowLeft size={13} strokeWidth={2} /> Projects
         </button>
-        <span style={{ color: '#333' }}>/</span>
+        <span style={{ color: 'var(--border-strong)' }}>/</span>
         <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '14px' }}>{projectName}</span>
       </div>
     </div>
@@ -35,10 +35,10 @@ function PageTopBar({ projectName }) {
 /* ─── stat card ─────────────────────────────────────────────────────────── */
 function StatCard({ icon: Icon, value, label, loading }) {
   return (
-    <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 24px' }}>
+    <div style={{ background: 'var(--surface-item)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '20px 24px' }}>
       <div style={{ marginBottom: '12px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#1c1c1e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon size={15} color='#666' />
+        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={15} color='var(--bg)' />
         </div>
       </div>
       {loading
@@ -70,10 +70,10 @@ function MemberRow({ m }) {
   const badge = ROLE_BADGE[m.role] || ROLE_BADGE.Member;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '8px', transition: 'background 120ms' }}
-      onMouseEnter={e => e.currentTarget.style.background = '#1a1a1e'}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
     >
-      <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#2a2a2e', color: '#fff', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
+      <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--text-primary)', color: 'var(--bg)', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
         {(m.name || m.username || '?')[0].toUpperCase()}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -141,12 +141,12 @@ function OwnerOverview({ project }) {
             Full project authority · real-time health &amp; team tracking
           </p>
         </div>
-        <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', marginTop: '4px' }}>
+        <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', marginTop: '4px' }}>
           Open Board
         </button>
       </div>
 
-      <div style={{ borderTop: '1px solid #1a1a1e', margin: '24px 0' }} />
+      <div style={{ borderTop: '1px solid var(--border-strong)', margin: '24px 0' }} />
 
       {/* Live stat cards — monochrome */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '20px' }}>
@@ -158,14 +158,14 @@ function OwnerOverview({ project }) {
       </div>
 
       {/* Members panel — full width, no status side panel */}
-      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 22px' }}>
+      <div style={{ background: 'var(--surface-item)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '20px 22px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
               Team {!loadingMembers && <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>({members.length})</span>}
             </p>
             <div style={{ position: 'relative' }}>
               <Search size={12} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search…" style={{ background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '7px', padding: '6px 10px 6px 28px', fontSize: '12px', color: 'var(--text-primary)', outline: 'none', width: '150px', fontFamily: 'inherit' }} />
+              <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search…" style={{ background: 'var(--surface-item)', border: '1px solid var(--border-strong)', borderRadius: '7px', padding: '6px 10px 6px 28px', fontSize: '12px', color: 'var(--text-primary)', outline: 'none', width: '150px', fontFamily: 'inherit' }} />
             </div>
           </div>
           {loadingMembers
@@ -175,7 +175,7 @@ function OwnerOverview({ project }) {
               : filteredMembers.map(m => <MemberRow key={m.id} m={m} />)
           }
           <button onClick={() => navigate(`/projects/${projectId}/members`)}
-            style={{ marginTop: '12px', width: '100%', padding: '8px', borderRadius: '7px', border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
+            style={{ marginTop: '12px', width: '100%', padding: '8px', borderRadius: '7px', border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
             onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
             onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           >
@@ -234,9 +234,9 @@ function MembersReadOnly({ role }) {
           <h1 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>Project Overview</h1>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>Your team and the current state of this project</p>
         </div>
-        <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', marginTop: '4px' }}>Open Board</button>
+        <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border-strong)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', marginTop: '4px' }}>Open Board</button>
       </div>
-      <div style={{ borderTop: '1px solid #1a1a1e', margin: '24px 0' }} />
+      <div style={{ borderTop: '1px solid var(--border-strong)', margin: '24px 0' }} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
         <StatCard icon={TrendingUp}    value={loadingStats ? null : `${stats?.completion_pct ?? 0}%`} label="Completion"  loading={loadingStats} />
@@ -246,17 +246,17 @@ function MembersReadOnly({ role }) {
       </div>
 
       {/* Read-only member list */}
-      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 22px' }}>
+      <div style={{ background: 'var(--surface-item)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '20px 22px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
           <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
             Team Members {!loadingMembers && <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>({members.length})</span>}
           </p>
           <div style={{ position: 'relative' }}>
             <Search size={12} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search…" style={{ background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '7px', padding: '6px 10px 6px 28px', fontSize: '12px', color: 'var(--text-primary)', outline: 'none', width: '150px', fontFamily: 'inherit' }} />
+            <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search…" style={{ background: 'var(--surface-item)', border: '1px solid var(--border-strong)', borderRadius: '7px', padding: '6px 10px 6px 28px', fontSize: '12px', color: 'var(--text-primary)', outline: 'none', width: '150px', fontFamily: 'inherit' }} />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '6px 10px', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.09em', textTransform: 'uppercase', borderBottom: '1px solid #1a1a1e', marginBottom: '6px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '6px 10px', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.09em', textTransform: 'uppercase', borderBottom: '1px solid var(--border-strong)', marginBottom: '6px' }}>
           <span>Member</span><span>Role</span><span>Status</span>
         </div>
         {loadingMembers
@@ -267,11 +267,11 @@ function MembersReadOnly({ role }) {
               const badge = ROLE_BADGE[m.role] || ROLE_BADGE.Member;
               return (
                 <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', alignItems: 'center', padding: '9px 10px', borderRadius: '8px', transition: 'background 120ms' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#1a1a1e'}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#2a2a2e', color: '#fff', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--text-primary)', color: 'var(--bg)', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
                       {(m.name || '?')[0].toUpperCase()}
                     </div>
                     <div style={{ minWidth: 0 }}>
@@ -301,7 +301,7 @@ export default function ProjectOverviewPage() {
   const { project } = useOutletContext() || {};
   const safeRole = role || 'Dev';
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0e0e10', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <PageTopBar projectName={project?.name || 'Project'} />
       <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
       {safeRole === 'Owner' ? <OwnerOverview project={project} /> : <MembersReadOnly role={safeRole} />}

@@ -5,9 +5,9 @@ export default function ProjectMyTasksPage() {
   const { projectId } = useParams();
 
   return (
-    <div style={{ padding: '32px 36px', height: '100vh', overflow: 'auto', background: '#0e0e10', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ padding: '32px 36px', height: '100vh', overflow: 'auto', background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#1a1a1e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Columns3 size={20} color="var(--text-secondary)" />
         </div>
         <div>
@@ -16,7 +16,7 @@ export default function ProjectMyTasksPage() {
         </div>
       </div>
 
-      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '10px', padding: '32px', textAlign: 'center' }}>
+      <div style={{ background: 'var(--surface-item)', border: '1px solid #1f1f24', borderRadius: '10px', padding: '32px', textAlign: 'center' }}>
         <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>A personalized list of your assigned tasks, blockers, and upcoming deadlines.</p>
       </div>
     </div>

@@ -157,7 +157,7 @@ export default function ProjectSidebar({ project: passedProject }) {
       style={{
         flexShrink: 0,
         height: '100vh', display: 'flex', flexDirection: 'column',
-        background: '#0e0e0e', borderRight: '1px solid var(--surface-hover)',
+        background: 'var(--surface-item)', borderRight: '1px solid var(--surface-hover)',
         overflowY: 'auto', overflowX: 'hidden', userSelect: 'none',
       }}
     >
@@ -172,7 +172,7 @@ export default function ProjectSidebar({ project: passedProject }) {
         {/* DC Logo — always visible */}
         <div style={{
           width: '34px', height: '34px', borderRadius: '8px',
-          background: 'linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)',
+          background: 'var(--text-primary)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 800, fontSize: '13px', color: '#fff',
           letterSpacing: '-0.5px', flexShrink: 0,
@@ -236,7 +236,7 @@ export default function ProjectSidebar({ project: passedProject }) {
             color: 'var(--text-muted)', fontSize: '12px', fontWeight: 500,
             transition: 'background 120ms, color 120ms',
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#1c1c1c'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-raised)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
           onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
         >
           <ArrowLeft size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
@@ -249,7 +249,7 @@ export default function ProjectSidebar({ project: passedProject }) {
         {navConfig.map((section, sectionIdx) => (
           <div key={section.label} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {!collapsed && (
-              <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: '#3a3a3a', margin: '0 0 6px 6px' }}>
+              <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--border-strong)', margin: '0 0 6px 6px' }}>
                 {section.label}
               </p>
             )}
@@ -267,7 +267,7 @@ export default function ProjectSidebar({ project: passedProject }) {
                   borderRadius: '8px',
                   fontSize: '14px', fontWeight: isActive ? 500 : 400,
                   color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                  background: isActive ? '#1c1c1c' : 'transparent',
+                  background: isActive ? 'var(--surface-raised)' : 'transparent',
                   textDecoration: 'none', transition: 'background 120ms, color 120ms',
                   overflow: 'hidden', whiteSpace: 'nowrap',
                 })}
