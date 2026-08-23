@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Zap, X } from 'lucide-react';
 
 import '../../styles/tokens.css';
 import '../../styles/components.css';
@@ -41,6 +41,7 @@ export function SourceChip({ source }) {
 
 export default function OrganizationIntelligence() {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const [mode, setMode] = useState('LIVE');
   const [data, setData] = useState(null);
@@ -125,6 +126,40 @@ export default function OrganizationIntelligence() {
             <DvButton variant="outline" size="sm" style={{ borderColor: 'var(--dv-warning)' }} onClick={() => setMode('LIVE')}>
               EXIT DEMO
             </DvButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Phase 3: MEMBER_UNAVAILABLE Alert Banner ─────── */}
+      <AnimatePresence>
+        {unavailableBanner && mode === 'LIVE' && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            style={{
+              background: 'var(--dv-danger-subtle)', borderBottom: '2px solid var(--dv-danger-border)',
+              padding: '14px 40px', display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden'
+            }}
+          >
+            <Zap size={16} color="var(--dv-danger)" style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, color: 'var(--dv-danger)', letterSpacing: '0.08em', marginBottom: 2 }}>
+                DECISION REQUIRED — MEMBER UNAVAILABLE
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--dv-text-secondary)' }}>
+                {unavailableBanner.affected_member?.username || 'A team member'} has declared unavailability
+                {unavailableBanner.affected_member?.duration_hours
+                  ? ` for ${Math.floor(unavailableBanner.affected_member.duration_hours / 24)} day(s)`
+                  : ''}
+                . {(unavailableBanner.affected_tasks || []).length} critical task(s) require reassignment.
+              </div>
+            </div>
+            <DvButton variant="danger" size="sm" onClick={() => navigate('/dashboard/intelligence/organization')}>
+              REVIEW DECISION
+            </DvButton>
+            <button onClick={() => setUnavailableBanner(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dv-text-faint)', padding: 4 }}>
+              <X size={14} />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

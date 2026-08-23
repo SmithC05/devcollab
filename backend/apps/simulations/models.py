@@ -10,3 +10,13 @@ class SimulationScenario(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     results = models.JSONField(default=dict)
     status = models.CharField(max_length=50, default="EVALUATED")  # EVALUATED, APPROVED, REJECTED
+    # Phase 3: Track which member's unavailability triggered this scenario (for stale-state validation)
+    unavailable_member = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='triggered_simulations'
+    )
+    original_assignee = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='original_assignment_simulations'
+    )
+    duration_hours = models.IntegerField(null=True, blank=True)

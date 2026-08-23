@@ -157,10 +157,31 @@ export const useTaskStore = create((set, get) => ({
   },
 
   syncEngineEvent: (payload) => {
-    const { event_type, task_id, new_status, new_position, task_data } = payload;
+    const { event_type, task_id, new_status, new_position, task_data, new_assignee_id, new_assignee_name } = payload;
     
     // Ignore if task_data is missing
-    if (!task_data) return;
+    if (!task_data) {
+      // For TASK_REASSIGNED without full task_data: do a lightweight assignee patch
+      if ((event_type === 'TASK_REASSIGNED' || event_type === 'TASK_ASSIGNED') && task_id) {
+        const cols = { ...get().columns };
+        let updated = false;
+        for (const [colId, tasks] of Object.entries(cols)) {
+          const idx = tasks.findIndex(t => t.id === task_id.toString());
+          if (idx !== -1) {
+            const updatedTask = {
+              ...tasks[idx],
+              assignee: new_assignee_id,
+              assigneeName: new_assignee_name || tasks[idx].assigneeName,
+            };
+            cols[colId] = [...tasks.slice(0, idx), updatedTask, ...tasks.slice(idx + 1)];
+            updated = true;
+            break;
+          }
+        }
+        if (updated) set({ columns: cols });
+      }
+      return;
+    }
 
     let toColId = 'todo';
     if (new_status === 'To Do' || task_data.status === 'To Do') toColId = 'todo';
@@ -174,7 +195,7 @@ export const useTaskStore = create((set, get) => ({
       ...task_data,
       id: task_data.id.toString(),
       columnId: toColId,
-      assigneeName: task_data.assignee_details?.username || '',
+      assigneeName: task_data.assignee_details?.username || new_assignee_name || '',
     };
     
     if (event_type === 'TASK_CREATED') {
@@ -187,16 +208,17 @@ export const useTaskStore = create((set, get) => ({
         cols[toColId] = [...cols[toColId], mappedTask].sort((a, b) => a.position - b.position);
       }
     } else {
-      // TASK_MOVED or TASK_UPDATED
+      // TASK_MOVED, TASK_UPDATED, TASK_REASSIGNED, TASK_ASSIGNED
       let found = false;
+      const taskIdStr = (task_id || task_data.id).toString();
       for (const [cId, tasks] of Object.entries(cols)) {
-        const idx = tasks.findIndex(t => t.id === task_id.toString());
+        const idx = tasks.findIndex(t => t.id === taskIdStr);
         if (idx !== -1) {
           if (!found) {
             mappedTask = { ...tasks[idx], ...mappedTask };
             found = true;
           }
-          cols[cId] = tasks.filter(t => t.id !== task_id.toString());
+          cols[cId] = tasks.filter(t => t.id !== taskIdStr);
         }
       }
       cols[toColId] = [...cols[toColId], mappedTask].sort((a, b) => (a.position || 0) - (b.position || 0));
