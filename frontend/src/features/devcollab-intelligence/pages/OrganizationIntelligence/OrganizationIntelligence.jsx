@@ -49,6 +49,7 @@ export default function OrganizationIntelligence() {
   
   const [selectedNode, setSelectedNode] = useState(null);
   const [decisionPoint, setDecisionPoint] = useState(null);
+  const [unavailableBanner, setUnavailableBanner] = useState(null);
 
   const isFetchingRef = useRef(false);
   const debounceRef = useRef(null);
@@ -78,6 +79,9 @@ export default function OrganizationIntelligence() {
       // Always handle modal-level decision points immediately
       if (e.detail && e.detail.event_type === 'DECISION_POINT_CREATED') {
         setDecisionPoint(e.detail);
+      }
+      if (e.detail && e.detail.event_type === 'MEMBER_UNAVAILABLE') {
+        setUnavailableBanner(e.detail.payload || e.detail);
       }
       // Debounce the data refetch — wait 1.5s of silence before hitting the API
       clearTimeout(debounceRef.current);
