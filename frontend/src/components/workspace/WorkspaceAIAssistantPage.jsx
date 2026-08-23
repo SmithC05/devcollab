@@ -34,40 +34,44 @@ export default function WorkspaceAIAssistantPage() {
   ];
 
   return (
-    <PageContainer>
-      <div className="flex flex-col max-w-3xl mx-auto w-full" style={{ minHeight: 'calc(100vh - 44px - 56px)' }}>
+    <PageContainer className="w-full max-w-[1280px] px-4 sm:px-6 md:px-8 lg:px-10 pt-0 pb-0">
+      <div className="flex flex-col items-center mx-auto w-full" style={{ minHeight: 'calc(100vh - 64px)' }}>
         {/* Content Area */}
-        <div className="flex-1 pb-36 overflow-y-auto">
+        <div className="flex-1 pb-40 overflow-y-auto flex justify-center items-center w-full">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 bg-blue-500/10 border border-[var(--accent-border)] rounded-2xl flex items-center justify-center text-blue-400 mb-6">
+            <div className="flex flex-col items-center justify-center text-center w-full max-w-4xl mx-auto">
+              <div className="w-16 h-16 bg-blue-500/10 border border-[var(--accent-border)] rounded-2xl flex items-center justify-center text-blue-400 mb-7">
                 <Sparkles size={26} />
               </div>
-              <h1 className="text-[26px] font-semibold text-[var(--fg)] mb-2">How can I help you today?</h1>
-              <p className="text-[14px] text-[var(--text-secondary)] mb-10">Ask anything about your project or development workflow.</p>
+              <h1 className="text-[32px] md:text-[36px] font-semibold text-[var(--fg)] mb-4 leading-tight">
+                How can I help you today?
+              </h1>
+              <p className="text-[16px] text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto leading-relaxed text-center">
+                Ask anything about your project or development workflow.
+              </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-3xl mx-auto">
                 {capabilities.map((cap, i) => (
                   <Card
                     as="button"
                     key={i}
                     onClick={() => setQuery(cap.title + ' for my recent work')}
                     hover={true}
-                    className="p-5 text-left flex gap-3.5 group items-start"
+                    className="p-5 text-left flex gap-4 group items-center min-h-[74px]"
                   >
                     <div className="w-10 h-10 rounded-lg bg-[var(--surface-item)] border border-[var(--border-strong)] text-[var(--text-muted)] flex items-center justify-center group-hover:text-[var(--text-primary)] group-hover:bg-[var(--surface-raised)] transition-colors shrink-0">
                       <cap.icon size={17} />
                     </div>
-                    <div className="min-w-0 pt-0.5">
-                      <h3 className="text-[14px] font-medium text-[var(--fg)] group-hover:text-[var(--text-primary)] transition-colors mb-0.5">{cap.title}</h3>
-                      <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed">{cap.desc}</p>
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-semibold text-[var(--fg)] group-hover:text-[var(--text-primary)] transition-colors mb-1">{cap.title}</h3>
+                      <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">{cap.desc}</p>
                     </div>
                   </Card>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="space-y-5 pt-4">
+            <div className="space-y-5 pt-4 w-full max-w-3xl">
               <AnimatePresence>
                 {messages.map((msg, i) => (
                   <motion.div
@@ -113,10 +117,10 @@ export default function WorkspaceAIAssistantPage() {
         </div>
 
         {/* Input — absolutely pinned to page bottom */}
-        <div className="fixed bottom-0 left-[240px] right-0 p-5 md:p-6" style={{ background: 'linear-gradient(to top, var(--bg) 60%, transparent)' }}>
+        <div className="fixed bottom-0 left-0 md:left-[240px] right-0 px-5 md:px-6 pt-8 pb-5 flex flex-col items-center" style={{ background: 'linear-gradient(to top, var(--bg) 72%, transparent)' }}>
           <form
             onSubmit={handleSubmit}
-            className="relative max-w-2xl mx-auto flex items-end bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-2xl overflow-hidden focus-within:border-[var(--border-focus)] transition-colors"
+            className="relative w-full max-w-3xl flex items-end bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-2xl overflow-hidden focus-within:border-[var(--border-focus)] transition-colors"
           >
             <textarea
               value={query}
@@ -128,19 +132,19 @@ export default function WorkspaceAIAssistantPage() {
                 }
               }}
               placeholder="Ask DevCollab anything..."
-              className="w-full max-h-[180px] min-h-[52px] py-4 pl-5 pr-14 bg-transparent text-[14px] text-[var(--fg)] placeholder-[var(--text-muted)] resize-none focus:outline-none"
+              className="w-full max-h-[180px] min-h-[64px] py-5 pl-6 pr-16 bg-transparent text-[15px] leading-relaxed text-[var(--fg)] placeholder-[var(--text-muted)] resize-none focus:outline-none"
               rows={1}
             />
             <Button
               type="submit"
               variant="primary"
               disabled={!query.trim() || loading}
-              className="absolute right-3 bottom-3 !w-8 !h-8 !p-0 !rounded-lg disabled:opacity-40"
+              className="absolute right-4 bottom-4 !w-9 !h-9 !p-0 !rounded-lg disabled:opacity-40"
               icon={ArrowUp}
               iconSize={15}
             />
           </form>
-          <p className="text-center text-[11px] text-[var(--text-muted)] mt-3">
+          <p className="text-center text-[11px] text-[var(--text-muted)] mt-3 leading-relaxed">
             DevCollab AI can make mistakes. Verify important code changes.
           </p>
         </div>
