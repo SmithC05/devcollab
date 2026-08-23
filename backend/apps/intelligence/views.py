@@ -24,7 +24,8 @@ class EngineeringCommandCenterView(APIView):
     """
 
     def get(self, request):
-        workspace = Workspace.objects.first()
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
         if not workspace:
             return Response(self._empty_state())
 

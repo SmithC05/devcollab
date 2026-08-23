@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from apps.projects.models import Project, WikiPage, Snippet
 from apps.workspaces.models import Workspace, WorkspaceMembership
@@ -184,7 +185,8 @@ class WorkspaceOverviewView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        workspace, membership = _get_user_workspace(request)
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
         if not workspace:
             return Response({
                 "workspace_name": "Workspace", "user_name": "User",
@@ -273,9 +275,9 @@ class ProjectListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response([])
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace: return Response([])
         projects = Project.objects.filter(workspace=workspace)
         data = []
         for p in projects:
@@ -294,15 +296,12 @@ class ProjectListView(APIView):
         return Response(data)
 
     def post(self, request):
-        workspace, _ = _get_user_workspace(request)
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
         if not workspace:
-            workspace = Workspace.objects.create(
-                name="Default Workspace",
-                owner=request.user
-            )
-            if request.user.is_authenticated:
-                WorkspaceMembership.objects.create(workspace=workspace, user=request.user, role='OWNER')
-
+            return Response({"error": "Workspace not found."}, status=404)
+        
+        # Enforce free plan limit
         current_project_count = Project.objects.filter(workspace=workspace).count()
         if current_project_count >= 3:
             return Response(
@@ -325,10 +324,10 @@ class WorkspaceActivityView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response({})
-        projects_count = Project.objects.filter(workspace=workspace, is_active=True).count()
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace: return Response({})
+        projects = Project.objects.filter(workspace=workspace, is_active=True).count()
         return Response({
             "total_events": 0, "today_events": 0,
             "active_projects": projects, "recent_activity": [], "heatmap": []
@@ -336,23 +335,39 @@ class WorkspaceActivityView(APIView):
 
 
 
+from apps.workspaces.permissions import check_workspace_role
+
 class WorkspaceMembersView(APIView):
     """Fixed: uses actual WorkspaceMembership.role instead of is_superuser heuristic."""
     def get(self, request):
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response([])
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace: return Response([])
         data = []
-        for mem in workspace.memberships.select_related('user').all():
-            m = mem.user
+        for membership in workspace.memberships.select_related('user').all():
+            m = membership.user
+            # Fetch avatar URL and make it absolute if relative
+            avatar_url = ''
+            try:
+                from apps.authentication.models import UserProfile
+                from django.conf import settings
+                profile = UserProfile.objects.filter(user=m).first()
+                if profile and profile.avatar_url:
+                    avatar_url = profile.avatar_url
+                    if avatar_url.startswith('/'):
+                        backend_url = request.build_absolute_uri('/').rstrip('/')
+                        avatar_url = f"{backend_url}{avatar_url}"
+            except Exception:
+                pass
             data.append({
                 "id": m.id,
                 "name": f"{m.first_name} {m.last_name}".strip() or m.username,
                 "email": m.email,
-                "role": membership.role,   # ← actual DB role, not is_superuser heuristic
+                "role": membership.role,
+                "avatar_url": avatar_url,
                 "status": "Active",
-                "last_active": "Just now",
-                "is_owner": membership.role in ('OWNER', 'Owner'),
+                "joined_at": membership.created_at.isoformat() if hasattr(membership, 'created_at') and membership.created_at else None,
+                "last_active": "Just now"
             })
 
         # Pending invitations
@@ -366,22 +381,93 @@ class WorkspaceMembersView(APIView):
                     "email": inv.email,
                     "role": inv.role,
                     "status": "Pending",
-                    "last_active": "Invited",
-                    "is_owner": False,
+                    "joined_at": None,
+                    "last_active": "Sent just now"
                 })
         except Exception:
             pass
 
         return Response(data)
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from apps.workspaces.views import MiddlewareAuthentication
+
+@method_decorator(csrf_exempt, name='dispatch')
+class WorkspaceMemberDetailView(APIView):
+    authentication_classes = [MiddlewareAuthentication]
+    
+    def delete(self, request, user_id):
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication required"}, status=401)
+            
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace:
+            return Response({"error": "Workspace not found"}, status=404)
+            
+        # Enforce OWNER or ADMIN role
+        has_permission, error_msg = check_workspace_role(request.user, workspace.id, ['OWNER', 'ADMIN'])
+        if not has_permission:
+            return Response({"error": error_msg}, status=403)
+            
+        try:
+            target_membership = WorkspaceMembership.objects.get(workspace=workspace, user_id=user_id)
+        except WorkspaceMembership.DoesNotExist:
+            return Response({"error": "Member not found in workspace"}, status=404)
+            
+        # OWNER protection
+        if target_membership.role == 'OWNER':
+            return Response({"error": "Workspace owner cannot be removed."}, status=403)
+            
+        # Perform removal
+        target_membership.delete()
+        
+        # Remove from tasks (simulate project member removal)
+        tasks = Task.objects.filter(project__workspace=workspace, assignee_id=user_id)
+        tasks.update(assignee=None)
+        
+        return Response({"success": True, "message": "Member removed successfully"})
+
+    def put(self, request, user_id):
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication required"}, status=401)
+            
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace:
+            return Response({"error": "Workspace not found"}, status=404)
+            
+        # Only OWNER can change roles
+        has_permission, error_msg = check_workspace_role(request.user, workspace.id, ['OWNER'])
+        if not has_permission:
+            return Response({"error": "Only the workspace owner can change roles."}, status=403)
+            
+        try:
+            target_membership = WorkspaceMembership.objects.get(workspace=workspace, user_id=user_id)
+        except WorkspaceMembership.DoesNotExist:
+            return Response({"error": "Member not found in workspace"}, status=404)
+            
+        # Cannot change the OWNER's role
+        if target_membership.role == 'OWNER':
+            return Response({"error": "Cannot change the role of the workspace owner."}, status=403)
+            
+        new_role = request.data.get('role')
+        if not new_role or new_role not in ['ADMIN', 'LEAD', 'DEVELOPER']:
+            return Response({"error": "Invalid role specified."}, status=400)
+            
+        target_membership.role = new_role
+        target_membership.save()
+        
+        return Response({"success": True, "message": "Role updated successfully", "role": new_role})
 
 class WorkspaceBillingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response({})
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace: return Response({})
         projects_count = Project.objects.filter(workspace=workspace).count()
         members_count = workspace.memberships.count()
         return Response({
@@ -397,9 +483,9 @@ class WorkspaceSettingsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response({})
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace: return Response({})
         return Response({
             "name": workspace.name,
             "slug": workspace.slug or workspace.name.lower().replace(" ", "-"),
@@ -408,13 +494,11 @@ class WorkspaceSettingsView(APIView):
 
 
     def put(self, request):
-        workspace, membership = _get_user_workspace(request)
-        if not workspace:
-            return Response({"error": "Workspace not found"}, status=404)
-        if membership and membership.role not in ['OWNER', 'ADMIN']:
-            return Response({"error": "Insufficient permissions"}, status=403)
-        workspace.name = request.data.get('name', workspace.name)
-        workspace.save()
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if workspace:
+            workspace.name = request.data.get('name', workspace.name)
+            workspace.save()
         return Response({"status": "success"})
 
 class ProjectRepositoryMappingView(APIView):

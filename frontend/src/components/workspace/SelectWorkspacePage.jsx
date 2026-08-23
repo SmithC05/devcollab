@@ -1,7 +1,7 @@
 // src/pages/SelectWorkspacePage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, FolderOpen, LogOut } from 'lucide-react';
+import { Plus, Users, FolderOpen, LogOut, Crown, Lock } from 'lucide-react';
 import { useAuthStore } from "../../stores/authStore";
 import { workspaceApi } from "../../api/workspaceApi";
 import { useTheme } from "../../hooks/useTheme";
@@ -15,58 +15,81 @@ function getInitials(name) {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
+// Role badge colors
+const ROLE_STYLES = {
+  OWNER:     { dot: '#f59e0b', text: '#f59e0b', label: 'OWNER' },
+  ADMIN:     { dot: '#818cf8', text: '#818cf8', label: 'ADMIN' },
+  LEAD:      { dot: '#34d399', text: '#34d399', label: 'LEAD' },
+  DEVELOPER: { dot: '#60a5fa', text: '#60a5fa', label: 'DEVELOPER' },
+  MEMBER:    { dot: '#A1A1AA', text: '#A1A1AA', label: 'MEMBER' },
+};
+
 export default function SelectWorkspacePage() {
   useTheme();
   const navigate = useNavigate();
   const { user, workspaces, refreshWorkspaces, setActiveWorkspace, logout } = useAuthStore();
-  
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
-  const [actionError, setActionError] = useState(null);  // L-05: surface errors to UI
+  const [createError, setCreateError] = useState('');
 
+  // Refresh on mount to ensure latest membership list
   useEffect(() => {
     refreshWorkspaces();
-  }, [refreshWorkspaces]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Count workspaces the user CREATED (owner) — this is what FREE plan limits
+  const createdWorkspacesCount = workspaces.filter(ws => ws.created_by_me).length;
+  const isFreePlanLimitReached = createdWorkspacesCount >= 1; // FREE: max 1 created
 
   const handleSelectWorkspace = (workspaceId) => {
     setActiveWorkspace(workspaceId);
     navigate('/dashboard');
   };
 
-  const handleCreate = async (name, slug, description) => {
-    setActionError(null);
+  const handleCreate = async (name, slug) => {
+    setCreateError('');
     try {
-      // BUG-09 FIX: Backend now uses request.user — don't pass user.id
       await workspaceApi.createWorkspace(name, slug);
       await refreshWorkspaces();
       setIsCreateOpen(false);
     } catch (err) {
-      setActionError(err.message || 'Failed to create workspace');
+      setCreateError(err.message);
+      // Re-throw so modal can also show the error if needed
+      throw err;
     }
   };
 
   const handleJoin = async (inviteCode) => {
-    setActionError(null);
     try {
-      // BUG-10 FIX: Backend now uses request.user — don't pass user.id
-      await workspaceApi.joinWorkspace(inviteCode);
+      await workspaceApi.joinWorkspace(inviteCode, user?.id);
       await refreshWorkspaces();
       setIsJoinOpen(false);
     } catch (err) {
-      setActionError(err.message || 'Failed to join workspace');
+      alert(err.message);
     }
+  };
+
+  const handleCreateClick = () => {
+    if (isFreePlanLimitReached) {
+      setCreateError('Free plan allows creating only 1 workspace. Upgrade to Pro to create more.');
+      return;
+    }
+    setCreateError('');
+    setIsCreateOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-white w-full flex flex-col font-sans">
-      
+
       {/* Header */}
-      <header className="w-full flex items-center justify-between px-8 py-6 h-[72px]">
+      <header className="w-full flex items-center justify-between px-8 py-6 h-[72px] border-b border-[#1a1a1a]">
         <div className="flex items-center gap-2 text-white font-bold text-xl">
           DevCollab
         </div>
         <button
-          onClick={() => logout()}
+          onClick={() => { logout(); navigate('/login'); }}
           className="text-[#A1A1AA] hover:text-white transition-colors text-sm flex items-center gap-2 font-medium"
         >
           <LogOut size={16} />
@@ -74,112 +97,154 @@ export default function SelectWorkspacePage() {
         </button>
       </header>
 
-      {/* Main Centered Content Container */}
-      <main 
-        className="w-full mx-auto self-center px-8 pt-[72px] pb-[80px] flex-1 flex flex-col"
+      {/* Main Content */}
+      <main
+        className="w-full mx-auto self-center px-8 pt-[64px] pb-[80px] flex-1 flex flex-col"
         style={{ maxWidth: '1180px' }}
       >
-        
+
         {/* Header Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-[44px] font-bold mb-3 tracking-tight text-white leading-tight">Select Workspace</h1>
+            <h1 className="text-[44px] font-bold mb-2 tracking-tight text-white leading-tight">
+              Select Workspace
+            </h1>
             <p className="text-[16px] text-[#A1A1AA]">
-              Choose a workspace to enter, or create a new one.
+              {workspaces.length > 0
+                ? `You belong to ${workspaces.length} workspace${workspaces.length !== 1 ? 's' : ''}.`
+                : 'Create a new workspace or join an existing team.'}
             </p>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsJoinOpen(true)}
-              className="px-5 py-2.5 rounded-full border border-[#27272A] bg-transparent hover:bg-[#27272A]/50 transition-colors text-[14px] font-medium text-[#FAFAFA] whitespace-nowrap shrink-0"
-            >
-              Join Workspace
-            </button>
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="px-5 py-2.5 rounded-full bg-white hover:bg-gray-200 transition-colors text-black text-[14px] font-medium flex items-center gap-2 whitespace-nowrap shrink-0"
-            >
-              <Plus size={16} strokeWidth={2.5} /> Create
-            </button>
+
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-3">
+              {/* Join — always available */}
+              <button
+                onClick={() => setIsJoinOpen(true)}
+                className="px-5 py-2.5 rounded-full border border-[#27272A] bg-transparent hover:bg-[#27272A]/50 transition-colors text-[14px] font-medium text-[#FAFAFA] whitespace-nowrap shrink-0"
+              >
+                Join Workspace
+              </button>
+
+              {/* Create — disabled with message for FREE users at limit */}
+              <button
+                onClick={handleCreateClick}
+                className={`px-5 py-2.5 rounded-full text-[14px] font-medium flex items-center gap-2 whitespace-nowrap shrink-0 transition-colors ${
+                  isFreePlanLimitReached
+                    ? 'bg-[#1a1a1a] border border-[#27272A] text-[#737373] cursor-not-allowed'
+                    : 'bg-white hover:bg-gray-200 text-black'
+                }`}
+              >
+                {isFreePlanLimitReached ? <Lock size={14} /> : <Plus size={16} strokeWidth={2.5} />}
+                Create Workspace
+              </button>
+            </div>
+
+            {/* FREE plan limit notice */}
+            {isFreePlanLimitReached && (
+              <p className="text-[12px] text-[#737373] text-right">
+                Free plan: 1 workspace creation limit.{' '}
+                <button className="text-white underline hover:no-underline" onClick={() => navigate('/dashboard/billing')}>
+                  Upgrade to Pro
+                </button>
+              </p>
+            )}
+            {createError && !isFreePlanLimitReached && (
+              <p className="text-[12px] text-red-400 text-right">{createError}</p>
+            )}
           </div>
         </div>
 
         {/* Workspaces Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 340px))' }}>
-          {workspaces.map((ws) => {
-            const role = ws.role?.toUpperCase() || 'MEMBER';
-            
-            return (
-              <button
-                key={ws.id}
-                onClick={() => handleSelectWorkspace(ws.id)}
-                className="group relative w-full text-left bg-[var(--surface-raised)] border border-[#27272A] rounded-2xl p-7 hover:border-[#3F3F46] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[250px] flex flex-col"
-              >
-                {/* Top row: Avatar and Badge */}
-                <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-[var(--surface-hover)] border border-[#27272A] flex items-center justify-center">
-                    <span className="text-[#FAFAFA] text-[16px] font-semibold tracking-wide">
-                      {getInitials(ws.name)}
-                    </span>
-                  </div>
-                  
-                  <div className="px-3 py-1 rounded-full bg-[var(--surface-hover)] border border-[#27272A] text-[11px] font-semibold text-[#A1A1AA] tracking-wide">
-                    {ws.plan?.toUpperCase() || 'FREE'}
-                  </div>
-                </div>
+        {workspaces.length > 0 && (
+          <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+            {workspaces.map((ws) => {
+              const role = ws.role?.toUpperCase() || 'MEMBER';
+              const roleStyle = ROLE_STYLES[role] || ROLE_STYLES.MEMBER;
 
-                {/* Middle: Title and Role */}
-                <div className="mb-auto">
-                  <h3 className="text-[20px] font-semibold text-[#FAFAFA] mb-2 truncate">
-                    {ws.name}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-[#60A5FA]">
-                    <span className="text-[14px]">◎</span> {role}
+              return (
+                <button
+                  key={ws.id}
+                  onClick={() => handleSelectWorkspace(ws.id)}
+                  className="group relative w-full text-left bg-[#0d0d0d] border border-[#1f1f1f] rounded-2xl p-6 hover:border-[#333] hover:bg-[#111] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 min-h-[220px] flex flex-col"
+                >
+                  {/* Top row: Avatar + Plan badge */}
+                  <div className="flex justify-between items-start mb-5">
+                    <div className="w-11 h-11 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center shrink-0">
+                      <span className="text-[#FAFAFA] text-[15px] font-bold tracking-wide">
+                        {getInitials(ws.name)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {ws.created_by_me && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
+                          <Crown size={10} className="text-[#f59e0b]" />
+                          <span className="text-[10px] font-semibold text-[#f59e0b] tracking-wide">CREATED</span>
+                        </div>
+                      )}
+                      <div className="px-2.5 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-[10px] font-semibold text-[#737373] tracking-wide">
+                        {ws.plan?.toUpperCase() || 'FREE'}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Bottom row: Stats with Divider */}
-                <div className="mt-8 pt-5 border-t border-[#242424] flex items-center gap-6 text-[#A1A1AA]">
-                  <div className="flex items-center gap-2">
-                    <Users size={16} />
-                    {/* BUG-12 FIX: Backend returns memberCount, not members.length */}
-                    <span className="text-[14px] font-medium">{ws.memberCount ?? 1}</span>
+                  {/* Workspace name + role */}
+                  <div className="mb-auto">
+                    <h3 className="text-[18px] font-semibold text-white mb-1.5 truncate">
+                      {ws.name}
+                    </h3>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: roleStyle.dot }}
+                      />
+                      <span
+                        className="text-[11px] font-semibold tracking-wider"
+                        style={{ color: roleStyle.text }}
+                      >
+                        {roleStyle.label}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <FolderOpen size={16} />
-                    {/* BUG-12 FIX: Backend returns projectCount, not projectsCount */}
-                    <span className="text-[14px] font-medium">{ws.projectCount ?? 0}</span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
 
+                  {/* Stats footer */}
+                  <div className="mt-6 pt-4 border-t border-[#1f1f1f] flex items-center gap-5 text-[#737373]">
+                    <div className="flex items-center gap-1.5">
+                      <Users size={14} />
+                      <span className="text-[13px] font-medium">{ws.memberCount ?? 1}</span>
+                      <span className="text-[12px]">members</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <FolderOpen size={14} />
+                      <span className="text-[13px] font-medium">{ws.projectCount ?? 0}</span>
+                      <span className="text-[12px]">projects</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Empty state */}
         {workspaces.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-[#27272A] rounded-2xl mt-4 max-w-[340px]">
+          <div className="flex flex-col items-center justify-center py-24 text-center border border-dashed border-[#27272A] rounded-2xl mt-4">
             <FolderOpen size={32} className="text-[#52525B] mb-4" />
-            <h3 className="text-[17px] font-semibold text-white mb-2">No workspaces found</h3>
+            <h3 className="text-[17px] font-semibold text-white mb-2">No workspaces yet</h3>
             <p className="text-[14px] text-[#A1A1AA] max-w-sm">
-              You don't belong to any workspaces yet. Create a new one or join an existing team.
+              Create a new workspace for your team or join one using an invite code.
             </p>
           </div>
         )}
 
-        {/* L-05: Surface action errors */}
-        {actionError && (
-          <div className="mt-4 px-4 py-3 bg-red-900/30 border border-red-700 rounded-xl text-red-400 text-[13px]">
-            {actionError}
-          </div>
-        )}
+
 
       </main>
 
       {/* Modals */}
       <CreateWorkspaceModal
         isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={() => { setIsCreateOpen(false); setCreateError(''); }}
         onCreate={handleCreate}
       />
       <JoinWorkspaceModal

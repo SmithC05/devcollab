@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { apiClient } from '../../api/client';
 import PageContainer from '../layout/PageContainer';
 import { Card, CardContent, Button, Spinner, Progress, SectionHeader, Badge } from '../ui/index';
 import { useAuthStore } from '../../stores/authStore';
@@ -15,9 +16,8 @@ export default function WorkspaceBillingPage() {
   useEffect(() => {
     const fetchBilling = async () => {
       try {
-        // BUG-18 FIX: Use workspaceApi.getBilling with workspace_id
-        const json = await workspaceApi.getBilling(activeWorkspace?.id);
-        setData(json);
+        const response = await apiClient('/workspace/billing/');
+        setData(response);
       } catch (err) {
         setError(err.message);
       } finally {

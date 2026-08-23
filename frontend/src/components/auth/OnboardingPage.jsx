@@ -26,10 +26,14 @@ export default function OnboardingPage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleCreate = async (name, slug, description) => {
-    await workspaceApi.createWorkspace(name, slug, user?.id);
-    await useAuthStore.getState().refreshWorkspaces();
-    navigate('/select-workspace');
+  const handleCreate = async (name, slug) => {
+    try {
+      await workspaceApi.createWorkspace(name, slug);
+      await useAuthStore.getState().refreshWorkspaces();
+      navigate('/select-workspace');
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   const handleJoin = async (inviteCode) => {

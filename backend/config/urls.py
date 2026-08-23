@@ -5,11 +5,15 @@ Root URL configuration for Engineering Decision Twin.
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
+
 from apps.projects.views import (
     WorkspaceOverviewView, 
     ProjectListView, 
     WorkspaceActivityView, 
     WorkspaceMembersView, 
+    WorkspaceMemberDetailView,
     WorkspaceBillingView, 
     WorkspaceSettingsView
 )
@@ -32,6 +36,7 @@ urlpatterns = [
     path("api/workspace/projects/", ProjectListView.as_view(), name="workspace-projects"),
     path("api/workspace/activity/", WorkspaceActivityView.as_view(), name="workspace-activity"),
     path("api/workspace/members/", WorkspaceMembersView.as_view(), name="workspace-members"),
+    path("api/workspace/members/<int:user_id>/", WorkspaceMemberDetailView.as_view(), name="workspace-member-detail"),
     path("api/workspace/billing/", WorkspaceBillingView.as_view(), name="workspace-billing"),
     path("api/workspace/settings/", WorkspaceSettingsView.as_view(), name="workspace-settings"),
     path("api/notifications/", NotificationListView.as_view(), name="notifications"),
@@ -55,3 +60,6 @@ urlpatterns = [
     path("api/intelligence/", include("apps.intelligence.urls")),
     path("api/integrations/github/", include("apps.integrations.github.urls")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
