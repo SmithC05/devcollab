@@ -85,9 +85,13 @@ export default function Sidebar({ isOpen, onClose }) {
     }
   ];
   
+  const isDeveloper = activeWorkspace?.role === 'DEVELOPER' || activeWorkspace?.role === 'MEMBER';
+
   const intelGroup = {
     title: 'INTELLIGENCE',
-    items: [
+    items: isDeveloper ? [
+      { to: '/dashboard/intelligence/engineering-profile', icon: Globe, label: 'Engineering Profile' },
+    ] : [
       { to: '/dashboard/ai', icon: Sparkles, label: 'AI Assistant' },
       { to: '/dashboard/intelligence/organization', icon: Globe, label: 'Organization' },
       { to: '/dashboard/intelligence/decision/dp1', icon: Target, label: 'Decision Points' },

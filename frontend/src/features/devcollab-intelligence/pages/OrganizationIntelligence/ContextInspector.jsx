@@ -159,7 +159,7 @@ function ProjectInspector({ project, members, responsibilities }) {
   ) : null;
 }
 
-function MemberInspector({ member }) {
+export function MemberInspector({ member }) {
   const [evidence, setEvidence] = useState(null);
   const [loading, setLoading] = useState(true);
   const [aiSummary, setAiSummary] = useState('Generating summary...');
