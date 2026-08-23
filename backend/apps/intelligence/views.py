@@ -320,6 +320,15 @@ def summarize_member_evidence(request, pk):
     if not evidence:
         return Response({"summary": "No GitHub evidence available to summarize."})
         
+    metadata = evidence.evidence_metadata or {}
+    last_analyzed_str = evidence.last_analyzed_at.isoformat() if evidence.last_analyzed_at else None
+    
+    cached_summary = metadata.get('ai_summary')
+    cached_timestamp = metadata.get('ai_summary_timestamp')
+    
+    if cached_summary and cached_timestamp == last_analyzed_str:
+        return Response({"summary": cached_summary, "cached": True})
+        
     prompt = f"""
     You are an engineering intelligence AI. Summarize the following developer's GitHub evidence in 2-3 short, factual sentences.
     Focus on their primary languages, repository experience, and key technical skills. Do not invent any information.
@@ -334,6 +343,15 @@ def summarize_member_evidence(request, pk):
         genai.configure(api_key=settings.GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-3.6-flash')
         response = model.generate_content(prompt)
-        return Response({"summary": response.text.strip()})
+        summary_text = response.text.strip()
+        
+        EngineeringEvidence.objects.filter(id=evidence.id).update(
+            evidence_metadata={
+                **metadata,
+                'ai_summary': summary_text,
+                'ai_summary_timestamp': last_analyzed_str
+            }
+        )
+        return Response({"summary": summary_text, "cached": False})
     except Exception as e:
         return Response({"summary": "Could not generate summary at this time.", "error": str(e)})
