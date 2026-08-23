@@ -15,11 +15,21 @@ from apps.authentication.jwt_utils import (
 )
 
 def safe_user(user):
-    return {
+    data = {
         "id": user.id,
         "email": user.email,
-        "name": user.username
+        "name": user.username,
+        "github_connected": False,
+        "github_username": None,
+        "sync_status": "NOT_SYNCED",
+        "last_sync_at": None,
     }
+    if hasattr(user, 'developer_profile'):
+        data["github_connected"] = user.developer_profile.github_connection_status == 'CONNECTED'
+        data["github_username"] = user.developer_profile.github_username
+        data["sync_status"] = user.developer_profile.sync_status
+        data["last_sync_at"] = user.developer_profile.last_sync_at.isoformat() if user.developer_profile.last_sync_at else None
+    return data
 
 @csrf_exempt
 def login_view(request):
@@ -193,8 +203,16 @@ def oauth_callback_view(request):
     # allauth creates the user and logs them in via django.contrib.auth.
     # So request.user will be populated.
     
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
-    callback_url = f"{frontend_url}/auth/callback"
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://127.0.0.1:5173')
+    
+    # Forward the return_url if provided by allauth/session (we passed it through next)
+    return_url = request.GET.get('return_url')
+    if return_url:
+        import urllib.parse
+        encoded_url = urllib.parse.quote(return_url)
+        callback_url = f"{frontend_url}/auth/callback?return_url={encoded_url}"
+    else:
+        callback_url = f"{frontend_url}/auth/callback"
     
     if request.user.is_authenticated:
         access_token = generate_access_token(request.user.id)

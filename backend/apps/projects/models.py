@@ -15,3 +15,14 @@ class Project(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.workspace.name})"
+
+class ProjectRepositoryMapping(models.Model):
+    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='repository_mapping')
+    github_repository_id = models.CharField(max_length=255)
+    github_repository_full_name = models.CharField(max_length=255) # e.g. owner/repo
+    connected_at = models.DateTimeField(auto_now_add=True)
+    connected_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_repo_mappings')
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.project.name} <-> {self.github_repository_full_name}"

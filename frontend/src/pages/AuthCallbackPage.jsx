@@ -11,7 +11,7 @@ export default function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const error = searchParams.get('error');
   
-  const { initFromServer, isAuthenticated, workspaces, isLoading } = useAuthStore();
+  const { initFromServer, isAuthenticated, workspaces, isLoading, activeWorkspace, setActiveWorkspace } = useAuthStore();
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -33,6 +33,19 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     if (hasInitialized.current && !isLoading) {
       if (isAuthenticated) {
+        const returnUrl = sessionStorage.getItem('auth_return_url');
+        if (returnUrl) {
+          sessionStorage.removeItem('auth_return_url');
+          
+          // Prevent AppRoutes from kicking us out if activeWorkspace was somehow lost
+          if (!activeWorkspace && workspaces && workspaces.length > 0) {
+            setActiveWorkspace(workspaces[0].id);
+          }
+          
+          navigate(returnUrl, { replace: true });
+          return;
+        }
+
         if (workspaces && workspaces.length > 0) {
           navigate('/select-workspace', { replace: true });
         } else {

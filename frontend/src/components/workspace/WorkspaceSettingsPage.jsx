@@ -3,6 +3,7 @@ import { Settings2, User, Bell, Palette, AlertTriangle, Save } from 'lucide-reac
 import { useTheme } from '../../hooks/useTheme';
 import PageContainer from '../layout/PageContainer';
 import { Card, Button, Spinner, Input, SectionHeader, Tabs, Tab } from '../ui/index';
+import DeveloperProfileSettings from './DeveloperProfileSettings';
 
 export default function WorkspaceSettingsPage() {
   const [activeTab, setActiveTab] = useState('Workspace');
@@ -133,15 +134,19 @@ export default function WorkspaceSettingsPage() {
         )}
 
         {activeTab === 'Profile' && (
-          <Card className="p-6">
-            <div className="mb-6">
-              <h2 className="text-[16px] font-semibold text-[var(--fg)] mb-1">Profile</h2>
-              <p className="text-[13px] text-[var(--text-secondary)]">Manage your personal developer profile.</p>
-            </div>
-            <div className="py-12 border border-dashed border-[var(--border-strong)] rounded-xl text-center text-[var(--text-muted)] text-[13px]">
-              Profile fields (Avatar, Bio, GitHub link) — backend schema update pending.
-            </div>
-          </Card>
+          <div className="space-y-6">
+            <Card className="p-6">
+              <div className="mb-6">
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] mb-1">Profile</h2>
+                <p className="text-[13px] text-[var(--text-secondary)]">Manage your personal developer profile.</p>
+              </div>
+              <div className="py-12 border border-dashed border-[var(--border-strong)] rounded-xl text-center text-[var(--text-muted)] text-[13px]">
+                Profile fields (Avatar, Bio) — backend schema update pending.
+              </div>
+            </Card>
+            
+            <DeveloperProfileSettings />
+          </div>
         )}
 
         {activeTab === 'Appearance' && (

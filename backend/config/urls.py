@@ -53,4 +53,5 @@ urlpatterns = [
     path("api/scenarios/", include("apps.scenarios.urls")),
     path("api/ai/", include("apps.ai.urls")),
     path("api/intelligence/", include("apps.intelligence.urls")),
+    path("api/integrations/github/", include("apps.integrations.github.urls")),
 ]

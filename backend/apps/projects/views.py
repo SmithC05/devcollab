@@ -255,3 +255,44 @@ class WorkspaceSettingsView(APIView):
             workspace.name = request.data.get('name', workspace.name)
             workspace.save()
         return Response({"status": "success"})
+
+class ProjectRepositoryMappingView(APIView):
+    def get(self, request, project_id):
+        from apps.projects.models import ProjectRepositoryMapping, Project
+        try:
+            project = Project.objects.get(id=project_id)
+            mapping = ProjectRepositoryMapping.objects.get(project=project)
+            return Response({
+                "github_repository_full_name": mapping.github_repository_full_name,
+                "active": mapping.active
+            })
+        except Project.DoesNotExist:
+            return Response({"error": "Project not found"}, status=404)
+        except ProjectRepositoryMapping.DoesNotExist:
+            return Response({"github_repository_full_name": None, "active": False})
+
+    def post(self, request, project_id):
+        from apps.projects.models import ProjectRepositoryMapping, Project
+        try:
+            project = Project.objects.get(id=project_id)
+            repo_name = request.data.get("github_repository_full_name")
+            active = request.data.get("active", True)
+            
+            if not repo_name:
+                # If they pass empty string or None, they are un-linking
+                ProjectRepositoryMapping.objects.filter(project=project).delete()
+                return Response({"status": "unlinked"})
+                
+            mapping, _ = ProjectRepositoryMapping.objects.update_or_create(
+                project=project,
+                defaults={
+                    "github_repository_full_name": repo_name,
+                    "active": active
+                }
+            )
+            return Response({
+                "github_repository_full_name": mapping.github_repository_full_name,
+                "active": mapping.active
+            })
+        except Project.DoesNotExist:
+            return Response({"error": "Project not found"}, status=404)
