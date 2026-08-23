@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiClient } from '../../api/client';
 import { Plus, FolderOpen, MoreHorizontal, Users, CheckSquare, LayoutGrid, List as ListIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';

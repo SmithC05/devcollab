@@ -209,6 +209,7 @@ class ProjectListView(APIView):
             "description": f"Project for {project.name}",
             "status": "Active",
             "members_count": workspace.memberships.count(),
+            "members_count": workspace.memberships.count(),
             "tasks_count": 0,
             "progress": 0,
             "updated_at": project.updated_at

@@ -16,12 +16,9 @@ class WebSocketClient {
     this.isConnecting = true;
 
     const { sessionToken } = useAuthStore.getState();
-    if (!sessionToken) {
-      this.isConnecting = false;
-      return;
-    }
-
-    this.socket = new WebSocket(`${WS_BASE_URL}/workspace/?token=${sessionToken}`);
+    // Build URL — include token if available (for presence), but connect regardless for realtime events
+    const tokenParam = sessionToken ? `?token=${sessionToken}` : '';
+    this.socket = new WebSocket(`${WS_BASE_URL}/workspace/${tokenParam}`);
 
     this.socket.onopen = () => {
       this.isConnecting = false;

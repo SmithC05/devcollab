@@ -6,6 +6,23 @@ import AgentPanel from '../ai/AgentPanel';
 export default function ProjectLayout() {
   const { projectId } = useParams();
   const [isAgentOpen, setIsAgentOpen] = useState(false);
+  const [currentProject, setCurrentProject] = useState(null);
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        const { apiClient } = await import('../../api/client');
+        const projects = await apiClient('/workspace/projects/');
+        const found = projects.find(p => p.id.toString() === projectId || p.name === projectId);
+        if (found) {
+          setCurrentProject(found);
+        }
+      } catch (err) {
+        console.error('Failed to fetch project', err);
+      }
+    };
+    fetchProject();
+  }, [projectId]);
 
   useEffect(() => {
     const handleOpen = () => setIsAgentOpen(true);
@@ -32,16 +49,15 @@ export default function ProjectLayout() {
       style={{ display: 'flex', width: '100%', height: '100vh', overflow: 'hidden' }}
       className="bg-[#0d0d0f] text-[var(--text-primary)] font-sans relative"
     >
-      <ProjectSidebar />
+      <ProjectSidebar project={currentProject} />
 
       {/* Main Content Area */}
       <main
         style={{ flex: 1, minWidth: 0, height: '100vh', overflow: 'auto' }}
         className="bg-[#0d0d0f]"
       >
-        {/* We can pass setIsAgentOpen to the outlet context if we want, or just let Header handle it globally or via a store. 
-            For simplicity, we'll listen to a custom event to open it. */}
-        <Outlet context={{ openAgent: () => setIsAgentOpen(true) }} />
+        {/* We pass the project down to the outlet context */}
+        <Outlet context={{ openAgent: () => setIsAgentOpen(true), project: currentProject }} />
       </main>
 
       <AgentPanel 

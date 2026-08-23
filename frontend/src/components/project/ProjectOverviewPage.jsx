@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { Search, Bell, Navigation } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -9,6 +9,7 @@ const PRIORITY_OPTIONS = ['P0 Urgent', 'P1 High', 'P2 Normal'];
 const DUE_OPTIONS      = ['Today', 'Tomorrow', 'This week', 'Next week', 'No date'];
 
 function TopHeader({ projectName }) {
+  const navigate = useNavigate();
   return (
     <div style={{
       height: '48px', borderBottom: '1px solid #1a1a1e',
@@ -16,7 +17,13 @@ function TopHeader({ projectName }) {
       padding: '0 24px', flexShrink: 0, background: '#0e0e10',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
-        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>MNB</span>
+        <button 
+          onClick={() => navigate('/dashboard/projects')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '0', marginRight: '8px' }}
+        >
+          <Navigation size={14} style={{ transform: 'rotate(-90deg)' }} />
+        </button>
+        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Workspace</span>
         <span style={{ color: 'var(--border-strong)' }}>/</span>
         <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{projectName}</span>
       </div>
@@ -189,7 +196,8 @@ export default function ProjectOverviewPage() {
   const { projectId } = useParams();
   const { role } = useAuthStore();
   const safeRole = role || 'Dev';
-  const projectName = projectId || 'P1';
+  const { project } = useOutletContext();
+  const projectName = project?.name || projectId || 'P1';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0e0e10', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
