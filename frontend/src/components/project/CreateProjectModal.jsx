@@ -70,7 +70,7 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-[calc(100vw-32px)] md:w-[620px] min-h-[280px] md:min-h-[320px] bg-[#151515] border border-[#2A2A2A] rounded-[18px] shadow-2xl flex flex-col"
+            className="relative w-full max-w-[calc(100vw-32px)] md:w-[620px] min-h-[280px] md:min-h-[320px] bg-[var(--surface-hover)] border border-[var(--border-subtle)] rounded-[18px] shadow-2xl flex flex-col"
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
@@ -78,7 +78,7 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }) {
             {/* Close Button */}
             <button
               onClick={!loading ? onClose : undefined}
-              className="absolute top-5 right-5 p-1 text-[#A3A3A3] hover:text-white transition-colors"
+              className="absolute top-5 right-5 p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               aria-label="Close modal"
               disabled={loading}
             >
@@ -88,10 +88,10 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }) {
             <form onSubmit={handleSubmit} className="flex flex-col flex-1">
               {/* Header */}
               <div className="pt-8 px-8 pb-6">
-                <h2 id="modal-title" className="text-[22px] md:text-[24px] font-bold text-white mb-2 leading-tight">
+                <h2 id="modal-title" className="text-[22px] md:text-[24px] font-bold text-[var(--text-primary)] mb-2 leading-tight">
                   Create New Project
                 </h2>
-                <p className="text-[14px] md:text-[15px] text-[#A3A3A3]">
+                <p className="text-[14px] md:text-[15px] text-[var(--text-secondary)]">
                   Enter the details for your new project. Click save when you're done.
                 </p>
               </div>
@@ -99,7 +99,7 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }) {
               {/* Body */}
               <div className="px-8 flex-1">
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="projectName" className="text-[14px] font-semibold text-white">
+                  <label htmlFor="projectName" className="text-[14px] font-semibold text-[var(--text-primary)]">
                     Project Name
                   </label>
                   <input
@@ -109,7 +109,7 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={loading}
-                    className="w-full h-[48px] md:h-[52px] rounded-[10px] md:rounded-[12px] bg-[#111111] border border-[#333333] text-white px-4 focus:outline-none focus:border-[#737373] transition-colors"
+                    className="w-full h-[48px] md:h-[52px] rounded-[10px] md:rounded-[12px] bg-[var(--surface-item)] border border-[var(--border-strong)] text-[var(--text-primary)] px-4 focus:outline-none focus:border-[#737373] transition-colors"
                     placeholder="e.g. Frontend App"
                   />
                   {error && (
@@ -124,7 +124,7 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate }) {
                   type="button"
                   onClick={onClose}
                   disabled={loading}
-                  className="px-5 py-2.5 text-[#A3A3A3] hover:text-white font-medium text-[14px] transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium text-[14px] transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>

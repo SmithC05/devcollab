@@ -38,6 +38,7 @@ import SimulationCenter          from '../features/devcollab-intelligence/pages/
 import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
 import JudgeMode                 from '../features/devcollab-intelligence/pages/JudgeMode';
 import DevCollabDemoMode, { DemoStartScreen } from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
+import IncidentResponse from '../features/devcollab-intelligence/pages/IncidentResponse';
 import InvitationPage       from '../pages/InvitationPage';
 import LandingPage          from '../pages/LandingPage';
 // L-03 FIX: Moved these imports from mid-file to top where they belong
@@ -182,6 +183,8 @@ export default function AppRoutes() {
           <Route path="simulation/demo/:id" element={<SimulationCenter />} />
           <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
           <Route path="demo" element={<DevCollabDemoMode />} />
+          <Route path="incident" element={<IncidentResponse />} />
+          <Route path="incident/:eventId" element={<IncidentResponse />} />
         </Route>
       </Route>
 

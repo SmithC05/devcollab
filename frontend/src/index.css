@@ -14,7 +14,36 @@
 }
 
 :root {
-  /* Strictly Monochrome UI Tokens */
+  /* Strictly Monochrome UI Tokens (Light Theme) */
+  --bg: #F9FAFB;
+  --app-bg: #F9FAFB;
+  --surface: #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --surface-item: #F3F4F6;
+  --surface-card: #FFFFFF;
+  --surface-hover: #E5E7EB;
+  
+  --border-subtle: #E5E7EB;
+  --border-default: #D1D5DB;
+  --border-strong: #9CA3AF;
+  --border-focus: #6B7280;
+  
+  --text-primary: #111827;
+  --fg: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6B7280;
+  --text-white: #FFFFFF;
+
+  --focus-ring: #D1D5DB;
+  
+  /* Status Colors (Green only) */
+  --status-success: #16A34A;
+  --status-success-bg: rgba(22, 163, 74, 0.1);
+  --status-success-border: rgba(22, 163, 74, 0.2);
+}
+
+.dark {
+  /* Strictly Monochrome UI Tokens (Dark Theme) */
   --bg: #050505;
   --app-bg: #050505;
   --surface: #0A0A0A;

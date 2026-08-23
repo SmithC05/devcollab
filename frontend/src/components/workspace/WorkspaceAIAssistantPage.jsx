@@ -223,21 +223,21 @@ export default function WorkspaceAIAssistantPage() {
                     key={i}
                     onClick={() => setQuery(`${cap.title} for my recent work`)}
                     hover={true}
-                    className="p-5 text-left flex gap-3.5 group items-start"
+                    className="p-5 text-left flex gap-4 group items-center min-h-[74px]"
                   >
                     <div className="w-10 h-10 rounded-lg bg-[var(--surface-item)] border border-[var(--border-strong)] text-[var(--text-muted)] flex items-center justify-center group-hover:text-[var(--text-primary)] group-hover:bg-[var(--surface-raised)] transition-colors shrink-0">
                       <cap.icon size={17} />
                     </div>
-                    <div className="min-w-0 pt-0.5">
-                      <h3 className="text-[14px] font-medium text-[var(--fg)] group-hover:text-[var(--text-primary)] transition-colors mb-0.5">{cap.title}</h3>
-                      <p className="text-[12px] text-[var(--text-secondary)] leading-relaxed">{cap.desc}</p>
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-semibold text-[var(--fg)] group-hover:text-[var(--text-primary)] transition-colors mb-1">{cap.title}</h3>
+                      <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">{cap.desc}</p>
                     </div>
                   </Card>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="space-y-5 pt-4">
+            <div className="space-y-5 pt-4 w-full max-w-3xl">
               <AnimatePresence>
                 {messages.map((msg, i) => (
                   <motion.div
@@ -304,7 +304,7 @@ export default function WorkspaceAIAssistantPage() {
         >
           <form
             onSubmit={handleSubmit}
-            className="relative max-w-2xl mx-auto flex items-end bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-2xl overflow-hidden focus-within:border-[var(--border-focus)] transition-colors"
+            className="relative w-full max-w-3xl flex items-end bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-2xl overflow-hidden focus-within:border-[var(--border-focus)] transition-colors"
           >
             <textarea
               value={query}
@@ -323,7 +323,7 @@ export default function WorkspaceAIAssistantPage() {
               type="submit"
               variant="primary"
               disabled={!query.trim() || loading}
-              className="absolute right-3 bottom-3 !w-8 !h-8 !p-0 !rounded-lg disabled:opacity-40"
+              className="absolute right-4 bottom-4 !w-9 !h-9 !p-0 !rounded-lg disabled:opacity-40"
               icon={ArrowUp}
               iconSize={15}
             />

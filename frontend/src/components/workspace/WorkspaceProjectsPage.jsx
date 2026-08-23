@@ -3,28 +3,34 @@ import { Plus, FolderOpen, MoreHorizontal, Users, CheckSquare, LayoutGrid, List 
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
 import { Spinner, EmptyState, Badge, IconButton, Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '../ui/index';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import CreateProjectModal from '../project/CreateProjectModal';
 import LaunchScreen from '../project/LaunchScreen';
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../stores/authStore';
 
 // --- Utilities ---
+const getStatusVariant = (status) => {
+  if (status === 'Active') return 'success';
+  if (status === 'Archived') return 'secondary';
+  return 'default';
+};
+
 const formatRelativeTime = (dateString) => {
   if (!dateString) return 'Updated recently';
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
-  
+
   if (diffInSeconds < 60) return 'Updated just now';
   const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `Updated ${diffInMinutes}m ago`;
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
   const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `Updated ${diffInHours}h ago`;
+  if (diffInHours < 24) return `${diffInHours}h ago`;
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) return `Updated ${diffInDays}d ago`;
+  if (diffInDays < 30) return `${diffInDays}d ago`;
   const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) return `Updated ${diffInMonths}mo ago`;
+  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
   const diffInYears = Math.floor(diffInDays / 365);
   return `Updated ${diffInYears}y ago`;
 };
@@ -51,7 +57,16 @@ export default function WorkspaceProjectsPage() {
   const [viewMode, setViewMode] = useState('grid');
   
   const navigate = useNavigate();
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const location = useLocation();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(location.state?.openCreateModal || false);
+  
+  useEffect(() => {
+    if (location.state?.openCreateModal) {
+      // Clear the state so refreshing doesn't reopen the modal
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
+
   const [launchingProject, setLaunchingProject] = useState(null);
 
   const handleCreateProject = async (name) => {
@@ -68,6 +83,7 @@ export default function WorkspaceProjectsPage() {
   };
 
   useEffect(() => {
+    if (!activeWorkspace?.id) return;
     const fetchProjects = async () => {
       try {
         const data = await apiClient('/workspace/projects/');
@@ -83,7 +99,9 @@ export default function WorkspaceProjectsPage() {
 
   const filteredProjects = projects.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filter === 'All' || p.status === filter;
+    const isPriorityFilter = filter === 'P0' || filter === 'P1' || filter === 'P2';
+    // For now, if a priority filter is clicked, show all active (mocking functionality)
+    const matchesFilter = filter === 'All' || p.status === filter || (isPriorityFilter && p.status === 'Active');
     return matchesSearch && matchesFilter;
   });
 
@@ -139,7 +157,7 @@ export default function WorkspaceProjectsPage() {
           <div className="shrink-0 pt-1">
             <button 
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 h-[40px] px-[20px] rounded-[8px] bg-[var(--text-primary)] text-[var(--bg)] font-semibold text-[13px] hover:bg-white transition-colors duration-150 border border-transparent shadow-sm"
+              className="flex items-center gap-2 h-[40px] px-[20px] rounded-[8px] bg-[var(--text-primary)] text-[var(--bg)] font-semibold text-[13px] hover:opacity-90 transition-all duration-150 border border-transparent shadow-sm"
             >
               <Plus size={16} strokeWidth={2.5} />
               New Project →
