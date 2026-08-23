@@ -6,79 +6,79 @@
 
 .dv-intelligence {
   /* ── Backgrounds ──────────────────────────────────────────────────── */
-  --dv-bg-canvas:    #090b0e;
-  --dv-bg-base:      #0c0f13;
-  --dv-bg-surface:   #101419;
-  --dv-bg-elevated:  #141820;
-  --dv-bg-overlay:   #191e28;
-  --dv-bg-hover:     #1c2230;
-  --dv-bg-active:    #202638;
+  --dv-bg-canvas:    var(--bg);
+  --dv-bg-base:      var(--bg);
+  --dv-bg-surface:   var(--surface);
+  --dv-bg-elevated:  var(--surface-raised);
+  --dv-bg-overlay:   var(--surface-raised);
+  --dv-bg-hover:     var(--surface-hover);
+  --dv-bg-active:    var(--surface-active);
 
   /* ── Borders ──────────────────────────────────────────────────────── */
-  --dv-border-subtle:   rgba(255,255,255,0.04);
-  --dv-border-default:  rgba(255,255,255,0.07);
-  --dv-border-strong:   rgba(255,255,255,0.12);
-  --dv-border-focus:    rgba(99,137,253,0.5);
+  --dv-border-subtle:   var(--border-subtle);
+  --dv-border-default:  var(--border-default);
+  --dv-border-strong:   var(--border-strong);
+  --dv-border-focus:    var(--focus-ring, rgba(59,130,246,0.5));
 
   /* ── Text ─────────────────────────────────────────────────────────── */
-  --dv-text-primary:    #eaeef4;
-  --dv-text-secondary:  #8b95a8;
-  --dv-text-muted:      #525d6e;
-  --dv-text-faint:      #363f4d;
-  --dv-text-inverse:    #090b0e;
+  --dv-text-primary:    var(--text-primary);
+  --dv-text-secondary:  var(--text-secondary);
+  --dv-text-muted:      var(--text-muted);
+  --dv-text-faint:      var(--text-muted);
+  --dv-text-inverse:    var(--bg);
 
   /* ── Accent (Brand Blue) ──────────────────────────────────────────── */
-  --dv-accent:            #6389fd;
-  --dv-accent-hover:      #7b9dfe;
-  --dv-accent-subtle:     rgba(99,137,253,0.08);
-  --dv-accent-border:     rgba(99,137,253,0.2);
-  --dv-accent-glow:       rgba(99,137,253,0.12);
+  --dv-accent:            var(--accent);
+  --dv-accent-hover:      var(--accent-hover);
+  --dv-accent-subtle:     var(--accent-subtle, rgba(59,130,246,0.1));
+  --dv-accent-border:     var(--accent-border, rgba(59,130,246,0.25));
+  --dv-accent-glow:       var(--accent-subtle, rgba(59,130,246,0.12));
 
   /* ── Semantic ─────────────────────────────────────────────────────── */
-  --dv-success:           #2dd4a4;
-  --dv-success-subtle:    rgba(45,212,164,0.08);
-  --dv-success-border:    rgba(45,212,164,0.2);
+  --dv-success:           var(--success);
+  --dv-success-subtle:    rgba(34,197,94,0.1);
+  --dv-success-border:    rgba(34,197,94,0.25);
 
-  --dv-warning:           #f5a623;
-  --dv-warning-subtle:    rgba(245,166,35,0.08);
-  --dv-warning-border:    rgba(245,166,35,0.2);
+  --dv-warning:           var(--warning);
+  --dv-warning-subtle:    rgba(245,158,11,0.1);
+  --dv-warning-border:    rgba(245,158,11,0.25);
 
-  --dv-danger:            #f56060;
-  --dv-danger-subtle:     rgba(245,96,96,0.08);
-  --dv-danger-border:     rgba(245,96,96,0.2);
+  --dv-danger:            var(--danger);
+  --dv-danger-subtle:     rgba(239,68,68,0.1);
+  --dv-danger-border:     rgba(239,68,68,0.25);
 
-  --dv-info:              #60b8f5;
-  --dv-info-subtle:       rgba(96,184,245,0.08);
-  --dv-info-border:       rgba(96,184,245,0.2);
+  --dv-info:              var(--accent);
+  --dv-info-subtle:       var(--accent-subtle, rgba(59,130,246,0.1));
+  --dv-info-border:       var(--accent-border, rgba(59,130,246,0.25));
 
   /* ── Intelligence State Tokens ────────────────────────────────────── */
-  --dv-observed:          #eaeef4;
-  --dv-observed-subtle:   rgba(234,238,244,0.06);
-  --dv-observed-border:   rgba(234,238,244,0.12);
+  --dv-observed:          var(--text-primary);
+  --dv-observed-subtle:   var(--surface-hover);
+  --dv-observed-border:   var(--border-strong);
 
-  --dv-analyzing:         #a78bfa;
-  --dv-analyzing-subtle:  rgba(167,139,250,0.08);
-  --dv-analyzing-border:  rgba(167,139,250,0.2);
+  --dv-analyzing:         var(--accent);
+  --dv-analyzing-subtle:  var(--accent-subtle, rgba(59,130,246,0.1));
+  --dv-analyzing-border:  var(--accent-border, rgba(59,130,246,0.25));
 
-  --dv-predicted:         #38bdf8;
-  --dv-predicted-subtle:  rgba(56,189,248,0.08);
-  --dv-predicted-border:  rgba(56,189,248,0.2);
+  --dv-predicted:         var(--accent);
+  --dv-predicted-subtle:  var(--accent-subtle, rgba(59,130,246,0.1));
+  --dv-predicted-border:  var(--accent-border, rgba(59,130,246,0.25));
 
-  --dv-simulated:         #fb923c;
-  --dv-simulated-subtle:  rgba(251,146,60,0.08);
-  --dv-simulated-border:  rgba(251,146,60,0.2);
+  --dv-simulated:         var(--warning);
+  --dv-simulated-subtle:  rgba(245,158,11,0.1);
+  --dv-simulated-border:  rgba(245,158,11,0.25);
 
-  --dv-recommended:       #2dd4a4;
-  --dv-recommended-subtle: rgba(45,212,164,0.08);
-  --dv-recommended-border:  rgba(45,212,164,0.2);
+  --dv-recommended:       var(--success);
+  --dv-recommended-subtle: rgba(34,197,94,0.1);
+  --dv-recommended-border:  rgba(34,197,94,0.25);
 
-  --dv-approved:          #6389fd;
-  --dv-approved-subtle:   rgba(99,137,253,0.08);
-  --dv-approved-border:   rgba(99,137,253,0.2);
+  --dv-approved:          var(--accent);
+  --dv-approved-subtle:   var(--accent-subtle, rgba(59,130,246,0.1));
+  --dv-approved-border:   var(--accent-border, rgba(59,130,246,0.25));
 
-  --dv-executed:          #f5a623;
-  --dv-executed-subtle:   rgba(245,166,35,0.08);
-  --dv-executed-border:   rgba(245,166,35,0.2);
+  --dv-executed:          var(--success);
+  --dv-executed-subtle:   rgba(34,197,94,0.1);
+  --dv-executed-border:   rgba(34,197,94,0.25);
 
   /* ── Spacing Scale ────────────────────────────────────────────────── */
   --dv-space-1:   4px;

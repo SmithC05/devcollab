@@ -10,7 +10,7 @@ def _strip_provenance(features: dict) -> dict:
     """
     return features.copy()
 
-def predict_context_transfer(task, candidate) -> dict:
+def predict_context_transfer(task, candidate, is_demo: bool = False) -> dict:
     """
     Predicts the context transfer effort in hours.
     Returns structured metadata including the model version.
@@ -18,7 +18,7 @@ def predict_context_transfer(task, candidate) -> dict:
     model = ModelLoader.get_model("context_transfer")
     metadata = ModelLoader.get_metadata("context_transfer")
     
-    features, provenance = build_context_transfer_features(task, candidate)
+    features, provenance, explanations = build_context_transfer_features(task, candidate, is_demo)
     inference_payload = _strip_provenance(features)
     
     # Sklearn pipelines trained on DataFrames expect DataFrames for inference
@@ -30,17 +30,18 @@ def predict_context_transfer(task, candidate) -> dict:
         "model": metadata["name"],
         "feature_version": metadata["feature_version"],
         "prediction_hours": round(predicted_hours, 2),
-        "provenance": provenance
+        "provenance": provenance,
+        "explanations": explanations
     }
 
-def predict_knowledge_transfer(task, candidate) -> dict:
+def predict_knowledge_transfer(task, candidate, is_demo: bool = False) -> dict:
     """
     Predicts the reduction in transfer effort (hours) from a structured knowledge handoff.
     """
     model = ModelLoader.get_model("knowledge_transfer")
     metadata = ModelLoader.get_metadata("knowledge_transfer")
     
-    features, provenance = build_knowledge_transfer_features(task, candidate)
+    features, provenance, explanations = build_knowledge_transfer_features(task, candidate, is_demo)
     inference_payload = _strip_provenance(features)
     
     df = pd.DataFrame([inference_payload])
@@ -51,5 +52,6 @@ def predict_knowledge_transfer(task, candidate) -> dict:
         "model": metadata["name"],
         "feature_version": metadata["feature_version"],
         "predicted_reduction_hours": round(predicted_reduction_hours, 2),
-        "provenance": provenance
+        "provenance": provenance,
+        "explanations": explanations
     }

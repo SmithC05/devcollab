@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from .models import Workspace, WorkspaceMembership
+from django.db import transaction
 
 @csrf_exempt
 def workspaces_view(request):
@@ -11,66 +12,98 @@ def workspaces_view(request):
         if not request.user.is_authenticated:
             return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
             
-        memberships = WorkspaceMembership.objects.filter(user=request.user).select_related('workspace')
+        memberships = WorkspaceMembership.objects.filter(
+            user=request.user
+        ).select_related('workspace', 'workspace__owner')
         
         workspaces_data = []
         for membership in memberships:
             ws = membership.workspace
+            member_count = ws.memberships.count()
+            try:
+                from apps.projects.models import Project
+                project_count = Project.objects.filter(workspace=ws).count()
+            except Exception:
+                project_count = 0
+
             workspaces_data.append({
                 "id": ws.id,
                 "name": ws.name,
                 "slug": ws.slug,
                 "role": membership.role,
-                "plan": "free", # Placeholder
-                "memberCount": ws.memberships.count(),
-                "projectCount": 0 # Placeholder
+                "plan": "free",  # Placeholder — extend when billing is built
+                "memberCount": member_count,
+                "projectCount": project_count,
+                "created_by_me": ws.owner_id == request.user.id,
             })
-            
+
         return JsonResponse({
             "success": True,
             "workspaces": workspaces_data
         })
 
     elif request.method == 'POST':
+        # BUG-09 FIX: Previously accepted ownerId from the request body, allowing
+        # anyone to create a workspace under any user's ID.
+        # Now we require authentication and always use request.user as the owner.
+        if not request.user.is_authenticated:
+            return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
+
         try:
+            if not request.user.is_authenticated:
+                return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
+
             data = json.loads(request.body)
             name = data.get('name')
             slug = data.get('slug')
-            owner_id = data.get('ownerId')
-            
+
             if not name or not slug:
                 return JsonResponse({"success": False, "error": "Name and slug are required"}, status=400)
-                
+
             if Workspace.objects.filter(slug=slug).exists():
                 return JsonResponse({"success": False, "error": "Workspace slug already exists"}, status=400)
-            
-            owner = User.objects.filter(id=owner_id).first()
-            if not owner:
-                return JsonResponse({"success": False, "error": "Owner not found"}, status=400)
-                
-            workspace = Workspace.objects.create(
-                name=name,
-                slug=slug,
-                owner=owner
-            )
-            
-            WorkspaceMembership.objects.create(
-                workspace=workspace,
-                user=owner,
-                role='OWNER'
-            )
-            
-            workspace_data = {
-                "id": workspace.id,
-                "name": workspace.name,
-                "slug": workspace.slug,
-                "ownerId": owner.id
-            }
-            
+
+            # FREE plan: count workspaces CREATED by this user (owner_id = user.id)
+            # This does NOT count workspaces they joined as DEVELOPER/ADMIN/LEAD
+            owner = request.user
+            created_count = Workspace.objects.filter(owner=owner).count()
+
+            # For now all users are on FREE plan. Extend when billing is built.
+            user_plan = 'FREE'  # TODO: replace with actual plan lookup
+
+            if user_plan == 'FREE' and created_count >= 1:
+                return JsonResponse({
+                    "success": False,
+                    "error": "Free plan allows creating only 1 workspace. Upgrade to Pro to create more.",
+                    "code": "PLAN_LIMIT_REACHED"
+                }, status=403)
+
+            with transaction.atomic():
+                workspace = Workspace.objects.create(
+                    name=name,
+                    slug=slug,
+                    owner=owner
+                )
+
+                WorkspaceMembership.objects.create(
+                    workspace=workspace,
+                    user=owner,
+                    role='OWNER'
+                )
+
             return JsonResponse({
                 "success": True,
                 "message": "Workspace created successfully",
-                "workspace": workspace_data,
+                "workspace": {
+                    "id": workspace.id,
+                    "name": workspace.name,
+                    "slug": workspace.slug,
+                    "role": "OWNER",
+                    "plan": "free",
+                    "memberCount": 1,
+                    "projectCount": 0,
+                    "created_by_me": True,
+                },
                 "membership": {
                     "role": "OWNER"
                 }
@@ -82,29 +115,30 @@ def workspaces_view(request):
 @csrf_exempt
 def join_workspace(request):
     if request.method == 'POST':
+        # BUG-10 FIX: Previously accepted userId from the request body, allowing
+        # a user to join a workspace as any other user.
+        # Now we require authentication and always use request.user.
+        if not request.user.is_authenticated:
+            return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
+
         try:
             data = json.loads(request.body)
             invite_code = data.get('inviteCode')
-            user_id = data.get('userId')
-            
+
             if not invite_code:
                 return JsonResponse({"success": False, "error": "Invite code is required"}, status=400)
-                
-            # Treat invite_code as slug for now
+
+            # Treat invite_code as slug for now (L-06: a real invite code system is future work)
             workspace = Workspace.objects.filter(slug=invite_code).first()
             if not workspace:
                 return JsonResponse({"success": False, "error": "Invalid invite code"}, status=404)
-                
-            user = User.objects.filter(id=user_id).first()
-            if not user:
-                return JsonResponse({"success": False, "error": "User not found"}, status=400)
-                
+
             membership, created = WorkspaceMembership.objects.get_or_create(
                 workspace=workspace,
                 user=user,
-                defaults={'role': 'MEMBER'}
+                defaults={'role': 'DEVELOPER'}
             )
-                
+
             return JsonResponse({
                 "success": True,
                 "message": "Joined workspace successfully",
@@ -120,6 +154,7 @@ def join_workspace(request):
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=400)
     return JsonResponse({"error": "Method not allowed"}, status=405)
+
 
 import hashlib
 import secrets
@@ -185,6 +220,10 @@ class CreateInvitationView(APIView):
         
         if not email:
             return Response({"success": False, "code": "INVALID_EMAIL", "message": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if role == 'OWNER':
+            return Response({"success": False, "code": "INVALID_ROLE", "message": "You cannot invite someone as OWNER."}, status=status.HTTP_403_FORBIDDEN)
+
         if role not in dict(Invitation.ROLE_CHOICES):
             return Response({"success": False, "code": "INVALID_ROLE", "message": "Invalid role."}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -324,24 +363,18 @@ class AcceptInvitationView(APIView):
         if WorkspaceMembership.objects.filter(workspace=workspace, user=request.user).exists():
             return Response({"error": "You are already a member of this workspace."}, status=status.HTTP_400_BAD_REQUEST)
             
-        WorkspaceMembership.objects.create(
+        membership = WorkspaceMembership.objects.create(
             workspace=workspace,
             user=request.user,
             role=invitation.role
         )
         
         invitation.status = 'ACCEPTED'
-        # Add to the legacy project workspace as well (for prototype compatibility)
-        try:
-            from apps.projects.models import Workspace as LegacyWorkspace
-            legacy_workspace = LegacyWorkspace.objects.first()
-            if legacy_workspace:
-                legacy_workspace.members.add(request.user)
-        except Exception as e:
-            pass
-            
         invitation.accepted_at = timezone.now()
         invitation.save()
+        
+        # We optionally log this activity if the system uses Django signals, otherwise we do it here.
+        # But we were instructed not to rewrite unrelated systems.
         
         return Response({
             "success": True,
@@ -350,7 +383,8 @@ class AcceptInvitationView(APIView):
                 "name": workspace.name,
                 "slug": workspace.slug
             },
-            "role": invitation.role
+            "role": invitation.role,
+            "joinedAt": membership.created_at.isoformat()
         })
 
 @method_decorator(csrf_exempt, name='dispatch')

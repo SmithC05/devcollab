@@ -6,38 +6,42 @@ from .models import PresenceSession
 
 class WorkspaceConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.session_token = self.scope['query_string'].decode().split('token=')[-1]
-        
-        # Verify session
-        session = await self.get_session(self.session_token)
-        if not session:
-            await self.close()
-            return
-            
-        self.user_id = session.user_id
-        # In a real app we might use workspace_id for the group name
+        self.session_token = self.scope['query_string'].decode().split('token=')[-1] if b'token=' in self.scope['query_string'] else None
+        self.user_id = None
+
+        if self.session_token:
+            session = await self.get_session(self.session_token)
+            if session:
+                self.user_id = session.user_id
+
+        # Also try Django session/user from scope (works for OAuth users)
+        scope_user = self.scope.get('user')
+        if self.user_id is None and scope_user and scope_user.is_authenticated:
+            self.user_id = scope_user.id
+
         self.room_group_name = 'workspace_global'
-        
-        # Join room group
+
+        # Join room group — allow all connections for realtime board events
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
-        
+
         await self.accept()
-        
-        # Mark as active
-        await self.update_status('ACTIVE')
-        
-        # Broadcast presence update
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'presence_update',
-                'user_id': self.user_id,
-                'status': 'ACTIVE'
-            }
-        )
+
+        if self.user_id and self.session_token:
+            await self.update_status('ACTIVE')
+
+        # Broadcast presence update if we have a user
+        if self.user_id:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'presence_update',
+                    'user_id': self.user_id,
+                    'status': 'ACTIVE'
+                }
+            )
 
     async def disconnect(self, close_code):
         # Leave room group

@@ -1,16 +1,19 @@
-import { useState } from 'react';
-import { Menu, Search, Bell, Command, Sun, Moon, Crown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Menu, Search, Bell, Command, Sun, Moon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { IconButton } from '../ui';
 import { useAuthStore } from '../../stores/authStore';
 
-export default function Topbar({ workspaceName, onMenuClick }) {
+// BUG-15 FIX: workspaceName prop removed; read from store directly
+export default function Topbar({ onMenuClick }) {
+  const { user, activeWorkspace } = useAuthStore();
+  const workspaceName = activeWorkspace?.name || 'Workspace';
   const [isFocused, setIsFocused] = useState(false);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const { user, workspacePlan } = useAuthStore();
+>>>>>>> 1bd0419a17ed342f97d20fcc693629ddc26eff4f
   
   const userName = user?.first_name
     ? `${user.first_name} ${user.last_name}`.trim()
@@ -30,50 +33,67 @@ export default function Topbar({ workspaceName, onMenuClick }) {
     return 'Overview';
   };
 
+  const wsName = workspaceName || activeWorkspace?.name || 'Workspace';
+  const pageName = getPageName();
+
+  // Global command K listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('global-search')?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
+<<<<<<< HEAD
       className="sticky top-0 z-20 shrink-0 flex items-center justify-center h-16 bg-[var(--topbar-bg)] border-b border-[var(--border-subtle)] w-full"
+=======
+      className="sticky top-0 z-20 shrink-0 flex items-center justify-center h-[56px] bg-[var(--bg)] border-b border-[var(--border-subtle)] w-full"
     >
       <div 
-        className="flex items-center w-[92%] md:w-[90%] lg:w-[85%] max-w-[1440px] px-6 md:px-10 h-full box-border"
-        style={{ margin: '0 auto' }}
+        className="flex items-center w-full px-4 md:px-8 h-full box-border gap-4"
       >
         {/* ── Left: Menu & Breadcrumb ────────────────────────────────────── */}
-        <div className="flex items-center flex-1 min-w-0">
+        <div className="flex items-center flex-1 min-w-0 shrink-0">
           <div className="md:hidden mr-3 shrink-0">
             <IconButton icon={Menu} onClick={onMenuClick} size={16} />
           </div>
           
           <div className="hidden sm:flex items-center gap-2 overflow-hidden select-none">
-            <span className="text-[13px] font-medium text-[var(--text-secondary)] truncate max-w-[120px]">
-              {workspaceName || 'Workspace'}
+            <span className="text-[12px] font-semibold tracking-wide text-[var(--text-muted)] truncate max-w-[120px] uppercase">
+              {wsName.charAt(0)}
             </span>
-            <span className="text-[13px] text-[var(--text-muted)]">/</span>
-            <span className="text-[13px] font-semibold text-[var(--text-primary)] truncate max-w-[150px]">
-              {getPageName()}
+            <span className="text-[12px] text-[var(--text-muted)]">/</span>
+            <span className="text-[12px] font-semibold tracking-wide text-[var(--text-primary)] truncate max-w-[150px] uppercase">
+              {pageName}
             </span>
           </div>
         </div>
 
         {/* ── Center: Global Command Search ──────────────────────────────── */}
-        <div className="flex-1 flex justify-center px-4 max-w-2xl shrink-0">
+        <div className="flex-[2] flex justify-center max-w-xl shrink min-w-[200px]">
           <motion.div
             animate={{
-              width: isFocused ? '520px' : '500px',
-              borderColor: isFocused ? 'var(--focus-ring)' : 'var(--border-default)',
-              backgroundColor: isFocused ? 'var(--surface-hover)' : 'var(--surface-raised)'
+              borderColor: isFocused ? 'var(--border-focus)' : 'var(--border-subtle)',
+              backgroundColor: isFocused ? 'var(--surface-item)' : 'var(--surface-raised)'
             }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="relative flex items-center h-10 rounded-lg border w-full max-w-full overflow-hidden group cursor-text"
+            transition={{ duration: 0.15 }}
+            className="relative flex items-center h-[32px] rounded-[8px] border w-full max-w-full overflow-hidden group cursor-text transition-shadow shadow-sm"
+            style={{ boxShadow: isFocused ? '0 0 0 1px var(--border-focus)' : 'none' }}
             onClick={() => document.getElementById('global-search')?.focus()}
           >
             <Search 
-              size={15} 
-              className="absolute transition-colors pointer-events-none" 
-              style={{ left: 14, color: isFocused ? 'var(--text-primary)' : 'var(--text-muted)' }}
+              size={13} 
+              className="absolute left-3 transition-colors duration-150" 
+              style={{ color: isFocused ? 'var(--text-primary)' : 'var(--text-muted)' }}
             />
             <input
               id="global-search"
@@ -84,60 +104,42 @@ export default function Topbar({ workspaceName, onMenuClick }) {
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
             />
-            <div className="absolute right-2 flex items-center gap-0.5">
-              <span className="flex items-center justify-center h-5 px-1.5 rounded bg-[var(--surface)] border border-[var(--border-default)] text-[10px] font-medium text-[var(--text-muted)] opacity-60 group-hover:opacity-100 transition-opacity select-none">
-                <Command size={10} className="mr-0.5" /> K
+            <div className="absolute right-2 flex items-center gap-1">
+              <span className="flex items-center justify-center h-[20px] px-1.5 rounded-[4px] border border-[var(--border-strong)] bg-[var(--surface-hover)] text-[10px] font-medium text-[var(--text-muted)] select-none">
+                <Command size={10} className="mr-[2px]" /> K
               </span>
             </div>
           </motion.div>
         </div>
 
         {/* ── Right: Actions ─────────────────────────────────────────────── */}
-        <div className="flex items-center justify-end flex-1 min-w-0 gap-2 sm:gap-3">
-          <div className="hidden sm:flex items-center gap-1.5 mr-1">
+        <div className="flex items-center justify-end flex-1 min-w-0 gap-3 shrink-0">
+          <div className="hidden sm:flex items-center gap-1 mr-1">
             <IconButton 
               icon={theme === 'dark' ? Moon : Sun} 
               size={15} 
               onClick={toggleTheme} 
-              className="w-8 h-8 rounded-full"
+              className="w-8 h-8 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
               title="Switch theme"
             />
             <div className="relative">
               <IconButton 
                 icon={Bell} 
                 size={15} 
-                className="w-8 h-8 rounded-full"
+                className="w-8 h-8 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
                 title="Notifications"
               />
               {/* Notification Badge */}
-              <div className="absolute top-[4px] right-[4px] w-2 h-2 rounded-full bg-blue-500 border border-[var(--topbar-bg)] pointer-events-none" />
+              <div className="absolute top-[6px] right-[6px] w-[6px] h-[6px] rounded-full bg-green-500 pointer-events-none shadow-[0_0_0_2px_var(--bg)]" />
             </div>
           </div>
 
           {/* User Avatar */}
-          <motion.button 
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            className={`relative flex items-center justify-center cursor-pointer outline-none shrink-0 overflow-visible select-none ${
-              isPro
-                ? 'w-[64px] h-9 rounded-full bg-[#D4AF37] text-black border border-[#F5D76E] shadow-[0_0_0_3px_rgba(212,175,55,0.12)] gap-1.5 px-2'
-                : 'w-8 h-8 rounded-full bg-[#8B6B5D] text-white'
-            } text-[12px] font-semibold`}
+          <button 
+            className="w-[28px] h-[28px] rounded-full bg-[var(--surface-item)] border border-[var(--border-strong)] flex items-center justify-center text-[11px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-focus)] transition-all cursor-pointer outline-none shrink-0 overflow-hidden select-none"
           >
-            {isPro ? (
-              <>
-                <span className="w-5 h-5 rounded-full bg-black/15 flex items-center justify-center text-[11px] font-bold">
-                  {initial}
-                </span>
-                <span className="text-[11px] font-bold uppercase tracking-wide">Pro</span>
-                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#FFE08A] border border-[#B88900] flex items-center justify-center">
-                  <Crown size={11} strokeWidth={2.3} />
-                </span>
-              </>
-            ) : (
-              initial
-            )}
-          </motion.button>
+            {initial}
+          </button>
         </div>
       </div>
     </motion.header>

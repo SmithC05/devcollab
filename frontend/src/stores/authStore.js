@@ -65,7 +65,9 @@ export const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      role: 'Owner', // Temporary default for RBAC simulation
+      // L-04 FIX: null is the correct default — null role means "not in a workspace yet".
+      // Previously 'Owner' was hardcoded, bypassing all real permission checks.
+      role: null,
       activeWorkspace: null,
       workspacePlan: 'FREE',
       sessionToken: null,
@@ -171,11 +173,15 @@ export const useAuthStore = create(
       },
 
       loginWithGoogle: () => {
-        window.location.href = 'http://127.0.0.1:8000/accounts/google/login/';
+        // BUG-03 FIX: Use env var so this works in staging/production
+        const base = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+        window.location.href = `${base}/accounts/google/login/`;
       },
 
       loginWithGitHub: () => {
-        window.location.href = 'http://127.0.0.1:8000/accounts/github/login/';
+        // BUG-03 FIX: Use env var so this works in staging/production
+        const base = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+        window.location.href = `${base}/accounts/github/login/`;
       },
 
       logout: async () => {
@@ -212,7 +218,17 @@ export const useAuthStore = create(
         try {
           const wsData = await workspaceApi.getWorkspaces();
           if (wsData.success) {
-            set({ workspaces: wsData.workspaces });
+            const freshWorkspaces = wsData.workspaces;
+            set((state) => {
+              // Keep activeWorkspace if it still exists in the refreshed list
+              const stillExists = freshWorkspaces.some(
+                (w) => w.id === state.activeWorkspace?.id
+              );
+              return {
+                workspaces: freshWorkspaces,
+                activeWorkspace: stillExists ? state.activeWorkspace : null,
+              };
+            });
           }
         } catch (e) {
           console.error("Failed to refresh workspaces", e);
@@ -222,7 +238,19 @@ export const useAuthStore = create(
       setActiveWorkspace: (workspaceId) => {
         const ws = get().workspaces.find(w => w.id === workspaceId);
         if (ws) {
-          set({ activeWorkspace: ws, role: ws.role, workspacePlan: (ws.plan || 'FREE').toUpperCase() });
+          const roleMap = {
+            OWNER: 'Owner',
+            ADMIN: 'Admin',
+            LEAD: 'Lead',
+            DEVELOPER: 'Dev',
+            MEMBER: 'Dev',
+          };
+          const normalizedRole = roleMap[ws.role?.toUpperCase()] || ws.role || 'Dev';
+          set({ 
+            activeWorkspace: { ...ws, role: normalizedRole }, 
+            role: normalizedRole, 
+            workspacePlan: (ws.plan || 'FREE').toUpperCase() 
+          });
         }
       },
 
@@ -273,6 +301,12 @@ export const useAuthStore = create(
       can: (action) => {
         const currentRole = get().role || 'Dev';
         return hasPermission(currentRole, action);
+      },
+      
+      updateUser: (userData) => {
+        set((state) => ({
+          user: { ...state.user, ...userData }
+        }));
       }
     }),
     {

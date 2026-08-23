@@ -1,24 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Sparkles, Plus, CheckCircle2, ArrowRight, Circle, Check, Bell } from 'lucide-react';
+import { apiClient } from '../../api/client';
 import TasksCompletedChart from '../dashboard/TasksCompletedChart';
 import StatusDistribution from '../dashboard/StatusDistribution';
 import PageContainer from '../layout/PageContainer';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
 
-export default function WorkspaceOverview({ setWorkspaceName }) {
+// BUG-15: setWorkspaceName prop removed; workspace name now read from store
+export default function WorkspaceOverview() {
+  const { activeWorkspace } = useAuthStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/workspace/overview/');
-        if (response.ok) {
-          const json = await response.json();
-          setData(json);
-          setWorkspaceName(json.workspace_name);
-        } else {
-          console.error('Failed to fetch workspace data');
-        }
+        const data = await apiClient('/workspace/overview/');
+        setData(data);
+
       } catch (err) {
         console.error('Error fetching workspace data:', err);
       } finally {
@@ -26,7 +26,7 @@ export default function WorkspaceOverview({ setWorkspaceName }) {
       }
     };
     fetchData();
-  }, [setWorkspaceName]);
+  }, [activeWorkspace?.id]);
 
   const getGreeting = () => {
     const h = new Date().getHours();

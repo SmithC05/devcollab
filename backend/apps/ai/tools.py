@@ -86,14 +86,14 @@ def get_recent_activity(project_id: int, task_id: int = None) -> str:
         })
     return json.dumps(events)
 
-def simulate_interventions(task_id: int, candidate_ids: list) -> str:
+def simulate_interventions(task_id: int, candidate_ids: list, is_demo: bool = False) -> str:
     """
     Runs deterministic read-only simulations of various interventions (WAIT, REASSIGN, PAIR, KNOWLEDGE_TRANSFER)
     across multiple candidates and returns their predicted outcomes.
     """
     results = []
     for c_id in candidate_ids:
-        c_results = run_simulation(task_id, c_id)
+        c_results = run_simulation(task_id, c_id, is_demo)
         results.append({
             "candidate_id": c_id,
             "interventions": c_results

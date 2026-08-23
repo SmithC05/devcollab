@@ -17,11 +17,19 @@ const DEMO_USER_MAP = {
   'Karthik': 5
 };
 
-export async function fetchSimulation(decisionId, trigger, candidateNames) {
-  // Map demo UI decision IDs and candidate names to real backend DB IDs
-  // to prevent 404s when hitting the real Django /api/simulations/evaluate/ endpoint
-  const taskId = DEMO_TASK_MAP[decisionId] || 1;
-  const candidateIds = candidateNames.map(name => DEMO_USER_MAP[name]).filter(id => id);
+export async function fetchSimulation(decisionId, trigger, candidates) {
+  // If decisionId is numeric, it's a live task. Otherwise, map demo UI decision IDs.
+  const isLiveTask = !isNaN(decisionId);
+  const taskId = isLiveTask ? parseInt(decisionId, 10) : (DEMO_TASK_MAP[decisionId] || 1);
+  
+  // Candidates is now expected to be an array of objects {id, name}
+  // For live tasks we extract IDs. For demo, we fallback to names mapped to IDs.
+  let candidateIds = [];
+  if (isLiveTask) {
+    candidateIds = candidates.map(c => c.id);
+  } else {
+    candidateIds = candidates.map(c => DEMO_USER_MAP[c.name] || DEMO_USER_MAP[c]).filter(id => id);
+  }
   
   if (candidateIds.length === 0) {
     throw new Error('No valid candidates mapped for simulation.');
@@ -52,7 +60,7 @@ export async function fetchSimulation(decisionId, trigger, candidateNames) {
     }
 
     const data = await response.json();
-    return formatSimulationResult(data);
+    return formatSimulationResult(data, candidates, isLiveTask);
   } catch (err) {
     console.error('Simulation Adapter Error:', err);
     throw err;
@@ -103,12 +111,18 @@ export async function approveSimulation(scenarioId, candidateName, intervention)
  * Transforms the backend response into the format expected by SimulationResults.jsx.
  * Also appends a derived 'recommended' flag based on backend heuristic output.
  */
-function formatSimulationResult(data) {
+function formatSimulationResult(data, candidates, isLiveTask) {
   let allInterventions = [];
   
   data.evaluation_results.forEach(candResult => {
     const cId = candResult.candidate_id;
-    const cName = Object.keys(DEMO_USER_MAP).find(k => DEMO_USER_MAP[k] === cId) || `Candidate ${cId}`;
+    let cName = `Candidate ${cId}`;
+    if (isLiveTask) {
+       const candObj = candidates.find(c => c.id === cId);
+       if (candObj) cName = candObj.name;
+    } else {
+       cName = Object.keys(DEMO_USER_MAP).find(k => DEMO_USER_MAP[k] === cId) || cName;
+    }
     
     candResult.interventions.forEach(inv => {
       allInterventions.push({

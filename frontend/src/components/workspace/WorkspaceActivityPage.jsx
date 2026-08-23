@@ -1,28 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Activity, Clock, Filter, Zap } from 'lucide-react';
+import { apiClient } from '../../api/client';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
-import { Card, CardHeader, Spinner, EmptyState } from '../ui/index';
-
-const ActivityStatCard = ({ label, value, icon: Icon }) => (
-  <div className="min-h-[116px] bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-lg p-6 flex items-center justify-between hover:border-[var(--border-focus)] transition-colors">
-    <div>
-      <p className="text-[12px] font-semibold text-[var(--text-muted)] mb-3 uppercase tracking-wider">
-        {label}
-      </p>
-      <p className="text-[34px] font-semibold text-[var(--fg)] tabular-nums leading-none">
-        {value}
-      </p>
-    </div>
-    {Icon && (
-      <div className="w-12 h-12 rounded-full bg-[var(--surface-item)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
-        <Icon className="text-[var(--text-secondary)]" size={22} strokeWidth={2} />
-      </div>
-    )}
-  </div>
-);
+import { Card, CardHeader, Spinner, SectionHeader, StatCard, EmptyState } from '../ui/index';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
 
 export default function WorkspaceActivityPage() {
+  const { activeWorkspace } = useAuthStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,10 +17,8 @@ export default function WorkspaceActivityPage() {
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        const response = await fetch('/api/workspace/activity/');
-        if (!response.ok) throw new Error('Failed to load activity');
-        const json = await response.json();
-        setData(json);
+        const response = await apiClient('/workspace/activity/');
+        setData(response);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -42,7 +26,7 @@ export default function WorkspaceActivityPage() {
       }
     };
     fetchActivity();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   return (
     <PageContainer className="w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-10 pt-12 md:pt-14">

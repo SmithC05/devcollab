@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-def simulate_intervention(task_id: int, candidate_id: int, intervention_type: str) -> dict:
+def simulate_intervention(task_id: int, candidate_id: int, intervention_type: str, is_demo: bool = False) -> dict:
     """
     Simulates the outcome of applying a specific intervention.
     Integrates ML predictions for context transfer and knowledge transfer.
@@ -38,7 +38,7 @@ def simulate_intervention(task_id: int, candidate_id: int, intervention_type: st
     # We predict context transfer for relevant interventions
     if intervention_type in ["REASSIGN", "PAIR", "KNOWLEDGE_TRANSFER"]:
         try:
-            ctx_pred = predict_context_transfer(task, candidate)
+            ctx_pred = predict_context_transfer(task, candidate, is_demo)
             transfer_effort = ctx_pred.get("prediction_hours", 0.0)
             reasons.append(f"Predicted base context transfer effort: {transfer_effort}h.")
         except Exception as e:
@@ -89,7 +89,7 @@ def simulate_intervention(task_id: int, candidate_id: int, intervention_type: st
         "reason": reasons
     }
 
-def run_simulation(task_id: int, candidate_id: int) -> list:
+def run_simulation(task_id: int, candidate_id: int, is_demo: bool = False) -> list:
     """
     Runs a simulation across all valid intervention types for a given candidate.
     """
@@ -106,6 +106,6 @@ def run_simulation(task_id: int, candidate_id: int) -> list:
     
     results = []
     for intervention in interventions:
-        results.append(simulate_intervention(task_id, candidate_id, intervention))
+        results.append(simulate_intervention(task_id, candidate_id, intervention, is_demo))
         
     return results
