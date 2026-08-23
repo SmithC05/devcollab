@@ -32,31 +32,64 @@ function Avatar({ name, size = 34 }) {
   );
 }
 
-/* ─── Invite Modal — wired to backend ───────────────────────────────────── */
-function InviteModal({ workspaceId, onClose, onInvited }) {
-  const [email, setEmail]   = useState('');
-  const [name, setName]     = useState('');
-  const [roleVal, setRole]  = useState('DEVELOPER');
-  const [state, setState]   = useState('idle'); // idle|loading|success|error
+/* ─── Add Member Modal — wired to backend ───────────────────────────────────── */
+function AddMemberModal({ projectId, existingMemberIds = [], onClose, onAdded }) {
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [state, setState] = useState('idle'); // idle|saving|success|error
   const [errMsg, setErrMsg] = useState('');
 
-  const send = async () => {
-    if (!email.trim()) return;
-    setState('loading'); setErrMsg('');
+  useEffect(() => {
+    let active = true;
+    const fetchWorkspaceMembers = async () => {
+      try {
+        const { apiClient } = await import('../../api/client');
+        const data = await apiClient('/workspace/members/');
+        if (active) {
+          // Filter to only active members who are not already in the project
+          const eligible = data.filter(m => 
+            m.status !== 'Pending' && 
+            m.status !== 'Rejected' && 
+            !existingMemberIds.includes(m.id)
+          );
+          setCandidates(eligible);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (active) {
+          setErrMsg('Failed to load workspace members.');
+          setLoading(false);
+        }
+      }
+    };
+    fetchWorkspaceMembers();
+    return () => { active = false; };
+  }, [existingMemberIds]);
+
+  const handleAdd = async () => {
+    if (!selectedUser) return;
+    setState('saving'); setErrMsg('');
     try {
       const { apiClient } = await import('../../api/client');
-      await apiClient(`/workspaces/${workspaceId}/invitations/`, {
+      await apiClient(`/projects/${projectId}/members/`, {
         method: 'POST',
-        body: JSON.stringify({ email: email.trim(), name: name.trim(), role: roleVal }),
+        body: JSON.stringify({ user_id: selectedUser.id }),
       });
       setState('success');
-      onInvited?.();
-      setTimeout(onClose, 2000);
+      onAdded?.();
+      setTimeout(onClose, 1500);
     } catch (err) {
-      setErrMsg(err.message || 'Failed to send.');
+      setErrMsg(err.message || 'Failed to add member.');
       setState('error');
     }
   };
+
+  const filtered = candidates.filter(m => 
+    (m.name || m.username || '').toLowerCase().includes(search.toLowerCase()) ||
+    (m.email || '').toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -66,8 +99,8 @@ function InviteModal({ workspaceId, onClose, onInvited }) {
         {state === 'success' ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <CheckCircle2 size={44} color="#4ade80" style={{ margin: '0 auto 14px', display: 'block' }} />
-            <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '16px', margin: '0 0 6px' }}>Invitation Sent!</p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>Invite dispatched to <strong style={{ color: 'var(--text-secondary)' }}>{email}</strong></p>
+            <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '16px', margin: '0 0 6px' }}>Added!</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}><strong style={{ color: 'var(--text-secondary)' }}>{selectedUser?.name || selectedUser?.username}</strong> was added to the project.</p>
           </div>
         ) : (
           <>
@@ -76,38 +109,68 @@ function InviteModal({ workspaceId, onClose, onInvited }) {
                 <UserPlus size={16} color="#fff" />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Invite to Project</h3>
-                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>Send a role-based email invitation</p>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Add Members to Project</h3>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>Select members from this workspace to add to the project.</p>
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>NAME (optional)</label>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Their name" style={{ width: '100%', boxSizing: 'border-box', background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
+                <label style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>MEMBER</label>
+                
+                {selectedUser ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0e0e0e', border: '1px solid #3b82f644', borderRadius: '8px', padding: '10px 14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Avatar name={selectedUser.name || selectedUser.username} size={28} />
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{selectedUser.name || selectedUser.username} <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: '#6366f118', color: '#818cf8', marginLeft: '6px' }}>{selectedUser.role}</span></div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{selectedUser.email}</div>
+                      </div>
+                    </div>
+                    <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={14} /></button>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ position: 'relative', marginBottom: '10px' }}>
+                      <Search size={13} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search workspace members..." style={{ width: '100%', boxSizing: 'border-box', background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '8px', padding: '10px 14px 10px 34px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
+                    </div>
+                    
+                    <div style={{ background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                      {loading ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>Loading members...</div>
+                      ) : candidates.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>No members available. Invite people to this workspace first.</div>
+                      ) : filtered.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>No members found. Try a different name or email.</div>
+                      ) : (
+                        filtered.map(m => (
+                          <div key={m.id} onClick={() => setSelectedUser(m)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid #1a1a1e', cursor: 'pointer', transition: 'background 150ms' }} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1e'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <Avatar name={m.name || m.username} size={28} />
+                              <div>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{m.name || m.username}</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{m.email}</div>
+                              </div>
+                            </div>
+                            <div style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: '#ffffff0a', color: '#aaa', fontWeight: 700 }}>{m.role}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>EMAIL ADDRESS *</label>
-                <div style={{ position: 'relative' }}>
-                  <Mail size={13} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input autoFocus value={email} onChange={e => { setEmail(e.target.value); if (state === 'error') setState('idle'); }} onKeyDown={e => e.key === 'Enter' && send()} placeholder="colleague@company.com" type="email" style={{ width: '100%', boxSizing: 'border-box', background: '#0e0e0e', border: `1px solid ${state === 'error' ? '#f87171' : '#2a2a2e'}`, borderRadius: '8px', padding: '10px 14px 10px 34px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginBottom: '8px' }}>ASSIGN ROLE</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {['ADMIN', 'LEAD', 'DEVELOPER'].map(r => (
-                    <button key={r} onClick={() => setRole(r)} style={{ flex: 1, padding: '8px', borderRadius: '7px', fontSize: '12px', fontWeight: 600, border: roleVal === r ? '1px solid #6366f1' : '1px solid #2a2a2e', background: roleVal === r ? '#6366f118' : 'transparent', color: roleVal === r ? '#818cf8' : 'var(--text-muted)', cursor: 'pointer', transition: 'all 120ms' }}>
-                      {r}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              
               {state === 'error' && <div style={{ background: '#f8717118', border: '1px solid #f8717144', borderRadius: '7px', padding: '10px 14px', fontSize: '12px', color: '#f87171' }}>{errMsg}</div>}
-              <button onClick={send} disabled={!email.trim() || state === 'loading'} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: email.trim() && state !== 'loading' ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : '#1a1a1e', color: email.trim() && state !== 'loading' ? '#fff' : 'var(--text-muted)', border: 'none', cursor: email.trim() ? 'pointer' : 'not-allowed', fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 120ms' }}>
-                {state === 'loading' && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
-                {state === 'loading' ? 'Sending…' : 'Send Invitation'}
-              </button>
+              
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: '8px', background: 'transparent', border: '1px solid #2a2a2e', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: 'all 120ms' }}>Cancel</button>
+                <button onClick={handleAdd} disabled={!selectedUser || state === 'saving'} style={{ flex: 1, padding: '12px', borderRadius: '8px', background: selectedUser && state !== 'saving' ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : '#1a1a1e', color: selectedUser && state !== 'saving' ? '#fff' : 'var(--text-muted)', border: 'none', cursor: selectedUser ? 'pointer' : 'not-allowed', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 120ms' }}>
+                  {state === 'saving' && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
+                  {state === 'saving' ? 'Adding...' : 'Add Member'}
+                </button>
+              </div>
             </div>
           </>
         )}
@@ -135,26 +198,30 @@ export default function ProjectMembersPage() {
     setLoading(true);
     try {
       const { apiClient } = await import('../../api/client');
-      const data = await apiClient('/workspace/members/');
+      // Fetch project members instead of all workspace members
+      const data = await apiClient(`/projects/${projectId}/members/`);
       setMembers(data);
-      const wsData = await apiClient('/workspaces/');
-      if (wsData?.workspaces?.length > 0) setWsId(wsData.workspaces[0].id);
     } catch (err) {
-      console.error('Failed to load members', err);
+      console.error('Failed to load project members', err);
     } finally { setLoading(false); }
-  }, []);
+  }, [projectId]);
 
   useEffect(() => { load(); }, [load]);
 
   const handleRemove = async (memberId) => {
-    // Frontend only for now (member store removal) — backend endpoint can be wired when available
     setRemoving(memberId);
-    setMembers(prev => prev.filter(m => m.id !== memberId));
+    try {
+      const { apiClient } = await import('../../api/client');
+      await apiClient(`/projects/${projectId}/members/${memberId}/`, { method: 'DELETE' });
+      setMembers(prev => prev.filter(m => m.id !== memberId));
+    } catch (err) {
+      console.error('Failed to remove project member', err);
+    }
     setRemoving(null);
   };
 
   const filtered = members.filter(m =>
-    (m.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (m.name || m.username || '').toLowerCase().includes(search.toLowerCase()) ||
     (m.email || '').toLowerCase().includes(search.toLowerCase())
   );
 
@@ -180,7 +247,7 @@ export default function ProjectMembersPage() {
             {isOwner ? 'Team Management' : 'Project Team'}
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
-            {isOwner ? 'Invite and manage people working on this project.' : 'People working on this project and their roles.'}
+            {isOwner ? 'Manage people working on this project.' : 'People working on this project and their roles.'}
           </p>
         </div>
         {isOwner && (
@@ -189,7 +256,7 @@ export default function ProjectMembersPage() {
             onClick={() => setShowInvite(true)}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '9px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, marginTop: '6px', boxShadow: '0 4px 20px rgba(99,102,241,0.3)' }}
           >
-            <UserPlus size={14} /> Invite People
+            <UserPlus size={14} /> Add Members
           </button>
         )}
       </div>
@@ -199,7 +266,7 @@ export default function ProjectMembersPage() {
       {/* Search */}
       <div style={{ position: 'relative', marginBottom: '20px', maxWidth: '360px' }}>
         <Search size={13} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search members…" style={{ width: '100%', boxSizing: 'border-box', background: '#141416', border: '1px solid #1f1f24', borderRadius: '9px', padding: '9px 12px 9px 34px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search project members…" style={{ width: '100%', boxSizing: 'border-box', background: '#141416', border: '1px solid #1f1f24', borderRadius: '9px', padding: '9px 12px 9px 34px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
       </div>
 
       {/* Members table */}
@@ -207,7 +274,7 @@ export default function ProjectMembersPage() {
         {/* Column headers */}
         <div style={{ display: 'grid', gridTemplateColumns: isOwner ? '2fr 1fr 1fr 1fr auto' : '2fr 1fr 1fr', padding: '10px 20px', borderBottom: '1px solid #1f1f24', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.09em', textTransform: 'uppercase' }}>
           <span>Member</span><span>Role</span><span>Status</span>
-          {isOwner && <><span>Last Active</span><span /></>}
+          {isOwner && <><span>Added At</span><span /></>}
         </div>
 
         {loading ? (
@@ -218,7 +285,7 @@ export default function ProjectMembersPage() {
         ) : filtered.length === 0 ? (
           <div style={{ padding: '48px', textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-              {search ? 'No members match your search.' : 'No members yet. Invite your team!'}
+              {search ? 'No members match your search.' : 'No members yet. Add people from the workspace!'}
             </p>
           </div>
         ) : (
@@ -260,7 +327,9 @@ export default function ProjectMembersPage() {
 
                 {isOwner && (
                   <>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{member.last_active || '—'}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {member.added_at ? new Date(member.added_at).toLocaleDateString() : '—'}
+                    </div>
                     <div>
                       {deletable && (
                         <button onClick={() => handleRemove(member.id)} title="Remove member"
@@ -280,7 +349,7 @@ export default function ProjectMembersPage() {
         )}
       </div>
 
-      {showInvite && <InviteModal workspaceId={workspaceId} onClose={() => setShowInvite(false)} onInvited={load} />}
+      {showInvite && <AddMemberModal projectId={projectId} existingMemberIds={members.map(m => m.id)} onClose={() => setShowInvite(false)} onAdded={load} />}
       <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );

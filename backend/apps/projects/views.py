@@ -644,3 +644,89 @@ class ProjectRepositoryMappingView(APIView):
             })
         except Project.DoesNotExist:
             return Response({"error": "Project not found"}, status=404)
+
+
+from apps.projects.models import ProjectMembership
+from apps.realtime.services import EventService
+
+class ProjectMemberListView(APIView):
+    def get(self, request, project_id):
+        project = _get_project_or_404(request, project_id)
+        
+        # Get users who are in this project
+        project_members = ProjectMembership.objects.filter(project=project).select_related('user')
+        
+        results = []
+        for pm in project_members:
+            # Get their workspace membership to find their role
+            try:
+                ws_member = WorkspaceMembership.objects.get(workspace=project.workspace, user=pm.user)
+                results.append({
+                    "id": pm.user.id,
+                    "name": pm.user.get_full_name() or pm.user.username,
+                    "email": pm.user.email,
+                    "username": pm.user.username,
+                    "role": ws_member.role,
+                    "status": "Active",
+                    "added_at": pm.created_at.isoformat()
+                })
+            except WorkspaceMembership.DoesNotExist:
+                pass
+                
+        return Response(results)
+
+    def post(self, request, project_id):
+        project = _get_project_or_404(request, project_id)
+        user_id = request.data.get("user_id")
+        
+        if not user_id:
+            return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        target_user = get_object_or_404(User, id=user_id)
+        
+        # Verify target user is an active workspace member
+        try:
+            ws_membership = WorkspaceMembership.objects.get(workspace=project.workspace, user=target_user)
+        except WorkspaceMembership.DoesNotExist:
+            return Response({"error": "User is not a member of this workspace"}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Verify not already in project
+        if ProjectMembership.objects.filter(project=project, user=target_user).exists():
+            return Response({"error": "User is already a member of this project"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        pm = ProjectMembership.objects.create(
+            project=project,
+            user=target_user,
+            added_by=request.user
+        )
+        
+        # Create Activity / Notification
+        EventService.record_activity(
+            event_type="MEMBER_ADDED_TO_PROJECT",
+            actor=request.user,
+            workspace=project.workspace,
+            project=project,
+            payload={
+                "details": f"Added {target_user.get_full_name() or target_user.username} to {project.name}"
+            }
+        )
+        
+        EventService.send_notification(
+            user=target_user,
+            title="Added to Project",
+            content=f"You were added to the project '{project.name}' by {request.user.get_full_name() or request.user.username}.",
+            event_type="PROJECT_INVITATION",
+            workspace=project.workspace,
+            project=project,
+            link=f"/projects/{project.id}"
+        )
+        
+        return Response({"success": True, "message": "User added to project"}, status=status.HTTP_201_CREATED)
+
+
+class ProjectMemberDetailView(APIView):
+    def delete(self, request, project_id, user_id):
+        project = _get_project_or_404(request, project_id)
+        pm = get_object_or_404(ProjectMembership, project=project, user_id=user_id)
+        pm.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

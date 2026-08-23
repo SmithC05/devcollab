@@ -76,7 +76,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                     event_type='TASK_ASSIGNED',
                     workspace=task.project.workspace,
                     project=task.project,
-                    link=f"/workspace/projects/{task.project.id}?task={task.id}"
+                    link=f"/projects/{task.project.id}/mytasks"
                 )
 
     def perform_update(self, serializer):
@@ -121,7 +121,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                         event_type='TASK_ASSIGNED',
                         workspace=task.project.workspace,
                         project=task.project,
-                        link=f"/workspace/projects/{task.project.id}?task={task.id}"
+                        link=f"/projects/{task.project.id}/mytasks"
                     )
             elif old_assignee:
                 EventService.record_activity(
@@ -141,7 +141,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                         event_type='TASK_UNASSIGNED',
                         workspace=task.project.workspace,
                         project=task.project,
-                        link=f"/workspace/projects/{task.project.id}?task={task.id}"
+                        link=f"/projects/{task.project.id}/mytasks"
                     )
 
     @action(detail=True, methods=['post'])

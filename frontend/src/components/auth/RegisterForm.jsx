@@ -71,8 +71,8 @@ export default function RegisterForm({ onSwitchToLogin }) {
 
       {/* Social */}
       <div className="flex gap-[16px]">
-        <SocialButton provider="google" onClick={loginWithGoogle} />
-        <SocialButton provider="github" onClick={loginWithGitHub} />
+        <SocialButton provider="google" onClick={() => loginWithGoogle(location.state?.from)} />
+        <SocialButton provider="github" onClick={() => loginWithGitHub(location.state?.from)} />
       </div>
 
       <AuthDivider />

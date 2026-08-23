@@ -88,7 +88,7 @@ function OwnerOverview({ project }) {
     const load = async () => {
       try {
         const { apiClient } = await import('../../api/client');
-        setMembers(await apiClient('/workspace/members/'));
+        setMembers(await apiClient(`/projects/${projectId}/members/`));
       } catch { /* silent */ }
       finally { setLoadingMembers(false); }
     };
@@ -201,7 +201,7 @@ function MembersReadOnly({ role }) {
     const load = async () => {
       try {
         const { apiClient } = await import('../../api/client');
-        setMembers(await apiClient('/workspace/members/'));
+        setMembers(await apiClient(`/projects/${projectId}/members/`));
       } catch { /* silent */ }
       finally { setLM(false); }
     };

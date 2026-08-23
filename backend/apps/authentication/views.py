@@ -184,9 +184,22 @@ def me_view(request):
         return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
         
     if request.method == 'GET':
+        import uuid
+        from apps.realtime.models import PresenceSession
+        session = PresenceSession.objects.filter(user=request.user, status='ACTIVE').first()
+        if session:
+            session_token = session.session_token
+        else:
+            session_token = str(uuid.uuid4())
+            PresenceSession.objects.create(
+                user=request.user,
+                session_token=session_token,
+                status='ACTIVE'
+            )
         return JsonResponse({
             "success": True,
-            "user": safe_user(request.user, request)
+            "user": safe_user(request.user, request),
+            "session_token": session_token
         })
         
     elif request.method in ['PATCH', 'POST']:

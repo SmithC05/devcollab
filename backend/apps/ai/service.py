@@ -17,8 +17,8 @@ def generate_decision(messages: list, tools: list, system_instruction: str):
     """
     client = get_genai_client()
     
-    # We will use gemini-2.5-flash as the fast decision agent
-    model_id = "gemini-2.5-flash"
+    primary_model = config("GEMINI_MODEL", default="gemini-2.5-flash")
+    fallback_model = config("GEMINI_FALLBACK_MODEL", default="gemini-1.5-flash")
     
     # Configure tools and system instructions
     genai_config = types.GenerateContentConfig(
@@ -27,9 +27,23 @@ def generate_decision(messages: list, tools: list, system_instruction: str):
         temperature=0.1 # low temp for more deterministic orchestration
     )
     
-    response = client.models.generate_content(
-        model=model_id,
-        contents=messages,
-        config=genai_config
-    )
-    return response
+    try:
+        response = client.models.generate_content(
+            model=primary_model,
+            contents=messages,
+            config=genai_config
+        )
+        return response
+    except Exception as e:
+        print(f"Primary model {primary_model} failed: {e}. Falling back to {fallback_model}...")
+        try:
+            response = client.models.generate_content(
+                model=fallback_model,
+                contents=messages,
+                config=genai_config
+            )
+            return response
+        except Exception as fallback_error:
+            print(f"Fallback model {fallback_model} also failed: {fallback_error}")
+            raise fallback_error
+

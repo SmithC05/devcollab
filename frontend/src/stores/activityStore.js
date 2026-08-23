@@ -34,6 +34,19 @@ const mapBackendEventToFrontend = (backendEvent) => {
   } else if (event_type === 'TASK_VIEW_STARTED') {
     type = 'member';
     action = `started viewing a task`;
+  } else if (event_type === 'TASK_ASSIGNED') {
+    type = 'task';
+    const assigneeName = payload?.task_data?.assignee_details?.username || payload?.task_data?.assignee_details?.first_name || 'someone';
+    action = `assigned task "${payload?.task_data?.title || 'Unknown'}" to ${assigneeName}`;
+  } else if (event_type === 'TASK_CREATED') {
+    type = 'task';
+    action = `created task "${payload?.task_data?.title || 'Unknown'}"`;
+  } else if (event_type === 'TASK_UNASSIGNED') {
+    type = 'task';
+    action = `unassigned task "${payload?.task_data?.title || 'Unknown'}"`;
+  } else if (event_type === 'TASK_UPDATED') {
+    type = 'task';
+    action = `updated task "${payload?.task_data?.title || 'Unknown'}"`;
   }
 
   return { id: String(id), type, user, action, time: timestamp };

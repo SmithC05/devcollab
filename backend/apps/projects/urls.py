@@ -14,4 +14,8 @@ urlpatterns = [
     # Snippets (per-project isolated)
     path('<int:project_id>/snippets/', views.SnippetListView.as_view(), name='snippet-list'),
     path('<int:project_id>/snippets/<int:snippet_id>/', views.SnippetDetailView.as_view(), name='snippet-detail'),
+    
+    # Project Members
+    path('<int:project_id>/members/', views.ProjectMemberListView.as_view(), name='project-members'),
+    path('<int:project_id>/members/<int:user_id>/', views.ProjectMemberDetailView.as_view(), name='project-member-detail'),
 ]

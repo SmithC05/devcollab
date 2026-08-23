@@ -5,7 +5,7 @@ import { wsClient } from '../../api/websocketClient';
 import { useAuthStore } from '../../stores/authStore';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { X, Trash2, Sparkles } from 'lucide-react';
-import { useMemberStore } from '../../stores/memberStore';
+import { apiClient } from '../../api/client';
 const PRIORITIES = ['P0', 'P1', 'P2'];
 const COLUMNS_LIST = [
   { id: 'todo', label: 'To Do' },
@@ -32,7 +32,20 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
   const resolvedProjectId = project?.id || routeProjectId;
   const isEdit = Boolean(task);
   const navigate = useNavigate();
-  const { members } = useMemberStore();
+  const [members, setMembers] = useState([]);
+  
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!resolvedProjectId) return;
+      try {
+        const data = await apiClient(`/projects/${resolvedProjectId}/members/`);
+        setMembers(data);
+      } catch (e) {
+        console.error('Failed to fetch members:', e);
+      }
+    };
+    fetchMembers();
+  }, [resolvedProjectId]);
   const { addTask, updateTask, deleteTask } = useTaskStore();
 
   useEffect(() => {
@@ -116,7 +129,14 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
     const data = { ...form, labels: form.labels ? form.labels.split(',').map((l) => l.trim()).filter(Boolean) : [] };
     if (data.assignee === '') {
       data.assignee = null;
+      data.assigneeName = null;
+    } else {
+      const selectedMember = members.find(m => m.id.toString() === data.assignee.toString());
+      if (selectedMember) {
+        data.assigneeName = selectedMember.name;
+      }
     }
+    
     if (isEdit) updateTask(task.id, data);
     else addTask(data.columnId, data, resolvedProjectId);
     onClose();

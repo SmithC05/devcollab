@@ -15,7 +15,7 @@ export const PERMISSIONS = {
   // Task / Board
   'task.view':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
   'task.create':    ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
-  'task.edit':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'task.edit':      ['OWNER', 'ADMIN', 'LEAD'],
   'task.delete':    ['OWNER', 'ADMIN', 'LEAD'],
   'task.move':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
   'task.assign':    ['OWNER', 'ADMIN', 'LEAD'],
@@ -92,6 +92,7 @@ export const useAuthStore = create(
             set({
               isAuthenticated: true,
               user: data.user,
+              sessionToken: data.session_token,
               workspaces: fetchedWorkspaces,
               isLoading: false,
             });
@@ -171,13 +172,21 @@ export const useAuthStore = create(
         }
       },
 
-      loginWithGoogle: () => {
+      loginWithGoogle: (returnUrl) => {
+        if (returnUrl && typeof returnUrl === 'string') {
+          document.cookie = `auth_return_url=${encodeURIComponent(returnUrl)}; path=/; max-age=3600`;
+          sessionStorage.setItem('auth_return_url', returnUrl);
+        }
         // BUG-03 FIX: Use env var so this works in staging/production
         const base = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
         window.location.href = `${base}/accounts/google/login/`;
       },
 
-      loginWithGitHub: () => {
+      loginWithGitHub: (returnUrl) => {
+        if (returnUrl && typeof returnUrl === 'string') {
+          document.cookie = `auth_return_url=${encodeURIComponent(returnUrl)}; path=/; max-age=3600`;
+          sessionStorage.setItem('auth_return_url', returnUrl);
+        }
         // BUG-03 FIX: Use env var so this works in staging/production
         const base = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
         window.location.href = `${base}/accounts/github/login/`;

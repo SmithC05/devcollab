@@ -18,6 +18,21 @@ class Project(models.Model):
         return f"{self.name} ({self.workspace.name})"
 
 
+class ProjectMembership(models.Model):
+    """Links a workspace member to a specific project."""
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='memberships')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='project_memberships')
+    added_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='added_project_members')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('project', 'user')
+
+    def __str__(self):
+        return f"{self.user.username} in {self.project.name}"
+
+
+
 class WikiPage(models.Model):
     """Per-project wiki pages — content is HTML from Tiptap editor."""
     project    = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='wiki_pages')

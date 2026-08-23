@@ -41,19 +41,18 @@ class Command(BaseCommand):
         # Project
         project, prj_created = Project.objects.get_or_create(
             workspace_id=workspace.id,
-            name='Payments',
-            defaults={'description': 'Core payments infrastructure and gateway integrations.'}
+            name='Payments'
         )
         if prj_created:
             self.stdout.write('Created Payments project')
 
         # Tasks
         tasks_data = [
-            {'title': 'Payment API', 'assignee': 'Smith', 'status': 'IN_PROGRESS'},
-            {'title': 'Frontend Integration', 'assignee': 'Rahul', 'status': 'IN_PROGRESS'},
-            {'title': 'Gateway Tests', 'assignee': 'Ankush', 'status': 'TODO'},
-            {'title': 'Security Review', 'assignee': 'Riya', 'status': 'TODO'},
-            {'title': 'Deployment', 'assignee': 'Karthik', 'status': 'TODO'},
+            {'title': 'Payment API', 'assignee': 'Smith', 'status': 'In Progress'},
+            {'title': 'Frontend Integration', 'assignee': 'Rahul', 'status': 'In Progress'},
+            {'title': 'Gateway Tests', 'assignee': 'Ankush', 'status': 'To Do'},
+            {'title': 'Security Review', 'assignee': 'Riya', 'status': 'To Do'},
+            {'title': 'Deployment', 'assignee': 'Karthik', 'status': 'To Do'},
         ]
 
         tasks = {}
@@ -63,8 +62,7 @@ class Command(BaseCommand):
                 title=t['title'],
                 defaults={
                     'assignee': users[t['assignee']],
-                    'status': t['status'],
-                    'position': float(idx)
+                    'status': t['status']
                 }
             )
             # Update assignee and status if already existed to keep it sync with the seed logic
