@@ -33,6 +33,8 @@ urlpatterns = [
     path("api/workspace/activity/", WorkspaceActivityView.as_view(), name="workspace-activity"),
     path("api/workspace/members/", WorkspaceMembersView.as_view(), name="workspace-members"),
     path("api/workspace/billing/", WorkspaceBillingView.as_view(), name="workspace-billing"),
+    path("api/workspace/billing/create-order/", apps.projects.views.CreateRazorpayOrderView.as_view(), name="workspace-billing-create-order"),
+    path("api/workspace/billing/verify-payment/", apps.projects.views.VerifyRazorpayPaymentView.as_view(), name="workspace-billing-verify-payment"),
     path("api/workspace/settings/", WorkspaceSettingsView.as_view(), name="workspace-settings"),
     path("api/notifications/", NotificationListView.as_view(), name="notifications"),
 

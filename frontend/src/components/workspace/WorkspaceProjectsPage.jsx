@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Plus, LayoutGrid, List as ListIcon, Search, Clock, Users } from 'lucide-react';
+import { Plus, LayoutGrid, List as ListIcon, Search, Clock, Users, FolderOpen, MoreHorizontal, CheckSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
+import { apiClient } from '../../api/client';
 import { Button, Spinner, EmptyState, Badge, SearchInput, IconButton, Card, Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '../ui/index';
 import { useNavigate } from 'react-router-dom';
 import CreateProjectModal from '../project/CreateProjectModal';
 import LaunchScreen from '../project/LaunchScreen';
 // --- Utilities ---
+const getStatusVariant = (status) => {
+  if (status === 'Active') return 'success';
+  if (status === 'Archived') return 'secondary';
+  return 'default';
+};
+
 const formatRelativeTime = (dateString) => {
   if (!dateString) return 'Updated recently';
   const date = new Date(dateString);
@@ -166,6 +173,7 @@ function ProjectListRow({ project, variants }) {
 
 // --- Main Page Component ---
 export default function WorkspaceProjectsPage() {
+  const workspaceName = "DevCollab";
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -178,18 +186,11 @@ export default function WorkspaceProjectsPage() {
   const [launchingProject, setLaunchingProject] = useState(null);
 
   const handleCreateProject = async (name) => {
-    const response = await fetch('/api/workspace/projects/', {
+    const newProject = await apiClient('/workspace/projects/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name })
     });
     
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to create project.');
-    }
-    
-    const newProject = await response.json();
     setProjects(prev => [newProject, ...prev]);
     setIsCreateModalOpen(false);
   };
@@ -197,9 +198,7 @@ export default function WorkspaceProjectsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/workspace/projects/');
-        if (!response.ok) throw new Error('Failed to load projects');
-        const data = await response.json();
+        const data = await apiClient('/workspace/projects/');
         setProjects(data);
       } catch (err) {
         setError(err.message);
@@ -272,8 +271,9 @@ export default function WorkspaceProjectsPage() {
       </div>
 
       {/* 2. Search and Filters */}
-      <div className="mb-14 space-y-6">
-        <div className="relative w-full">
+      {projects.length > 0 && (
+        <div className="mb-14 space-y-6">
+          <div className="relative w-full">
           <Search
             className="pointer-events-none absolute left-6 top-1/2 -translate-y-1/2 text-[#666]"
             size={17}
@@ -306,6 +306,7 @@ export default function WorkspaceProjectsPage() {
               {f}
             </button>
           ))}
+          </div>
         </div>
       )}
 
@@ -393,7 +394,7 @@ export default function WorkspaceProjectsPage() {
                   <span className="text-[var(--text-secondary)] font-medium">Progress</span>
                   <span className="text-[var(--fg)] font-semibold">{project.progress}%</span>
                 </div>
-                <AnimatedProgress value={project.progress} />
+                <ThinProgress value={project.progress} />
               </div>
 
               {/* Updated Date */}
@@ -442,7 +443,7 @@ export default function WorkspaceProjectsPage() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <span className="text-[12px] text-[var(--text-secondary)] w-8">{project.progress}%</span>
-                      <div className="w-20"><AnimatedProgress value={project.progress} /></div>
+                      <div className="w-20"><ThinProgress value={project.progress} /></div>
                     </div>
                   </TableCell>
                   <TableCell>
