@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { invitationApi } from '../../api/invitationApi';
+import { getAvailableRolesToInvite } from '../../utils/permissions';
 
-export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }) {
+export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess, currentUserRole }) {
   const { activeWorkspace } = useAuthStore();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -12,11 +13,21 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }) 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   
-  const ROLE_OPTIONS = [
+  const ALL_ROLE_OPTIONS = [
     { value: 'ADMIN', label: 'Admin', description: 'Workspace administration' },
     { value: 'LEAD', label: 'Lead', description: 'Team/project leadership' },
     { value: 'DEVELOPER', label: 'Developer', description: 'Development and collaboration access' }
   ];
+
+  const availableRoles = getAvailableRolesToInvite(currentUserRole);
+  const ROLE_OPTIONS = ALL_ROLE_OPTIONS.filter(r => availableRoles.includes(r.value));
+
+  // Reset role to first available if current role is not in the list
+  useEffect(() => {
+    if (ROLE_OPTIONS.length > 0 && !ROLE_OPTIONS.find(r => r.value === role)) {
+      setRole(ROLE_OPTIONS[0].value);
+    }
+  }, [currentUserRole]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

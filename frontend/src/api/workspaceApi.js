@@ -7,10 +7,11 @@ export const workspaceApi = {
     });
   },
 
-  createWorkspace: async (name, slug, ownerId) => {
+  createWorkspace: async (name, slug) => {
+    // Backend uses request.user as owner — no need to pass ownerId
     return await apiClient('/workspaces/', {
       method: 'POST',
-      body: JSON.stringify({ name, slug, ownerId }),
+      body: JSON.stringify({ name, slug }),
     });
   },
 

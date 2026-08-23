@@ -14,11 +14,28 @@ from apps.authentication.jwt_utils import (
     clear_auth_cookies
 )
 
-def safe_user(user):
+def safe_user(user, request=None):
+    from .models import UserProfile
+    from django.conf import settings
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    
+    avatar_url = profile.avatar_url or ''
+    # If it's a relative media URL, make it absolute
+    if avatar_url and avatar_url.startswith('/'):
+        backend_url = getattr(settings, 'BACKEND_URL', 'http://127.0.0.1:8000')
+        if request:
+            backend_url = request.build_absolute_uri('/').rstrip('/')
+        avatar_url = f"{backend_url}{avatar_url}"
+
     return {
         "id": user.id,
         "email": user.email,
-        "name": user.username
+        "name": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "bio": profile.bio,
+        "github_url": profile.github_url,
+        "avatar_url": avatar_url,
     }
 
 @csrf_exempt
@@ -57,7 +74,7 @@ def login_view(request):
             response = JsonResponse({
                 "success": True,
                 "message": "Login successful",
-                "user": safe_user(user),
+                "user": safe_user(user, request),
                 "access_token": access_token,
                 "session_token": session_token
             })
@@ -105,7 +122,7 @@ def register_view(request):
             response = JsonResponse({
                 "success": True,
                 "message": "Registration successful",
-                "user": safe_user(user),
+                "user": safe_user(user, request),
                 "access_token": access_token,
                 "session_token": session_token
             })
@@ -143,14 +160,82 @@ def logout_view(request):
 
 @csrf_exempt
 def me_view(request):
+    if not request.user or not request.user.is_authenticated:
+        return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
+        
     if request.method == 'GET':
-        if not request.user or not request.user.is_authenticated:
-            return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
-            
         return JsonResponse({
             "success": True,
-            "user": safe_user(request.user)
+            "user": safe_user(request.user, request)
         })
+        
+    elif request.method in ['PATCH', 'POST']:
+        try:
+            # Handle both JSON and multipart/form-data
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+            else:
+                data = request.POST.dict()
+
+            user = request.user
+            
+            # Update User base fields
+            if 'first_name' in data:
+                user.first_name = data['first_name']
+            if 'last_name' in data:
+                user.last_name = data['last_name']
+            
+            # Since name might be full name, extract it
+            if 'name' in data:
+                name_parts = data['name'].split(' ', 1)
+                user.first_name = name_parts[0]
+                user.last_name = name_parts[1] if len(name_parts) > 1 else ''
+                user.username = data['name']  # Just to keep it synced
+                
+            user.save()
+            
+            # Update UserProfile fields
+            from .models import UserProfile
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            
+            if 'bio' in data:
+                profile.bio = data['bio'][:500]
+            if 'github_url' in data:
+                profile.github_url = data['github_url'][:255]
+            if 'avatar_url' in data:
+                profile.avatar_url = data['avatar_url'][:1024]
+
+            # Handle file upload if present
+            if 'avatar_file' in request.FILES:
+                import os
+                import uuid
+                from django.conf import settings
+                from django.core.files.storage import FileSystemStorage
+                
+                avatar = request.FILES['avatar_file']
+                ext = avatar.name.split('.')[-1]
+                filename = f"{uuid.uuid4()}.{ext}"
+                
+                # Make sure media/avatars exists
+                avatars_dir = os.path.join(settings.MEDIA_ROOT, 'avatars')
+                os.makedirs(avatars_dir, exist_ok=True)
+                
+                fs = FileSystemStorage(location=avatars_dir)
+                saved_name = fs.save(filename, avatar)
+                
+                profile.avatar_url = f"{settings.MEDIA_URL}avatars/{saved_name}"
+
+            profile.save()
+            
+            return JsonResponse({
+                "success": True,
+                "user": safe_user(user, request)
+            })
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
+            
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 @csrf_exempt

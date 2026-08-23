@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Activity, Clock, Filter, Zap } from 'lucide-react';
+import { apiClient } from '../../api/client';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
 import { Card, CardHeader, Spinner, SectionHeader, StatCard, EmptyState } from '../ui/index';
@@ -13,10 +14,8 @@ export default function WorkspaceActivityPage() {
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        const response = await fetch('/api/workspace/activity/');
-        if (!response.ok) throw new Error('Failed to load activity');
-        const json = await response.json();
-        setData(json);
+        const response = await apiClient('/workspace/activity/');
+        setData(response);
       } catch (err) {
         setError(err.message);
       } finally {

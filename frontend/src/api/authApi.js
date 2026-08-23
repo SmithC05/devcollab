@@ -27,5 +27,12 @@ export const authApi = {
     return await apiClient('/auth/me/', {
       method: 'GET',
     });
+  },
+  updateProfile: async (data) => {
+    const isFormData = data instanceof FormData;
+    return await apiClient('/auth/me/', {
+      method: 'POST',
+      body: isFormData ? data : JSON.stringify(data),
+    });
   }
 };
