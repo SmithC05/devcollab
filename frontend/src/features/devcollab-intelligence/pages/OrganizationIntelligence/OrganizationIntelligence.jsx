@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 
@@ -41,6 +41,7 @@ export function SourceChip({ source }) {
 
 export default function OrganizationIntelligence() {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const [mode, setMode] = useState('LIVE');
   const [data, setData] = useState(null);
@@ -138,6 +139,24 @@ export default function OrganizationIntelligence() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            {/* Incident Response Entry Point */}
+            <button
+              id="incident-response-entry-btn"
+              onClick={() => navigate('/dashboard/intelligence/incident')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
+                background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                color: '#ef4444', fontSize: 11, fontWeight: 700,
+                fontFamily: 'var(--dv-font-mono)', letterSpacing: '0.06em',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.18)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.5)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; }}
+            >
+              <AlertTriangle size={12} />
+              INCIDENT RESPONSE
+            </button>
             {mode === 'LIVE' && (
               <DvButton variant="outline" size="sm" onClick={() => setMode('DEMO')}>
                 SIMULATE DEMO
