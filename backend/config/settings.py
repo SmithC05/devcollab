@@ -176,7 +176,7 @@ REST_FRAMEWORK = {
 # Override CORS_ALLOWED_ORIGINS in .env for other origins.
 # ---------------------------------------------------------------------------
 
-FRONTEND_URL = config("FRONTEND_URL", default="http://127.0.0.1:5173")
+FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
@@ -245,3 +245,11 @@ JWT_REFRESH_TOKEN_EXPIRY = 7  # Days
 AUTH_COOKIE_SECURE = config("AUTH_COOKIE_SECURE", default=False, cast=bool)
 AUTH_COOKIE_SAMESITE = 'Lax'
 
+# ---------------------------------------------------------------------------
+# Brevo Email Configuration
+# ---------------------------------------------------------------------------
+
+BREVO_API_KEY = config("BREVO_API_KEY", default="")
+BREVO_SENDER_EMAIL = config("BREVO_SENDER_EMAIL", default="devcollab.workspace@gmail.com")
+BREVO_SENDER_NAME = config("BREVO_SENDER_NAME", default="DevCollab")
+BREVO_API_BASE_URL = config("BREVO_API_BASE_URL", default="https://api.brevo.com/v3")

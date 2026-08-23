@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import AuthInput from './AuthInput';
 import AuthDivider from './AuthDivider';
@@ -17,6 +17,7 @@ export default function LoginForm({ onSwitchToRegister }) {
 
   const { login, loginWithGoogle, loginWithGitHub, workspaces, isLoading } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const validate = () => {
     const e = {};
@@ -34,6 +35,13 @@ export default function LoginForm({ onSwitchToRegister }) {
 
     const result = await login(email, password);
     if (result.success) {
+      // Check if we need to redirect back to a specific route (e.g. invitation page)
+      const locationState = location.state;
+      if (locationState && locationState.from) {
+        navigate(locationState.from);
+        return;
+      }
+
       const { workspaces: freshWorkspaces } = useAuthStore.getState();
       if (freshWorkspaces && freshWorkspaces.length > 0) {
         navigate('/select-workspace');

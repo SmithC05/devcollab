@@ -142,6 +142,41 @@ class ProjectListView(APIView):
             })
         return Response(data)
 
+    def post(self, request):
+        workspace = Workspace.objects.first()
+        if not workspace:
+            workspace = Workspace.objects.create(name="Default Workspace")
+            if request.user.is_authenticated:
+                workspace.members.add(request.user)
+        
+        # Enforce free plan limit
+        current_project_count = Project.objects.filter(workspace=workspace).count()
+        if current_project_count >= 3:
+            return Response(
+                {"error": "You've reached the 3-project limit on the Free plan. Upgrade to Pro for unlimited projects."},
+                status=403
+            )
+            
+        name = request.data.get('name')
+        if not name or not str(name).strip():
+            return Response({"error": "Project name is required"}, status=400)
+            
+        project = Project.objects.create(
+            name=str(name).strip(),
+            workspace=workspace
+        )
+        
+        return Response({
+            "id": project.id,
+            "name": project.name,
+            "description": f"Project for {project.name}",
+            "status": "Active",
+            "members_count": workspace.members.count(),
+            "tasks_count": 0,
+            "progress": 0,
+            "updated_at": project.updated_at
+        }, status=201)
+
 class WorkspaceActivityView(APIView):
     def get(self, request):
         workspace = Workspace.objects.first()
@@ -170,6 +205,23 @@ class WorkspaceMembersView(APIView):
                 "status": "Active",
                 "last_active": "Just now"
             })
+            
+        # Fetch pending invitations
+        try:
+            from apps.workspaces.models import Invitation
+            invitations = Invitation.objects.filter(workspace_id=workspace.id, status='PENDING')
+            for inv in invitations:
+                data.append({
+                    "id": f"inv_{inv.id}",
+                    "name": inv.name or "Pending Invite",
+                    "email": inv.email,
+                    "role": inv.role,
+                    "status": "Pending",
+                    "last_active": "Sent just now"
+                })
+        except ImportError:
+            pass
+            
         return Response(data)
 
 class WorkspaceBillingView(APIView):
