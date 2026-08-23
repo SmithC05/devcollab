@@ -30,7 +30,7 @@ def safe_user(user, request=None):
             backend_url = request.build_absolute_uri('/').rstrip('/')
         avatar_url = f"{backend_url}{avatar_url}"
 
-    return {
+    data = {
         "id": user.id,
         "email": user.email,
         "name": user.username,
@@ -39,6 +39,10 @@ def safe_user(user, request=None):
         "bio": profile.bio,
         "github_url": profile.github_url,
         "avatar_url": avatar_url,
+        "github_connected": False,
+        "github_username": None,
+        "sync_status": "NOT_SYNCED",
+        "last_sync_at": None,
     }
 
     # Self-healing: if allauth successfully linked a GitHub account, ensure DeveloperProfile reflects it
