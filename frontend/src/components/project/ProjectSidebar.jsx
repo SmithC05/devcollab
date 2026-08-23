@@ -138,7 +138,7 @@ const NAV_DEV = [
 export default function ProjectSidebar({ project: passedProject }) {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { user, activeWorkspace } = useAuthStore();
+  const { role, setRole } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
 
   const project = passedProject || { id: projectId || 'P1', name: projectId || 'P1', avatar: 'DC' };
@@ -275,25 +275,40 @@ export default function ProjectSidebar({ project: passedProject }) {
         ))}
       </div>
 
-      {/* ── User Footer ──────────────────────────────────── */}
-      <div className="shrink-0 p-3 flex flex-col gap-1 border-t border-[var(--border-subtle)] bg-[var(--bg)]">
-        <button
-          className={`w-full flex items-center h-[44px] rounded-[8px] bg-transparent hover:bg-[var(--surface-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-colors duration-150 cursor-default ${collapsed ? 'justify-center px-0' : 'justify-between px-2'}`}
-        >
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-[26px] h-[26px] rounded-full bg-[var(--surface-item)] border border-[var(--border-strong)] text-[var(--text-secondary)] flex items-center justify-center text-[11px] font-medium shrink-0 overflow-hidden">
-              {user?.first_name ? user.first_name.charAt(0).toUpperCase() : (user?.username ? user.username.charAt(0).toUpperCase() : 'U')}
-            </div>
-            {!collapsed && (
-              <div className="flex flex-col items-start overflow-hidden text-left">
-                <span className="text-[13px] font-medium text-[var(--text-primary)] truncate w-full leading-tight">
-                  {user?.first_name ? `${user.first_name} ${user.last_name}`.trim() : (user?.username || 'User')}
-                </span>
-                <span className="text-[11px] text-[var(--text-muted)] leading-tight mt-[1px]">
-                  {safeRole}
-                </span>
-              </div>
-            )}
+      {/* ── Footer / Role Switcher ─────────────────────────────── */}
+      <div style={{
+        borderTop: '1px solid var(--surface-hover)',
+        padding: collapsed ? '14px 0' : '14px',
+        display: 'flex', alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        gap: '10px', flexShrink: 0,
+      }}>
+        <div style={{
+          width: '34px', height: '34px', borderRadius: '50%',
+          background: 'var(--surface-hover)', border: '1px solid var(--border-strong)', color: 'var(--text-primary)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontWeight: 700, fontSize: '14px', flexShrink: 0,
+        }}>
+          D
+        </div>
+        {!collapsed && (
+          <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Demo User</span>
+            <select
+              value={safeRole}
+              onChange={(e) => setRole(e.target.value)}
+              style={{
+                fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px',
+                background: 'transparent', border: '1px solid var(--border-strong)',
+                borderRadius: '4px', padding: '2px', outline: 'none', cursor: 'pointer', width: '100%',
+              }}
+            >
+              {ROLES.map(r => (
+                <option key={r} value={r} style={{ background: 'var(--surface-raised)', color: 'var(--text-primary)' }}>
+                  Role: {r}
+                </option>
+              ))}
+            </select>
           </div>
         </button>
       </div>
