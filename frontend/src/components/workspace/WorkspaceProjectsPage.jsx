@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Plus, LayoutGrid, List as ListIcon, Search, Clock, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
-import { Button, Spinner, Card } from '../ui/index';
-import { useAuthStore } from '../../stores/authStore';
-
+import { Button, Spinner, EmptyState, Badge, SearchInput, IconButton, Card, Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '../ui/index';
+import { useNavigate } from 'react-router-dom';
+import CreateProjectModal from '../project/CreateProjectModal';
+import LaunchScreen from '../project/LaunchScreen';
 // --- Utilities ---
 const formatRelativeTime = (dateString) => {
   if (!dateString) return 'Updated recently';
@@ -170,10 +171,28 @@ export default function WorkspaceProjectsPage() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
+  
+  const navigate = useNavigate();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [launchingProject, setLaunchingProject] = useState(null);
 
-  const { activeWorkspace } = useAuthStore();
-  const workspaceName = activeWorkspace?.name || 'Acm Corp';
+  const handleCreateProject = async (name) => {
+    const response = await fetch('/api/workspace/projects/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Failed to create project.');
+    }
+    
+    const newProject = await response.json();
+    setProjects(prev => [newProject, ...prev]);
+    setIsCreateModalOpen(false);
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -247,31 +266,8 @@ export default function WorkspaceProjectsPage() {
             Track project milestones, tasks status, and stream alignments inside a unified workspace.
           </p>
         </div>
-
-        {/* Top Right Actions */}
-        <div className="flex shrink-0 items-center gap-4 lg:pt-1">
-          <div className="flex items-center gap-1 rounded-lg border border-[#262626] bg-[#111] p-1">
-            <ViewModeButton
-              active={viewMode === 'grid'}
-              label="Grid view"
-              onClick={() => setViewMode('grid')}
-              icon={LayoutGrid}
-            />
-            <ViewModeButton
-              active={viewMode === 'list'}
-              label="List view"
-              onClick={() => setViewMode('list')}
-              icon={ListIcon}
-            />
-          </div>
-          <Button
-            icon={Plus}
-            iconSize={16}
-            size="md"
-            className="h-11 min-w-[148px] rounded-lg border-none bg-white px-5 text-[14px] font-semibold !text-black shadow-none hover:bg-gray-100"
-          >
-            New Project
-          </Button>
+        <div className="shrink-0 pt-1">
+          <Button variant="primary" icon={Plus} iconSize={15} onClick={() => setIsCreateModalOpen(true)}>New Project</Button>
         </div>
       </div>
 
@@ -311,12 +307,24 @@ export default function WorkspaceProjectsPage() {
             </button>
           ))}
         </div>
-      </div>
+      )}
 
-      {/* 3. Projects */}
-      {viewMode === 'grid' ? (
-        <motion.div
-          key={viewMode}
+      {/* 4. Content Area */}
+      {projects.length === 0 ? (
+        <EmptyState
+          icon={FolderOpen}
+          title="No projects yet"
+          description="Create your first project to start organizing your team's work."
+          action={<Button variant="primary" icon={Plus} iconSize={15} onClick={() => setIsCreateModalOpen(true)}>New Project</Button>}
+        />
+      ) : filteredProjects.length === 0 ? (
+        <div className="py-24 flex flex-col items-center justify-center text-center">
+          <FolderOpen size={28} className="text-[var(--text-muted)] mb-3" />
+          <p className="text-[14px] font-medium text-[var(--fg)] mb-1">No matches found</p>
+          <p className="text-[13px] text-[var(--text-secondary)]">Try adjusting your search or filters.</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <motion.div 
           variants={containerVariants}
           initial="hidden"
           animate="show"
@@ -324,23 +332,153 @@ export default function WorkspaceProjectsPage() {
           style={{ marginTop: 12 }}
         >
           {filteredProjects.map(project => (
-            <ProjectCard key={project.id} project={project} variants={itemVariants} />
+            <Card
+              as={motion.div}
+              variants={itemVariants}
+              key={project.id}
+              onClick={() => setLaunchingProject(project)}
+              className="p-6 flex flex-col min-h-[300px] hover:border-[var(--border-focus)] transition-all duration-200 group relative bg-[var(--surface-card)] shadow-sm hover:shadow-md cursor-pointer"
+              style={{ '--tw-translate-y': '0px' }}
+              whileHover={{ y: -2 }}
+            >
+              {/* Header: Icon, Name, Menu */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-lg bg-[var(--surface-raised)] border border-[var(--border-strong)] flex items-center justify-center text-[var(--text-secondary)] font-semibold text-[15px] group-hover:text-blue-400 group-hover:bg-blue-500/5 group-hover:border-blue-500/20 transition-colors shrink-0">
+                    {project.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
+                  </div>
+                  <h3 className="text-[15px] md:text-[16px] font-semibold text-[var(--fg)] leading-tight group-hover:text-blue-400 transition-colors">
+                    {project.name}
+                  </h3>
+                </div>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <IconButton icon={MoreHorizontal} size={16} />
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="mb-3">
+                <Badge variant={getStatusVariant(project.status)}>
+                  <span className="flex items-center gap-1.5">
+                    <span className={`w-1.5 h-1.5 rounded-full ${project.status === 'Active' ? 'bg-green-500' : 'bg-[var(--text-muted)]'}`} />
+                    {project.status}
+                  </span>
+                </Badge>
+              </div>
+
+              {/* Description */}
+              <p className="text-[13px] text-[var(--text-secondary)] leading-[1.6] line-clamp-2">
+                {project.description || 'No description provided for this project.'}
+              </p>
+
+              {/* Flexible Space */}
+              <div className="flex-1" />
+
+              {/* Metadata */}
+              <div className="mt-4 mb-4 flex items-center gap-3 text-[12px] text-[var(--text-muted)] font-medium">
+                <span className="flex items-center gap-1.5">
+                  <Users size={13} className="text-[var(--text-muted)]" />
+                  {project.members_count} member{project.members_count !== 1 ? 's' : ''}
+                </span>
+                <span>·</span>
+                <span className="flex items-center gap-1.5">
+                  <CheckSquare size={13} className="text-[var(--text-muted)]" />
+                  {project.tasks_count} task{project.tasks_count !== 1 ? 's' : ''}
+                </span>
+              </div>
+
+              {/* Progress */}
+              <div className="mb-3 space-y-2">
+                <div className="flex items-center justify-between text-[12px]">
+                  <span className="text-[var(--text-secondary)] font-medium">Progress</span>
+                  <span className="text-[var(--fg)] font-semibold">{project.progress}%</span>
+                </div>
+                <AnimatedProgress value={project.progress} />
+              </div>
+
+              {/* Updated Date */}
+              <div className="text-[11px] text-[var(--text-muted)]">
+                {formatRelativeTime(project.updated_at)}
+              </div>
+            </Card>
           ))}
         </motion.div>
       ) : (
-        <motion.div
-          key={viewMode}
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="overflow-hidden rounded-lg border border-[#262626] bg-[#111]"
-          style={{ marginTop: 12 }}
+        /* List View */
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          className="bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-xl overflow-hidden"
         >
-          <ProjectListHeader />
-          {filteredProjects.map(project => (
-            <ProjectListRow key={project.id} project={project} variants={itemVariants} />
-          ))}
+          <Table>
+            <TableHeader>
+              <TableHead>Project</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Progress</TableHead>
+              <TableHead>Tasks</TableHead>
+              <TableHead>Members</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead></TableHead>
+            </TableHeader>
+            <TableBody>
+              {filteredProjects.map(project => (
+                <TableRow key={project.id} className="group cursor-pointer" onClick={() => setLaunchingProject(project)}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--surface-raised)] border border-[var(--border-strong)] flex items-center justify-center text-[var(--text-secondary)] font-semibold text-[12px] group-hover:text-blue-400 group-hover:bg-blue-500/5 group-hover:border-blue-500/20 transition-colors shrink-0">
+                        {project.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
+                      </div>
+                      <span className="text-[14px] font-medium text-[var(--fg)]">{project.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(project.status)}>
+                      <span className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${project.status === 'Active' ? 'bg-green-500' : 'bg-[var(--text-muted)]'}`} />
+                        {project.status}
+                      </span>
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[12px] text-[var(--text-secondary)] w-8">{project.progress}%</span>
+                      <div className="w-20"><AnimatedProgress value={project.progress} /></div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-[13px] text-[var(--text-secondary)]">{project.tasks_count}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-[13px] text-[var(--text-secondary)]">{project.members_count}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-[12px] text-[var(--text-muted)]">{formatRelativeTime(project.updated_at)}</span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <IconButton icon={MoreHorizontal} className="opacity-0 group-hover:opacity-100" size={15} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </motion.div>
+      )}
+
+      {/* Modals & Overlays */}
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateProject}
+      />
+      
+      {launchingProject && (
+        <LaunchScreen
+          project={launchingProject}
+          onComplete={() => {
+            setLaunchingProject(null);
+            navigate(`/projects/${launchingProject.id}/overview`);
+          }}
+        />
       )}
     </PageContainer>
   );

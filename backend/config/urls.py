@@ -14,6 +14,7 @@ from apps.projects.views import (
     WorkspaceSettingsView
 )
 from apps.developers.views import NotificationListView
+import apps.workspaces.views
 
 def health(request):
     """Simple health check endpoint. No authentication required."""
@@ -39,6 +40,11 @@ urlpatterns = [
     path("api/auth/", include("apps.authentication.urls")),
     path("accounts/", include("allauth.urls")), # Allauth (Google OAuth)
     path("api/workspaces/", include("apps.workspaces.urls")),
+    
+    # Invitations
+    path("api/invitations/<str:token>/", apps.workspaces.views.InvitationDetailView.as_view(), name="invitation-detail"),
+    path("api/invitations/<str:token>/accept/", apps.workspaces.views.AcceptInvitationView.as_view(), name="invitation-accept"),
+    path("api/invitations/<str:token>/reject/", apps.workspaces.views.RejectInvitationView.as_view(), name="invitation-reject"),
     path("api/projects/", include("apps.projects.urls")),
     path("api/developers/", include("apps.developers.urls")),
     path("api/tasks/", include("apps.tasks.urls")),
@@ -46,4 +52,5 @@ urlpatterns = [
     path("api/simulations/", include("apps.simulations.urls")),
     path("api/scenarios/", include("apps.scenarios.urls")),
     path("api/ai/", include("apps.ai.urls")),
+    path("api/intelligence/", include("apps.intelligence.urls")),
 ]
