@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useActivityStore, TYPE_COLORS } from '../../stores/activityStore';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 
@@ -20,11 +21,11 @@ const TYPE_ICONS = {
 };
 
 function getIntensityColor(count) {
-  if (count === 0) return 'var(--surface-raised)';
-  if (count <= 2)  return 'var(--border-strong)';
-  if (count <= 4)  return 'var(--text-muted)';
-  if (count <= 6)  return '#999';
-  return '#eee';
+  if (count === 0) return '#161b22';
+  if (count <= 2)  return '#0e4429';
+  if (count <= 4)  return '#006d32';
+  if (count <= 6)  return '#26a641';
+  return '#39d353';
 }
 
 function groupEventsByDay(events) {
@@ -40,25 +41,37 @@ function groupEventsByDay(events) {
   return groups;
 }
 
-export default function ProjectActivityPage({ projectId = 1 }) {
-  const { activityGrid, activeFilter, setFilter, getFilteredEvents, fetchEvents, isLoaded, addEvent } = useActivityStore();
+export default function ProjectActivityPage() {
+  // Always pull projectId from route — never use a default/hardcoded value
+  const { projectId } = useParams();
+
+  const {
+    activityGrid, activeFilter, setFilter,
+    getFilteredEvents, fetchEvents, addEvent, reset,
+  } = useActivityStore();
+
   const filteredEvents = getFilteredEvents();
   const grouped = useMemo(() => groupEventsByDay(filteredEvents), [filteredEvents]);
 
-  import('react').then(({ useEffect }) => {
-    useEffect(() => {
-      if (!isLoaded) {
-        fetchEvents(projectId);
-      }
-      
-      const handleEngineEvent = (e) => {
+  useEffect(() => {
+    // Fetch events for THIS project — store compares loadedProjectId internally
+    fetchEvents(projectId);
+
+    const handleEngineEvent = (e) => {
+      // Only add if the event belongs to this project
+      if (!e.detail?.project_id || String(e.detail.project_id) === String(projectId)) {
         addEvent(e.detail);
-      };
-      
-      document.addEventListener('engine_event', handleEngineEvent);
-      return () => document.removeEventListener('engine_event', handleEngineEvent);
-    }, [projectId, isLoaded, fetchEvents, addEvent]);
-  });
+      }
+    };
+
+    document.addEventListener('engine_event', handleEngineEvent);
+
+    return () => {
+      document.removeEventListener('engine_event', handleEngineEvent);
+      // Reset when leaving so the next project always loads fresh data
+      reset();
+    };
+  }, [projectId]); // re-runs whenever projectId changes
 
   const weeks = useMemo(() => {
     const result = [];
@@ -75,7 +88,9 @@ export default function ProjectActivityPage({ projectId = 1 }) {
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Activity</h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Project contribution history and event timeline.</p>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
+          Project contribution history and event timeline.
+        </p>
       </div>
 
       {/* Contribution Graph */}
@@ -84,8 +99,8 @@ export default function ProjectActivityPage({ projectId = 1 }) {
           <span style={{ fontSize: '13px', fontWeight: 600, color: '#d5d5d5' }}>Contributions — last 90 days</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Less</span>
-            {['var(--surface-raised)', 'var(--border-strong)', 'var(--text-muted)', '#999', '#eee'].map((c) => (
-              <div key={c} style={{ width: '11px', height: '11px', borderRadius: '2px', background: c }} />
+            {['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'].map((c) => (
+              <div key={c} style={{ width: '12px', height: '12px', borderRadius: '2px', background: c }} />
             ))}
             <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>More</span>
           </div>
@@ -98,9 +113,15 @@ export default function ProjectActivityPage({ projectId = 1 }) {
             ))}
           </div>
           {weeks.map((week, wi) => (
-            <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {week.map((day, di) => (
-                <div key={di} title={`${day.date}: ${day.count} activities`} style={{ width: '11px', height: '11px', borderRadius: '2px', background: getIntensityColor(day.count), cursor: 'pointer', transition: 'opacity 150ms' }} />
+                <div
+                  key={di}
+                  title={`${day.date}: ${day.count} activities`}
+                  style={{ width: '12px', height: '12px', borderRadius: '2px', background: getIntensityColor(day.count), cursor: 'pointer', transition: 'transform 150ms', outline: '1px solid rgba(255,255,255,0.02)' }}
+                  onMouseEnter={e => e.target.style.transform = 'scale(1.2)'}
+                  onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+                />
               ))}
             </div>
           ))}
@@ -134,15 +155,19 @@ export default function ProjectActivityPage({ projectId = 1 }) {
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>{day}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
               {events.map((ev) => (
-                <div key={ev.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 14px', borderRadius: '8px', background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', marginBottom: '6px' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', flexShrink: 0 }}>
+                <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', borderRadius: '10px', background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', marginBottom: '10px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
                     {TYPE_ICONS[ev.type]}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '13px', color: '#d5d5d5' }}><strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{ev.user}</strong> {ev.action}</span>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px' }}>{formatDistanceToNow(parseISO(ev.time), { addSuffix: true })}</div>
+                    <span style={{ fontSize: '14px', color: '#e5e5e5' }}>
+                      <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{ev.user}</strong> {ev.action}
+                    </span>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                      {formatDistanceToNow(parseISO(ev.time), { addSuffix: true })}
+                    </div>
                   </div>
-                  <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', background: 'var(--surface-hover)', color: TYPE_COLORS[ev.type], border: '1px solid var(--border-strong)', flexShrink: 0 }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', background: 'var(--surface-hover)', color: TYPE_COLORS[ev.type], border: '1px solid var(--border-strong)', flexShrink: 0, textTransform: 'capitalize' }}>
                     {ev.type}
                   </span>
                 </div>
@@ -150,7 +175,11 @@ export default function ProjectActivityPage({ projectId = 1 }) {
             </div>
           </div>
         ))}
-        {filteredEvents.length === 0 && <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px', fontSize: '14px' }}>No events for this filter.</div>}
+        {filteredEvents.length === 0 && (
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px', fontSize: '14px' }}>
+            No events recorded for this project yet.
+          </div>
+        )}
       </div>
     </div>
   );

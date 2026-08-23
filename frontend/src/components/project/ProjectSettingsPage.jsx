@@ -1,9 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { Trash2, Archive, Save } from 'lucide-react';
+import { apiClient } from '../../api/client';
 
 export default function ProjectSettingsPage() {
   const { can } = useAuthStore();
+  const { projectId } = useParams();
+
+  const [repoName, setRepoName] = useState('');
+  const [isSavingRepo, setIsSavingRepo] = useState(false);
+
+  useEffect(() => {
+    if (projectId) {
+      apiClient(`/projects/${projectId}/repository-mapping/`)
+        .then(res => {
+          if (res.github_repository_full_name) {
+            setRepoName(res.github_repository_full_name);
+          }
+        })
+        .catch(err => console.error("Failed to load repo mapping:", err));
+    }
+  }, [projectId]);
+
+  const handleSaveRepo = async () => {
+    setIsSavingRepo(true);
+    try {
+      await apiClient(`/projects/${projectId}/repository-mapping/`, {
+        method: 'POST',
+        body: JSON.stringify({
+          github_repository_full_name: repoName,
+          active: true
+        })
+      });
+      // Handle success notification here if we had one
+    } catch (err) {
+      console.error("Failed to save repo mapping:", err);
+    } finally {
+      setIsSavingRepo(false);
+    }
+  };
 
   const canDelete = can('project.delete');
   const canArchive = can('project.settings');
@@ -48,6 +84,36 @@ export default function ProjectSettingsPage() {
               </button>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* GitHub Integration */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold border-b border-[#2a2a2e] pb-2">GitHub Integration</h2>
+        <div className="bg-[var(--surface-raised)113] p-6 rounded-lg border border-[#2a2a2e] space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-1">GitHub Repository</label>
+            <p className="text-xs text-gray-500 mb-2">Link a GitHub repository to this project for code context (e.g., owner/repo).</p>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                value={repoName}
+                onChange={(e) => setRepoName(e.target.value)}
+                placeholder="e.g. facebook/react"
+                disabled={!canRename}
+                className="w-full bg-[#18181c] border border-[#2a2a2e] rounded px-4 py-2 text-white focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              {canRename && (
+                <button 
+                  onClick={handleSaveRepo}
+                  disabled={isSavingRepo}
+                  className="whitespace-nowrap flex items-center gap-2 bg-[#2a2a2e] text-white px-4 py-2 rounded-md hover:bg-[#3a3a3e] transition-colors disabled:opacity-50"
+                >
+                  {isSavingRepo ? 'Saving...' : 'Link Repository'}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 

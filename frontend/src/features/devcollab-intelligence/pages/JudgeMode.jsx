@@ -59,7 +59,7 @@ function ProvenanceBadge({ type }) {
 export default function JudgeMode() {
   const navigate = useNavigate();
   const location = useLocation();
-  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
   const [repoUrl, setRepoUrl] = useState('');
   const [status, setStatus] = useState('NOT_CONNECTED'); // NOT_CONNECTED | CONNECTING | ANALYZING | READY | FAILED
   const [errorMsg, setErrorMsg] = useState('');

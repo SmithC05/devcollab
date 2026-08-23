@@ -1,203 +1,310 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Search, Bell, Navigation } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
+import {
+  ArrowLeft, Search, Columns3, Users, Activity,
+  CheckCheck, AlertTriangle, TrendingUp, Loader2, ListTodo,
+  Clock,
+} from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
-import { useMemberStore } from '../../stores/memberStore';
-
-const PRIORITY_OPTIONS = ['P0 Urgent', 'P1 High', 'P2 Normal'];
-const DUE_OPTIONS      = ['Today', 'Tomorrow', 'This week', 'Next week', 'No date'];
-
-function TopHeader({ projectName }) {
+/* ─── breadcrumb bar ─────────────────────────────────────────────────────── */
+function PageTopBar({ projectName }) {
+  const navigate = useNavigate();
   return (
     <div style={{
-      height: '48px', borderBottom: '1px solid #1a1a1e',
+      height: '48px', borderBottom: '1px solid #1a1a1e', flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 24px', flexShrink: 0, background: '#0e0e10',
+      padding: '0 24px', background: '#0e0e10',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
-        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>MNB</span>
-        <span style={{ color: 'var(--border-strong)' }}>/</span>
-        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{projectName}</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <button style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          padding: '5px 12px', borderRadius: '999px',
-          border: '1px solid #2a2a2e', background: '#141416',
-          color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-        }}>
-          <Search size={12} /><span>⌘K</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button
+          onClick={() => navigate('/dashboard/projects')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, transition: 'background 120ms' }}
+          onMouseEnter={e => e.currentTarget.style.background = '#1c1c1c'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >
+          <ArrowLeft size={13} strokeWidth={2} /> Projects
         </button>
-        <button style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
-          <Bell size={15} />
-          <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', border: '1px solid #0e0e10' }} />
-        </button>
+        <span style={{ color: '#333' }}>/</span>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '14px' }}>{projectName}</span>
       </div>
     </div>
   );
 }
 
-function WorkDispatcher() {
-  const { members } = useMemberStore();
-  const MEMBER_OPTIONS = members.length > 0 ? members.map(m => `${m.name} (${(m.role || 'MEMBER').toUpperCase()})`) : ['Unassigned'];
-
-  const [priority, setPriority] = useState('P1 High');
-  const [assignee, setAssignee] = useState(MEMBER_OPTIONS[0]);
-  const [due, setDue] = useState('Tomorrow');
-  const [taskTitle, setTaskTitle] = useState('');
-
+/* ─── stat card ─────────────────────────────────────────────────────────── */
+function StatCard({ icon: Icon, value, label, loading }) {
   return (
-    <div style={{
-      background: '#141416', border: '1px solid #1f1f24', borderRadius: '10px',
-      padding: '24px 28px', maxWidth: '760px', position: 'relative', marginTop: '36px'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px' }}>
-        <div>
-          <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '0 0 5px 0' }}>WORK DISPATCHER</p>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.01em' }}>Task Assignment Center</h2>
-        </div>
-        <span style={{
-          display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 11px', borderRadius: '6px',
-          border: '1px solid #2a2a2e', background: '#1a1a1e', fontSize: '12px', fontWeight: 600, color: '#aaa', flexShrink: 0, marginTop: '4px',
-        }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', flexShrink: 0 }} />
-          Live
-        </span>
-      </div>
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '18px' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>TITLE</label>
-          <input value={taskTitle} onChange={e => setTaskTitle(e.target.value)} placeholder="Task title..." style={{ background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px', padding: '9px 13px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', width: '100%' }} />
-        </div>
-        <div style={{ minWidth: '140px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>ASSIGNEE</label>
-          <select value={assignee} onChange={e => setAssignee(e.target.value)} style={{ background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px', padding: '9px 10px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}>
-            {MEMBER_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </div>
-        <div style={{ minWidth: '120px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          <label style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>DUE</label>
-          <select value={due} onChange={e => setDue(e.target.value)} style={{ background: '#0e0e10', border: '1px solid #242428', borderRadius: '7px', padding: '9px 10px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}>
-            {DUE_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
+    <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 24px' }}>
+      <div style={{ marginBottom: '12px' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#1c1c1e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={15} color='#666' />
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>PRIORITY:</span>
-          {PRIORITY_OPTIONS.map(p => (
-            <button key={p} onClick={() => setPriority(p)} style={{ padding: '5px 13px', borderRadius: '999px', fontSize: '12px', fontWeight: 500, border: priority === p ? '1px solid var(--text-muted)' : '1px solid #2a2a2e', background: priority === p ? '#2a2a2e' : 'transparent', color: priority === p ? 'var(--text-primary)' : 'var(--text-muted)', cursor: 'pointer' }}>
-              {p}
-            </button>
-          ))}
-        </div>
-        <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 22px', borderRadius: '8px', background: 'var(--text-primary)', color: '#0e0e10', fontSize: '14px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
-          <Navigation size={14} strokeWidth={2.5} /> Dispatch
-        </button>
-      </div>
+      {loading
+        ? <Loader2 size={18} color="var(--text-muted)" style={{ animation: 'spin 1s linear infinite' }} />
+        : <>
+          <div style={{ fontSize: '30px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>{value ?? '—'}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px', fontWeight: 500 }}>{label}</div>
+        </>
+      }
     </div>
   );
 }
 
-function StatRow({ stats }) {
+
+/* ─── member row ─────────────────────────────────────────────────────────── */
+const ROLE_BADGE = {
+  OWNER:  { bg: '#6366f118', color: '#818cf8', border: '#6366f144' },
+  ADMIN:  { bg: '#f59e0b18', color: '#fbbf24', border: '#f59e0b44' },
+  LEAD:   { bg: '#10b98118', color: '#34d399', border: '#10b98144' },
+  DEVELOPER: { bg: '#3b82f618', color: '#60a5fa', border: '#3b82f644' },
+  Owner:  { bg: '#6366f118', color: '#818cf8', border: '#6366f144' },
+  Admin:  { bg: '#f59e0b18', color: '#fbbf24', border: '#f59e0b44' },
+  Lead:   { bg: '#10b98118', color: '#34d399', border: '#10b98144' },
+  Dev:    { bg: '#3b82f618', color: '#60a5fa', border: '#3b82f644' },
+  Member: { bg: '#ffffff0a', color: '#aaa',    border: '#ffffff18' },
+};
+
+function MemberRow({ m }) {
+  const badge = ROLE_BADGE[m.role] || ROLE_BADGE.Member;
   return (
-    <div style={{ display: 'flex', gap: '60px', marginBottom: '36px' }}>
-      {stats.map(({ value, label }) => (
-        <div key={label}>
-          <div style={{ fontSize: '30px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>{value}</div>
-          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '6px', fontWeight: 500 }}>{label}</div>
-        </div>
-      ))}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '8px', transition: 'background 120ms' }}
+      onMouseEnter={e => e.currentTarget.style.background = '#1a1a1e'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#2a2a2e', color: '#fff', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
+        {(m.name || m.username || '?')[0].toUpperCase()}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name || m.username}</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>
+      </div>
+      <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, flexShrink: 0 }}>
+        {m.role?.toUpperCase() || 'MEMBER'}
+      </span>
     </div>
   );
 }
 
-function PageHeader({ title, subtitle, navigate, projectId, showManageTeam }) {
-  return (
-    <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <h1 style={{ fontSize: '42px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em', margin: 0 }}>{title}</h1>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', paddingTop: '4px' }}>
-          <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '8px 18px', borderRadius: '7px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}>Open Board</button>
-          {showManageTeam && (
-            <button onClick={() => navigate(`/projects/${projectId}/members`)} style={{ padding: '8px 18px', borderRadius: '7px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer' }}>Manage Team</button>
-          )}
-        </div>
-      </div>
-      <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '32px', lineHeight: 1.6, maxWidth: '580px' }}>{subtitle}</p>
-      <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '28px' }} />
-    </>
-  );
-}
-
-function OwnerOverview({ projectId }) {
+/* ─── OWNER OVERVIEW ─────────────────────────────────────────────────────── */
+function OwnerOverview({ project }) {
   const navigate = useNavigate();
-  return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '10px' }}>OWNER VIEW</p>
-      <PageHeader title={projectId} subtitle="Strategic project health and ownership metrics." navigate={navigate} projectId={projectId} showManageTeam={true} />
-      <StatRow stats={[ { value: '92%', label: 'Project Health' }, { value: '3', label: 'Active Milestones' }, { value: '0', label: 'Critical Blockers' } ]} />
-    </div>
-  );
-}
-
-function AdminOverview({ projectId }) {
-  const navigate = useNavigate();
-  return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '10px' }}>ADMIN OPERATIONS</p>
-      <PageHeader title="Executive Overview" subtitle="Deep operational management, velocity tracking, and team capacity." navigate={navigate} projectId={projectId} showManageTeam={true} />
-      <StatRow stats={[ { value: '42', label: 'Velocity Points' }, { value: '8', label: 'Overdue Tasks' }, { value: '98%', label: 'Team Utilization' } ]} />
-      <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '28px' }} />
-      <WorkDispatcher />
-    </div>
-  );
-}
-
-function LeadOverview({ projectId }) {
-  const navigate = useNavigate();
-  return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '10px' }}>TEAM LEAD</p>
-      <PageHeader title="Team Coordination" subtitle="Manage your team's sprint progress and clear blockers." navigate={navigate} projectId={projectId} showManageTeam={false} />
-      <StatRow stats={[ { value: '6', label: 'Team Members' }, { value: '14', label: 'Sprint Tasks Remaining' }, { value: '2', label: 'Blocked Items' } ]} />
-      <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '28px' }} />
-      <WorkDispatcher />
-    </div>
-  );
-}
-
-function DevOverview({ projectId }) {
-  const navigate = useNavigate();
-  return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
-      <p style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--text-muted)', marginBottom: '10px' }}>DEVELOPER SPACE</p>
-      <PageHeader title="My Dashboard" subtitle="Your active assignments, upcoming deadlines, and personal blockers." navigate={navigate} projectId={projectId} showManageTeam={false} />
-      <StatRow stats={[ { value: '4', label: 'My Active Tasks' }, { value: '1', label: 'Due Today' }, { value: '0', label: 'My Blockers' } ]} />
-      <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '28px' }} />
-      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '10px', padding: '32px', textAlign: 'center' }}>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>Review your personalized task list in the "My Tasks" section to start working.</p>
-      </div>
-    </div>
-  );
-}
-
-// Viewer overview has been removed
-
-export default function ProjectOverviewPage() {
   const { projectId } = useParams();
-  const { role } = useAuthStore();
-  const safeRole = role || 'Dev';
-  const projectName = projectId || 'P1';
 
+  const [stats, setStats]           = useState(null);
+  const [members, setMembers]       = useState([]);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [loadingStats, setLoadingStats]     = useState(true);
+  const [loadingMembers, setLoadingMembers] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { apiClient } = await import('../../api/client');
+        const data = await apiClient(`/projects/${projectId}/stats/`);
+        setStats(data);
+      } catch (err) {
+        console.error('Stats fetch failed', err);
+        setStats({ total: 0, done: 0, in_progress: 0, in_review: 0, to_do: 0, blocked: 0, completion_pct: 0 });
+      } finally { setLoadingStats(false); }
+    };
+    load();
+  }, [projectId]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { apiClient } = await import('../../api/client');
+        setMembers(await apiClient('/workspace/members/'));
+      } catch { /* silent */ }
+      finally { setLoadingMembers(false); }
+    };
+    load();
+  }, []);
+
+  const filteredMembers = members.filter(m =>
+    (m.name || '').toLowerCase().includes(memberSearch.toLowerCase()) ||
+    (m.email || '').toLowerCase().includes(memberSearch.toLowerCase())
+  );
+
+  return (
+    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      {/* Title */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <div>
+          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-muted)', margin: '0 0 6px 0' }}>OWNER VIEW</p>
+          <h1 style={{ fontSize: '36px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1 }}>
+            {project?.name || 'Project'}
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>
+            Full project authority · real-time health &amp; team tracking
+          </p>
+        </div>
+        <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', marginTop: '4px' }}>
+          Open Board
+        </button>
+      </div>
+
+      <div style={{ borderTop: '1px solid #1a1a1e', margin: '24px 0' }} />
+
+      {/* Live stat cards — monochrome */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '20px' }}>
+        <StatCard icon={TrendingUp}    value={loadingStats ? null : `${stats?.completion_pct ?? 0}%`} label="Completion"   loading={loadingStats} />
+        <StatCard icon={ListTodo}      value={loadingStats ? null : stats?.total}                       label="Total Tasks"  loading={loadingStats} />
+        <StatCard icon={CheckCheck}    value={loadingStats ? null : stats?.done}                        label="Done"         loading={loadingStats} />
+        <StatCard icon={Clock}         value={loadingStats ? null : stats?.in_progress}                 label="In Progress"  loading={loadingStats} />
+        <StatCard icon={AlertTriangle} value={loadingStats ? null : stats?.blocked}                     label="Blocked"      loading={loadingStats} />
+      </div>
+
+      {/* Members panel — full width, no status side panel */}
+      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 22px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+              Team {!loadingMembers && <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>({members.length})</span>}
+            </p>
+            <div style={{ position: 'relative' }}>
+              <Search size={12} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search…" style={{ background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '7px', padding: '6px 10px 6px 28px', fontSize: '12px', color: 'var(--text-primary)', outline: 'none', width: '150px', fontFamily: 'inherit' }} />
+            </div>
+          </div>
+          {loadingMembers
+            ? <Loader2 size={16} color="var(--text-muted)" style={{ animation: 'spin 1s linear infinite', margin: '12px auto', display: 'block' }} />
+            : filteredMembers.length === 0
+              ? <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', padding: '16px' }}>No members found.</p>
+              : filteredMembers.map(m => <MemberRow key={m.id} m={m} />)
+          }
+          <button onClick={() => navigate(`/projects/${projectId}/members`)}
+            style={{ marginTop: '12px', width: '100%', padding: '8px', borderRadius: '7px', border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >
+            Team →
+          </button>
+        </div>
+    </div>
+  );
+}
+
+/* ─── NON-OWNER overview ─────────────────────────────────────────────────── */
+function MembersReadOnly({ role }) {
+  const navigate = useNavigate();
+  const { projectId } = useParams();
+
+  const [stats, setStats]   = useState(null);
+  const [members, setMembers] = useState([]);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [loadingStats, setLS]   = useState(true);
+  const [loadingMembers, setLM] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { apiClient } = await import('../../api/client');
+        setStats(await apiClient(`/projects/${projectId}/stats/`));
+      } catch { setStats({ total: 0, done: 0, in_progress: 0, blocked: 0, completion_pct: 0 }); }
+      finally { setLS(false); }
+    };
+    load();
+  }, [projectId]);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { apiClient } = await import('../../api/client');
+        setMembers(await apiClient('/workspace/members/'));
+      } catch { /* silent */ }
+      finally { setLM(false); }
+    };
+    load();
+  }, []);
+
+  const filtered = members.filter(m =>
+    (m.name || '').toLowerCase().includes(memberSearch.toLowerCase()) ||
+    (m.email || '').toLowerCase().includes(memberSearch.toLowerCase())
+  );
+
+  const roleLabel = { Admin: 'ADMIN VIEW', Lead: 'LEAD VIEW', Dev: 'DEVELOPER VIEW' }[role] || 'PROJECT VIEW';
+
+  return (
+    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-muted)', margin: '0 0 6px 0' }}>{roleLabel}</p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
+        <div>
+          <h1 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>Project Overview</h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>Your team and the current state of this project</p>
+        </div>
+        <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', marginTop: '4px' }}>Open Board</button>
+      </div>
+      <div style={{ borderTop: '1px solid #1a1a1e', margin: '24px 0' }} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
+        <StatCard icon={TrendingUp}    value={loadingStats ? null : `${stats?.completion_pct ?? 0}%`} label="Completion"  loading={loadingStats} />
+        <StatCard icon={ListTodo}      value={loadingStats ? null : stats?.total}                       label="Total Tasks" loading={loadingStats} />
+        <StatCard icon={CheckCheck}    value={loadingStats ? null : stats?.done}                        label="Done"        loading={loadingStats} />
+        <StatCard icon={AlertTriangle} value={loadingStats ? null : stats?.blocked}                     label="Blocked"     loading={loadingStats} />
+      </div>
+
+      {/* Read-only member list */}
+      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 22px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+            Team Members {!loadingMembers && <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>({members.length})</span>}
+          </p>
+          <div style={{ position: 'relative' }}>
+            <Search size={12} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search…" style={{ background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '7px', padding: '6px 10px 6px 28px', fontSize: '12px', color: 'var(--text-primary)', outline: 'none', width: '150px', fontFamily: 'inherit' }} />
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '6px 10px', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.09em', textTransform: 'uppercase', borderBottom: '1px solid #1a1a1e', marginBottom: '6px' }}>
+          <span>Member</span><span>Role</span><span>Status</span>
+        </div>
+        {loadingMembers
+          ? <Loader2 size={16} color="var(--text-muted)" style={{ animation: 'spin 1s linear infinite', margin: '16px auto', display: 'block' }} />
+          : filtered.length === 0
+            ? <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', padding: '20px' }}>No members found.</p>
+            : filtered.map(m => {
+              const badge = ROLE_BADGE[m.role] || ROLE_BADGE.Member;
+              return (
+                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', alignItems: 'center', padding: '9px 10px', borderRadius: '8px', transition: 'background 120ms' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#1a1a1e'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#2a2a2e', color: '#fff', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
+                      {(m.name || '?')[0].toUpperCase()}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>
+                    </div>
+                  </div>
+                  <span style={{ padding: '3px 9px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}>
+                    {m.role?.toUpperCase() || 'MEMBER'}
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Active</span>
+                  </div>
+                </div>
+              );
+            })
+        }
+      </div>
+    </div>
+  );
+}
+
+/* ─── root export ────────────────────────────────────────────────────────── */
+export default function ProjectOverviewPage() {
+  const { role } = useAuthStore();
+  const { project } = useOutletContext() || {};
+  const safeRole = role || 'Dev';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0e0e10', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <TopHeader projectName={projectName} />
-      {safeRole === 'Owner' && <OwnerOverview projectId={projectName} />}
-      {safeRole === 'Admin' && <AdminOverview projectId={projectName} />}
-      {safeRole === 'Lead' && <LeadOverview projectId={projectName} />}
-      {safeRole === 'Dev' && <DevOverview projectId={projectName} />}
+      <PageTopBar projectName={project?.name || 'Project'} />
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+      {safeRole === 'Owner' ? <OwnerOverview project={project} /> : <MembersReadOnly role={safeRole} />}
     </div>
   );
 }

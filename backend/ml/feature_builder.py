@@ -1,5 +1,6 @@
 import random
 from typing import Dict, Any, Tuple
+from apps.integrations.evidence import get_developer_context
 
 # We generate deterministic synthetic values seeded by stable entity IDs for missing data
 def _synthetic(task_id: int, user_id: int, key: str, min_val: float, max_val: float, is_int: bool = False):
@@ -8,25 +9,26 @@ def _synthetic(task_id: int, user_id: int, key: str, min_val: float, max_val: fl
         return rng.randint(int(min_val), int(max_val))
     return round(rng.uniform(min_val, max_val), 2)
 
-def build_context_transfer_features(task, candidate) -> Tuple[Dict[str, Any], Dict[str, str]]:
+def build_context_transfer_features(task, candidate, is_demo: bool = False) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, str]]:
     """
     Constructs the feature payload required for the context transfer model.
-    Returns:
-        features (dict): The feature values to be passed to the model.
-        provenance (dict): Mapping of feature names to their data source (REAL_DB, DERIVED, SYNTHETIC_DEMO).
     """
+    if not is_demo:
+        return get_developer_context(task, candidate)
+
     t_id = task.id
     u_id = candidate.id
     
     features = {}
     provenance = {}
+    explanations = {}
     
     def add_feat(name, value, prov):
         features[name] = value
         provenance[name] = prov
+        explanations[name] = "Synthetic fallback."
 
     # Categorical
-    # Use DERIVED for role_level based on email to maintain demo personality, else SYNTHETIC
     if "smith" in candidate.email.lower():
         role = "Senior"
     elif "rahul" in candidate.email.lower():
@@ -35,7 +37,7 @@ def build_context_transfer_features(task, candidate) -> Tuple[Dict[str, Any], Di
         role = "Junior"
     
     add_feat("role_level", role, "DERIVED")
-    add_feat("task_type", "Feature", "SYNTHETIC_DEMO")  # Not currently in DB
+    add_feat("task_type", "Feature", "SYNTHETIC_DEMO")
     add_feat("codebase_size", "Medium", "SYNTHETIC_DEMO")
 
     # Numeric - Derived from DB
@@ -66,22 +68,48 @@ def build_context_transfer_features(task, candidate) -> Tuple[Dict[str, Any], Di
     add_feat("test_coverage", _synthetic(t_id, u_id, "tests", 0.3, 0.95), "SYNTHETIC_DEMO")
     add_feat("task_volatility", _synthetic(t_id, u_id, "volatile", 0.1, 0.8), "SYNTHETIC_DEMO")
     
-    return features, provenance
+    return features, provenance, explanations
 
 
-def build_knowledge_transfer_features(task, candidate) -> Tuple[Dict[str, Any], Dict[str, str]]:
+def build_knowledge_transfer_features(task, candidate, is_demo: bool = False) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, str]]:
     """
     Constructs the feature payload required for the knowledge transfer model.
     """
+    # For now, knowledge transfer just falls back to demo mode or returns missing.
     t_id = task.id
     u_id = candidate.id
     
     features = {}
     provenance = {}
+    explanations = {}
     
     def add_feat(name, value, prov):
         features[name] = value
         provenance[name] = prov
+        explanations[name] = "Synthetic fallback."
+
+    if not is_demo:
+        # Not requested to fix knowledge transfer yet, but let's avoid synthetic in LIVE.
+        add_feat("task_type", "Feature", "DERIVED")
+        add_feat("codebase_size", "Medium", "DERIVED")
+        add_feat("task_progress", 0.5 if task.status == 'In Progress' else (1.0 if task.status == 'Done' else 0.0), "DERIVED")
+        add_feat("task_complexity", 0.5, "DERIVED")
+        add_feat("dependency_count", None, "UNAVAILABLE")
+        add_feat("technology_familiarity", None, "UNAVAILABLE")
+        add_feat("project_familiarity", None, "UNAVAILABLE")
+        add_feat("repository_familiarity", None, "UNAVAILABLE")
+        add_feat("architecture_familiarity", None, "UNAVAILABLE")
+        add_feat("dependency_familiarity", None, "UNAVAILABLE")
+        add_feat("previous_owner_context", None, "UNAVAILABLE")
+        add_feat("architecture_coverage", None, "UNAVAILABLE")
+        add_feat("important_files_coverage", None, "UNAVAILABLE")
+        add_feat("known_issues_coverage", None, "UNAVAILABLE")
+        add_feat("debugging_guidance_quality", None, "UNAVAILABLE")
+        add_feat("recent_decisions_coverage", None, "UNAVAILABLE")
+        add_feat("testing_guidance_quality", None, "UNAVAILABLE")
+        add_feat("deployment_guidance_quality", None, "UNAVAILABLE")
+        add_feat("handoff_completeness", None, "UNAVAILABLE")
+        return features, provenance, explanations
 
     # Categorical
     add_feat("task_type", "Feature", "SYNTHETIC_DEMO")
@@ -110,4 +138,4 @@ def build_knowledge_transfer_features(task, candidate) -> Tuple[Dict[str, Any], 
     add_feat("deployment_guidance_quality", _synthetic(t_id, u_id, "deploy_qual", 0.3, 1.0), "SYNTHETIC_DEMO")
     add_feat("handoff_completeness", _synthetic(t_id, u_id, "handoff_comp", 0.5, 1.0), "SYNTHETIC_DEMO")
     
-    return features, provenance
+    return features, provenance, explanations

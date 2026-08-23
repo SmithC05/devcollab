@@ -72,6 +72,24 @@ export default function KanbanColumn({ column, tasks, onTaskClick, onAddTask }) 
             Drop tasks here
           </div>
         )}
+        
+        {can('task.create') && (
+          <button
+            onClick={() => onAddTask(column.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 10px', marginTop: '4px',
+              background: 'transparent', border: 'none',
+              color: '#666', fontSize: '13px', fontWeight: 500,
+              cursor: 'pointer', transition: 'all 150ms',
+              borderRadius: '6px',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; e.currentTarget.style.background = 'transparent'; }}
+          >
+            <Plus size={14} strokeWidth={2.5} /> New task
+          </button>
+        )}
       </div>
     </div>
   );

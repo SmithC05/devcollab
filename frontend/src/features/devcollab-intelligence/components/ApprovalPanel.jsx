@@ -65,7 +65,7 @@ export function ApprovalPanel({ scenarioId, baseline, recommendation, onComplete
       // We don't mark as EXECUTED here, we wait for the WebSocket event!
       await Promise.all([
         advanceStaging(),
-        approveSimulation(scenarioId, recommendation.candidate, recommendation.intervention)
+        approveSimulation(scenarioId, recommendation.candidate_name || recommendation.candidate, recommendation.type || recommendation.intervention)
       ]);
       // After API resolves, we wait in 'syncing' state until WebSocket fires
     } catch (err) {
@@ -75,7 +75,7 @@ export function ApprovalPanel({ scenarioId, baseline, recommendation, onComplete
     }
   };
 
-  const isKnowledgeTransfer = recommendation.intervention.includes('KNOWLEDGE_TRANSFER');
+  const isKnowledgeTransfer = (recommendation.type || recommendation.intervention || '').includes('KNOWLEDGE_TRANSFER');
 
   return (
     <motion.div variants={staggerChildren} initial="hidden" animate="visible" style={{ marginTop: 32, position: 'relative' }}>

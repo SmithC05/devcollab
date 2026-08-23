@@ -1,17 +1,25 @@
 import { useAuthStore } from '../stores/authStore';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+// BUG-03 FIX: Use VITE_API_BASE_URL from .env.local instead of hardcoding localhost
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/api`;
+
 
 export const apiClient = async (endpoint, options = {}) => {
-  const { accessToken } = useAuthStore.getState();
+  const { accessToken, activeWorkspace } = useAuthStore.getState();
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+  const headers = { ...options.headers };
+  if (options.body && options.body instanceof FormData) {
+    // browser will set Content-Type with boundary automatically
+  } else {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
 
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+  
+  if (activeWorkspace && activeWorkspace.id) {
+    headers['X-Workspace-Id'] = activeWorkspace.id;
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {

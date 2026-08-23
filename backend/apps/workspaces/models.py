@@ -26,6 +26,13 @@ class WorkspaceMembership(models.Model):
 
     class Meta:
         unique_together = ('workspace', 'user')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['workspace'],
+                condition=models.Q(role='OWNER'),
+                name='unique_workspace_owner'
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.workspace.name} ({self.role})"
