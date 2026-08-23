@@ -12,3 +12,6 @@ class CustomMiddlewareAuthentication(BaseAuthentication):
         if user and user.is_authenticated:
             return (user, None)
         return None
+
+    def authenticate_header(self, request):
+        return 'Bearer'
