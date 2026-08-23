@@ -40,9 +40,15 @@ class Command(BaseCommand):
         # Workspace
         workspace, ws_created = Workspace.objects.get_or_create(name='DevCollab Engineering', defaults={'owner': users['admin']})
         for u in users_data:
-            WorkspaceMembership.objects.get_or_create(workspace=workspace, user=users[u['username']], defaults={'role': u['role']})
+            WorkspaceMembership.objects.update_or_create(
+                workspace=workspace,
+                user=users[u['username']],
+                defaults={'role': u['role']}
+            )
         if ws_created:
             self.stdout.write('Created workspace and memberships')
+        else:
+            self.stdout.write('Updated workspace memberships')
 
         # Projects
         project_payments, _ = Project.objects.get_or_create(
