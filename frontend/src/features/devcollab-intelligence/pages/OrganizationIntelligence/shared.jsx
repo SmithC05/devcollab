@@ -122,8 +122,7 @@ export function EngineeringEvidenceControl({ onSyncSuccess }) {
     setSyncing(true);
     setSyncStage('ANALYZING ENGINEERING EVIDENCE\\n\\nGitHub connection verified\\n→ Analyzing accessible engineering evidence...');
     try {
-      const res = await fetch('/api/integrations/github/sync/', { method: 'POST' });
-      if (!res.ok) throw new Error('Failed to start sync');
+      await import('../../../../api/client').then(m => m.apiClient('/integrations/github/sync/', { method: 'POST' }));
       await initFromServer();
     } catch (e) {
       setError('SYNC FAILED: ENGINEERING EVIDENCE UNAVAILABLE');

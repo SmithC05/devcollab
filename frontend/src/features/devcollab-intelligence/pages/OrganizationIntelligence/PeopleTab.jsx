@@ -232,14 +232,14 @@ function AnalyzeEvidenceView({ member, onBack, onEvaluate }) {
         <div style={{ height: 1, background: 'var(--dv-border-subtle)', margin: '4px 0' }} />
 
         <div>
-          <SectionLabel label="Engineering Evidence" icon={Github} />
+          <SectionLabel label="Engineering Evidence" icon={Code2} />
           
           {!summary && !analyzing && (
             <div style={{ 
               padding: 32, textAlign: 'center', background: 'var(--dv-bg-elevated)', 
               borderRadius: 'var(--dv-radius-md)', border: '1px dashed var(--dv-border-strong)' 
             }}>
-              <Github size={32} color="var(--dv-text-muted)" style={{ marginBottom: 16, opacity: 0.5 }} />
+              <Code2 size={32} color="var(--dv-text-muted)" style={{ marginBottom: 16, opacity: 0.5 }} />
               <div style={{ fontSize: 'var(--dv-text-md)', fontWeight: 500, color: 'var(--dv-text-primary)', marginBottom: 8 }}>
                 Analyze GitHub History
               </div>

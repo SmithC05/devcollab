@@ -93,4 +93,36 @@ class Command(BaseCommand):
         tasks['Security Review'].dependencies.add(tasks['Gateway Integration'])
         tasks['Deployment'].dependencies.add(tasks['Security Review'])
         
-        self.stdout.write(self.style.SUCCESS('Successfully seeded DevCollab database with simplified demo state!'))
+        # Engineering Evidence (Synthetic for Demo)
+        from apps.developers.models import EngineeringEvidence
+        import json
+        
+        # Give Libin some frontend/integration evidence
+        EngineeringEvidence.objects.update_or_create(
+            user=users['Libin'],
+            source='GITHUB',
+            defaults={
+                'repository_count': 8,
+                'repositories': {"items": [{"name": "dashboard-ui", "description": "React dashboard"}, {"name": "api-client", "description": "Frontend API client"}]},
+                'technology_evidence': {"JavaScript": 120000, "TypeScript": 90000, "React": 50000},
+                'architecture_evidence': {"dashboard-ui": ["src/components", "src/hooks"]},
+                'dependency_evidence': {"dashboard-ui": ["npm"]},
+                'schema_version': 'v2'
+            }
+        )
+        
+        # Give Balaji some devops/security evidence
+        EngineeringEvidence.objects.update_or_create(
+            user=users['Balaji'],
+            source='GITHUB',
+            defaults={
+                'repository_count': 5,
+                'repositories': {"items": [{"name": "infra-as-code", "description": "Terraform and CI/CD"}, {"name": "security-scanner", "description": "Automated vulnerability scanner"}]},
+                'technology_evidence': {"Go": 80000, "HCL": 40000, "Shell": 15000},
+                'architecture_evidence': {"infra-as-code": ["terraform/aws", ".github/workflows"]},
+                'dependency_evidence': {"infra-as-code": ["go"]},
+                'schema_version': 'v2'
+            }
+        )
+        
+        self.stdout.write(self.style.SUCCESS('Successfully seeded DevCollab database with simplified demo state and synthetic evidence!'))

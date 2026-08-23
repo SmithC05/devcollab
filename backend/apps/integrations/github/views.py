@@ -66,9 +66,13 @@ def disconnect_github_view(request):
             profile.github_user_id = None
             profile.save()
             
-            # Optionally we can delete the social token
-            from allauth.socialaccount.models import SocialToken
+            # Delete the social token AND the social account so it doesn't auto-reconnect
+            from allauth.socialaccount.models import SocialToken, SocialAccount
             SocialToken.objects.filter(account__user=request.user, account__provider='github').delete()
+            SocialAccount.objects.filter(user=request.user, provider='github').delete()
+            
+            # Delete any existing engineering evidence from GitHub
+            EngineeringEvidence.objects.filter(user=request.user, source='GITHUB').delete()
             
             return JsonResponse({"success": True, "message": "Disconnected"})
         except DeveloperProfile.DoesNotExist:

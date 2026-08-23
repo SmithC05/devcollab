@@ -3,6 +3,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { GitBranch, AlertCircle, Unplug } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
+import { apiClient } from '../../api/client';
 
 function timeAgo(dateString) {
   const date = new Date(dateString);
@@ -34,12 +35,10 @@ export default function DeveloperProfileSettings() {
 
   const handleDisconnect = async () => {
     try {
-      const res = await fetch('/api/integrations/github/disconnect/', {
+      await apiClient('/integrations/github/disconnect/', {
         method: 'POST',
       });
-      if (res.ok) {
-        await initFromServer();
-      }
+      await initFromServer();
     } catch (e) {
       setError('Failed to disconnect');
     }
