@@ -3,6 +3,7 @@ import { Copy, UserPlus, MoreHorizontal, Shield, Users, Search } from 'lucide-re
 import { Button } from '../ui/index';
 import InviteMemberModal from './InviteMemberModal';
 import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
 
 export default function WorkspaceMembersPage() {
   const [members, setMembers] = useState([]);
@@ -11,14 +12,13 @@ export default function WorkspaceMembersPage() {
   const [search, setSearch] = useState('');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteSuccessMsg, setInviteSuccessMsg] = useState('');
-  
+
   const { user, activeWorkspace } = useAuthStore();
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch('/api/workspace/members/');
-      if (!response.ok) throw new Error('Failed to load members');
-      const data = await response.json();
+      // BUG-18 FIX: Use workspaceApi.getMembers with workspace_id
+      const data = await workspaceApi.getMembers(activeWorkspace?.id);
       setMembers(data);
     } catch (err) {
       setError(err.message);

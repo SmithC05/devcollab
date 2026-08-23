@@ -1,15 +1,46 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from apps.projects.models import Project
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import Workspace, WorkspaceMembership
 from apps.tasks.models import Task
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count
 
+
+def _get_user_workspace(request):
+    """
+    BUG-01 FIX: Previously all views used Workspace.objects.first() which returned
+    the same workspace for ALL users regardless of their actual membership.
+    Resolves workspace safely from ?workspace_id= query param + membership check.
+    Falls back to the user's first workspace if no ID is provided.
+    Returns (workspace, membership) or (None, None).
+    """
+    user = request.user
+    workspace_id = request.query_params.get('workspace_id') or request.data.get('workspace_id')
+    if workspace_id:
+        try:
+            membership = WorkspaceMembership.objects.select_related('workspace').get(
+                workspace_id=workspace_id,
+                user=user
+            )
+            return membership.workspace, membership
+        except WorkspaceMembership.DoesNotExist:
+            return None, None
+    else:
+        membership = WorkspaceMembership.objects.select_related('workspace').filter(
+            user=user
+        ).order_by('created_at').first()
+        if membership:
+            return membership.workspace, membership
+        return None, None
+
 class WorkspaceOverviewView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
+        workspace, membership = _get_user_workspace(request)
         if not workspace:
             return Response({
                 "workspace_name": "Workspace",
@@ -30,29 +61,26 @@ class WorkspaceOverviewView(APIView):
         projects = Project.objects.filter(workspace=workspace, is_active=True)
         active_projects_count = projects.count()
         total_projects_count = Project.objects.filter(workspace=workspace).count()
+
+        user = request.user
         
-        user = request.user if request.user.is_authenticated else None
-        
-        tasks_pending_count = 0
-        tasks_completed_count = 0
         top_priority_tasks_data = []
         my_projects_data = []
         recent_projects_data = []
-        
-        if user:
-            user_tasks = Task.objects.filter(project__workspace=workspace, assignee=user)
-            tasks_pending_count = user_tasks.exclude(status=Task.StatusChoices.DONE).count()
-            tasks_completed_count = user_tasks.filter(status=Task.StatusChoices.DONE).count()
+
+        user_tasks = Task.objects.filter(project__workspace=workspace, assignee=user)
+        tasks_pending_count = user_tasks.exclude(status=Task.StatusChoices.DONE).count()
+        tasks_completed_count = user_tasks.filter(status=Task.StatusChoices.DONE).count()
             
-            # Top Priority Tasks
-            pending_tasks = user_tasks.exclude(status=Task.StatusChoices.DONE).order_by('priority', 'due_date')[:5]
-            for pt in pending_tasks:
-                top_priority_tasks_data.append({
-                    "id": pt.id,
-                    "title": pt.title,
-                    "status": pt.status,
-                    "priority": pt.priority
-                })
+        # Top Priority Tasks
+        pending_tasks = user_tasks.exclude(status=Task.StatusChoices.DONE).order_by('priority', 'due_date')[:5]
+        for pt in pending_tasks:
+            top_priority_tasks_data.append({
+                "id": pt.id,
+                "title": pt.title,
+                "status": pt.status,
+                "priority": pt.priority
+            })
         
         # My Projects (since all workspace projects are user's projects for now)
         for p in projects.order_by('-updated_at')[:5]:
@@ -105,7 +133,7 @@ class WorkspaceOverviewView(APIView):
             
         return Response({
             "workspace_name": workspace.name,
-            "user_name": f"{request.user.first_name} {request.user.last_name}".strip() if request.user.is_authenticated else "dev collab",
+            "user_name": f"{user.first_name} {user.last_name}".strip() or user.username,
             "total_projects": total_projects_count,
             "tasks_pending": tasks_pending_count,
             "tasks_completed": tasks_completed_count,
@@ -120,9 +148,12 @@ class WorkspaceOverviewView(APIView):
         })
 
 class ProjectListView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response([])
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response([])
         projects = Project.objects.filter(workspace=workspace)
         data = []
         for p in projects:
@@ -143,11 +174,17 @@ class ProjectListView(APIView):
         return Response(data)
 
     def post(self, request):
-        workspace = Workspace.objects.first()
+        workspace, _ = _get_user_workspace(request)
         if not workspace:
-            workspace = Workspace.objects.create(name="Default Workspace")
-            if request.user.is_authenticated:
-                workspace.members.add(request.user)
+            workspace = Workspace.objects.create(
+                name="Default Workspace",
+                owner=request.user
+            )
+            WorkspaceMembership.objects.create(
+                workspace=workspace,
+                user=request.user,
+                role='OWNER'
+            )
         
         # Enforce free plan limit
         current_project_count = Project.objects.filter(workspace=workspace).count()
@@ -171,37 +208,43 @@ class ProjectListView(APIView):
             "name": project.name,
             "description": f"Project for {project.name}",
             "status": "Active",
-            "members_count": workspace.members.count(),
+            "members_count": workspace.memberships.count(),
             "tasks_count": 0,
             "progress": 0,
             "updated_at": project.updated_at
         }, status=201)
 
 class WorkspaceActivityView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response({})
-        projects = Project.objects.filter(workspace=workspace, is_active=True).count()
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response({})
+        projects_count = Project.objects.filter(workspace=workspace, is_active=True).count()
         return Response({
             "total_events": 0,
             "today_events": 0,
-            "active_projects": projects,
+            "active_projects": projects_count,
             "recent_activity": [],
             "heatmap": []
         })
 
 class WorkspaceMembersView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response([])
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response([])
         data = []
-        for membership in workspace.memberships.select_related('user').all():
-            m = membership.user
+        for mem in workspace.memberships.select_related('user').all():
+            m = mem.user
             data.append({
                 "id": m.id,
                 "name": f"{m.first_name} {m.last_name}".strip() or m.username,
                 "email": m.email,
-                "role": "Owner" if m.is_superuser else "Member",
+                "role": mem.role,
                 "status": "Active",
                 "last_active": "Just now"
             })
@@ -225,9 +268,12 @@ class WorkspaceMembersView(APIView):
         return Response(data)
 
 class WorkspaceBillingView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response({})
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response({})
         projects_count = Project.objects.filter(workspace=workspace).count()
         members_count = workspace.memberships.count()
         return Response({
@@ -241,19 +287,26 @@ class WorkspaceBillingView(APIView):
         })
 
 class WorkspaceSettingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response({})
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response({})
         return Response({
             "name": workspace.name,
-            "slug": workspace.name.lower().replace(" ", "-"),
+            "slug": workspace.slug or workspace.name.lower().replace(" ", "-"),
             "description": "Development Workspace"
         })
+
     def put(self, request):
-        workspace = Workspace.objects.first()
-        if workspace:
-            workspace.name = request.data.get('name', workspace.name)
-            workspace.save()
+        workspace, membership = _get_user_workspace(request)
+        if not workspace:
+            return Response({"error": "Workspace not found"}, status=404)
+        if membership and membership.role not in ['OWNER', 'ADMIN']:
+            return Response({"error": "Insufficient permissions"}, status=403)
+        workspace.name = request.data.get('name', workspace.name)
+        workspace.save()
         return Response({"status": "success"})
 
 class ProjectRepositoryMappingView(APIView):

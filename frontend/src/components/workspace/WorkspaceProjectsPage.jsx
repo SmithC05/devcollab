@@ -6,6 +6,9 @@ import { Button, Spinner, EmptyState, Badge, SearchInput, IconButton, Card, Tabl
 import { useNavigate } from 'react-router-dom';
 import CreateProjectModal from '../project/CreateProjectModal';
 import LaunchScreen from '../project/LaunchScreen';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
+
 // --- Utilities ---
 const formatRelativeTime = (dateString) => {
   if (!dateString) return 'Updated recently';
@@ -56,6 +59,7 @@ const MetricBlock = ({ label, value }) => (
 
 // --- Main Page Component ---
 export default function WorkspaceProjectsPage() {
+  const { activeWorkspace } = useAuthStore();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -68,28 +72,21 @@ export default function WorkspaceProjectsPage() {
   const [launchingProject, setLaunchingProject] = useState(null);
 
   const handleCreateProject = async (name) => {
-    const response = await fetch('/api/workspace/projects/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
-    });
-    
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || 'Failed to create project.');
+    try {
+      // BUG-18 FIX: Use workspaceApi.createProject with workspace_id
+      const newProject = await workspaceApi.createProject(activeWorkspace?.id, name);
+      setProjects(prev => [newProject, ...prev]);
+      setIsCreateModalOpen(false);
+    } catch (err) {
+      throw new Error(err.message || 'Failed to create project.');
     }
-    
-    const newProject = await response.json();
-    setProjects(prev => [newProject, ...prev]);
-    setIsCreateModalOpen(false);
   };
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch('/api/workspace/projects/');
-        if (!response.ok) throw new Error('Failed to load projects');
-        const data = await response.json();
+        // BUG-18 FIX: Use workspaceApi.getProjects with workspace_id
+        const data = await workspaceApi.getProjects(activeWorkspace?.id);
         setProjects(data);
       } catch (err) {
         setError(err.message);
@@ -98,7 +95,7 @@ export default function WorkspaceProjectsPage() {
       }
     };
     fetchProjects();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   const filteredProjects = projects.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());

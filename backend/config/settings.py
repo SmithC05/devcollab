@@ -167,6 +167,16 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    # BUG-07 FIX: Without these, DRF defaults to AllowAny permission, meaning
+    # any unauthenticated request could read workspace/project data.
+    # We use SessionAuthentication since JWTAuthMiddleware already populates
+    # request.user from the JWT before DRF's authentication layer runs.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
 
 # ---------------------------------------------------------------------------

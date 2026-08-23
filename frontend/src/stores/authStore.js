@@ -65,7 +65,9 @@ export const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      role: 'Owner', // Temporary default for RBAC simulation
+      // L-04 FIX: null is the correct default — null role means "not in a workspace yet".
+      // Previously 'Owner' was hardcoded, bypassing all real permission checks.
+      role: null,
       activeWorkspace: null,
       sessionToken: null,
       accessToken: null,
@@ -170,11 +172,15 @@ export const useAuthStore = create(
       },
 
       loginWithGoogle: () => {
-        window.location.href = 'http://127.0.0.1:8000/accounts/google/login/';
+        // BUG-03 FIX: Use env var so this works in staging/production
+        const base = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+        window.location.href = `${base}/accounts/google/login/`;
       },
 
       loginWithGitHub: () => {
-        window.location.href = 'http://127.0.0.1:8000/accounts/github/login/';
+        // BUG-03 FIX: Use env var so this works in staging/production
+        const base = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+        window.location.href = `${base}/accounts/github/login/`;
       },
 
       logout: async () => {
@@ -220,7 +226,18 @@ export const useAuthStore = create(
       setActiveWorkspace: (workspaceId) => {
         const ws = get().workspaces.find(w => w.id === workspaceId);
         if (ws) {
-          set({ activeWorkspace: ws, role: ws.role });
+          // BUG-08 FIX: Backend sends uppercase roles (OWNER, DEVELOPER, ADMIN, LEAD)
+          // but the PERMISSIONS map uses title-case (Owner, Dev, Admin, Lead).
+          // Normalize here so hasPermission() actually works.
+          const roleMap = {
+            OWNER: 'Owner',
+            ADMIN: 'Admin',
+            LEAD: 'Lead',
+            DEVELOPER: 'Dev',
+            MEMBER: 'Dev',
+          };
+          const normalizedRole = roleMap[ws.role?.toUpperCase()] || ws.role || 'Dev';
+          set({ activeWorkspace: { ...ws, role: normalizedRole }, role: normalizedRole });
         }
       },
 

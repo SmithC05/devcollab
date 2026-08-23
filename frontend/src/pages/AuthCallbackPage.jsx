@@ -31,32 +31,44 @@ export default function AuthCallbackPage() {
 
   // Once loading finishes, redirect based on workspace state
   useEffect(() => {
-    if (hasInitialized.current && !isLoading) {
-      if (isAuthenticated) {
-        const returnUrl = sessionStorage.getItem('auth_return_url');
-        if (returnUrl) {
-          sessionStorage.removeItem('auth_return_url');
-          
-          // Prevent AppRoutes from kicking us out if activeWorkspace was somehow lost
-          if (!activeWorkspace && workspaces && workspaces.length > 0) {
-            setActiveWorkspace(workspaces[0].id);
-          }
-          
-          navigate(returnUrl, { replace: true });
-          return;
-        }
+    // BUG-11 FIX: Previously this could fire BEFORE initFromServer() set
+    // isLoading=true (if the ref guard ran slightly before the async set),
+    // causing an immediate /login redirect.  Now we require both:
+    //   1. hasInitialized.current is true (we've called initFromServer)
+    //   2. isLoading is false (it finished)
+    if (!hasInitialized.current || isLoading) return;
 
-        if (workspaces && workspaces.length > 0) {
-          navigate('/select-workspace', { replace: true });
-        } else {
-          navigate('/onboarding', { replace: true });
+    if (isAuthenticated) {
+      // BUG-05/BUG-11 FIX: Backend now sets auth_return_url as a short-lived
+      // cookie (non-httpOnly) instead of a query param.  Read it here.
+      const getCookieValue = (name) => {
+        const match = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+        return match ? decodeURIComponent(match.split('=')[1]) : null;
+      };
+
+      const returnUrl = getCookieValue('auth_return_url') || sessionStorage.getItem('auth_return_url');
+
+      if (returnUrl) {
+        // Clear both sources
+        document.cookie = 'auth_return_url=; Max-Age=0; path=/';
+        sessionStorage.removeItem('auth_return_url');
+
+        if (!activeWorkspace && workspaces && workspaces.length > 0) {
+          setActiveWorkspace(workspaces[0].id);
         }
-      } else {
-        // Failed to authenticate for some reason
-        navigate('/login', { replace: true });
+        navigate(returnUrl, { replace: true });
+        return;
       }
+
+      if (workspaces && workspaces.length > 0) {
+        navigate('/select-workspace', { replace: true });
+      } else {
+        navigate('/onboarding', { replace: true });
+      }
+    } else {
+      navigate('/login', { replace: true });
     }
-  }, [isLoading, isAuthenticated, workspaces, navigate]);
+  }, [isLoading, isAuthenticated, workspaces, navigate, activeWorkspace, setActiveWorkspace]);
 
   return (
     <div
