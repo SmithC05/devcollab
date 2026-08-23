@@ -145,14 +145,14 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {isEdit && canDelete && (
               <button onClick={handleDelete} style={{
-                background: '#1a1a1a', border: '1px solid #2a2a2a',
+                background: 'var(--border-strong)', border: '1px solid #2a2a2a',
                 color: '#999', borderRadius: '7px', padding: '6px 10px',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px',
               }}>
                 <Trash2 size={13} /> Delete
               </button>
             )}
-            <button onClick={onClose} style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#888', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer' }}>
+            <button onClick={onClose} style={{ background: 'var(--border-strong)', border: '1px solid #2a2a2a', color: '#888', borderRadius: '7px', padding: '6px 8px', cursor: 'pointer' }}>
               <X size={15} />
             </button>
           </div>
@@ -234,12 +234,12 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
                 <div key={comment.id || i} style={{ background: '#181818', padding: '12px', borderRadius: '8px', border: '1px solid #222' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: '#aaa' }}>{comment.author_details?.username || 'Unknown'}</span>
-                    <span style={{ fontSize: '10px', color: '#666' }}>{new Date(comment.created_at).toLocaleString()}</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{new Date(comment.created_at).toLocaleString()}</span>
                   </div>
                   <p style={{ fontSize: '13px', color: '#e5e5e5', margin: 0, whiteSpace: 'pre-wrap' }}>{comment.content}</p>
                 </div>
               ))}
-              {comments.length === 0 && <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>No comments yet.</p>}
+              {comments.length === 0 && <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>No comments yet.</p>}
             </div>
 
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -255,7 +255,7 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
                 disabled={!newComment.trim() || isSubmittingComment}
                 style={{ 
                   padding: '9px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, 
-                  background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer',
+                  background: '#3b82f6', color: 'var(--bg)', border: 'none', cursor: 'pointer',
                   opacity: (!newComment.trim() || isSubmittingComment) ? 0.5 : 1
                 }}
               >

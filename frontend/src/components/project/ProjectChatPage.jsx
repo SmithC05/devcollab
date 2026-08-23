@@ -29,7 +29,7 @@ function NewChannelModal({ onClose }) {
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
           <button onClick={onClose} style={{ padding: '8px 14px', borderRadius: '7px', background: 'transparent', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
-          <button onClick={handleCreate} style={{ padding: '8px 18px', borderRadius: '7px', background: 'var(--text-primary)', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Create</button>
+          <button onClick={handleCreate} style={{ padding: '8px 18px', borderRadius: '7px', background: 'var(--text-primary)', color: 'var(--bg)', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Create</button>
         </div>
       </div>
     </div>
@@ -38,7 +38,7 @@ function NewChannelModal({ onClose }) {
 
 function ChatSidebar({ channels, activeChannelId, onSelect, onNewChannel }) {
   return (
-    <div style={{ width: '220px', minWidth: '220px', background: '#0e0e0e', borderRight: '1px solid var(--surface-hover)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+    <div style={{ width: '220px', minWidth: '220px', background: 'var(--surface-item)', borderRight: '1px solid var(--surface-hover)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
       <div style={{ padding: '16px 14px 12px', borderBottom: '1px solid var(--surface-hover)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Channels</span>
@@ -53,7 +53,7 @@ function ChatSidebar({ channels, activeChannelId, onSelect, onNewChannel }) {
             style={{
               width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px',
               padding: '8px 10px', borderRadius: '7px',
-              background: activeChannelId === ch.id ? '#1c1c1c' : 'transparent',
+              background: activeChannelId === ch.id ? 'var(--surface-raised)' : 'transparent',
               color: activeChannelId === ch.id ? 'var(--text-primary)' : 'var(--text-secondary)',
               border: 'none', cursor: 'pointer', fontSize: '13px',
               fontFamily: 'inherit', transition: 'background 120ms', marginBottom: '2px',
@@ -76,7 +76,7 @@ function MessageBubble({ msg, prevMsg }) {
   return (
     <div style={{ display: 'flex', gap: '10px', paddingBottom: isSameSender ? '2px' : '12px', alignItems: 'flex-start' }}>
       {!isSameSender ? (
-        <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: avatarBg, color: '#ccc', border: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0, marginTop: '2px' }}>
+        <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: avatarBg, color: 'var(--text-secondary)', border: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0, marginTop: '2px' }}>
           {msg.sender[0].toUpperCase()}
         </div>
       ) : <div style={{ width: '30px', flexShrink: 0 }} />}
@@ -109,11 +109,11 @@ export default function ProjectChatPage() {
   const handleSend = () => { if (!text.trim()) return; sendMessage(activeChannelId, text.trim()); setText(''); };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#080808', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
       <ChatSidebar channels={channels} activeChannelId={activeChannelId} onSelect={setActiveChannel} onNewChannel={can('channel.create') ? () => setShowNewChannel(true) : null} />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--surface-hover)', display: 'flex', alignItems: 'center', gap: '8px', background: '#080808', flexShrink: 0 }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--surface-hover)', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg)', flexShrink: 0 }}>
           <Hash size={16} color="var(--text-muted)" />
           <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{activeChannel?.name || 'general'}</span>
           {activeChannel?.description && (
@@ -131,14 +131,14 @@ export default function ProjectChatPage() {
         </div>
 
         {can('chat.send') && (
-          <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--surface-hover)', flexShrink: 0, background: '#080808' }}>
+          <div style={{ padding: '12px 20px 16px', borderTop: '1px solid var(--surface-hover)', flexShrink: 0, background: 'var(--bg)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', borderRadius: '10px', padding: '8px 12px' }}>
               <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} placeholder={`Message #${activeChannel?.name || 'general'}...`} style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: '13px', color: 'var(--text-primary)', fontFamily: 'inherit' }} />
               <button
                 onClick={handleSend} disabled={!text.trim()}
                 style={{
                   background: text.trim() ? '#eee' : 'var(--surface-hover)', border: 'none', borderRadius: '7px',
-                  color: text.trim() ? '#080808' : 'var(--focus-ring)', cursor: text.trim() ? 'pointer' : 'default',
+                  color: text.trim() ? 'var(--bg)' : 'var(--focus-ring)', cursor: text.trim() ? 'pointer' : 'default',
                   display: 'flex', alignItems: 'center', padding: '6px 10px', transition: 'background 150ms',
                 }}
               >
@@ -154,4 +154,4 @@ export default function ProjectChatPage() {
 }
 
 const LABEL = { display: 'block', fontSize: '10px', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' };
-const INPUT_STYLE = { background: '#0e0e0e', border: '1px solid var(--border-strong)', borderRadius: '7px', padding: '9px 12px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' };
+const INPUT_STYLE = { background: 'var(--surface-item)', border: '1px solid var(--border-strong)', borderRadius: '7px', padding: '9px 12px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' };

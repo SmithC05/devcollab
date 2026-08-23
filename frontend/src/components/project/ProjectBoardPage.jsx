@@ -40,7 +40,7 @@ export default function ProjectBoardPage() {
   }, [syncEngineEvent]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#080808', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid var(--surface-hover)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexShrink: 0 }}>
         <div>
@@ -72,7 +72,7 @@ export default function ProjectBoardPage() {
           {can('task.create') && (
             <button
               onClick={() => setShowNewTask(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '8px', background: 'var(--text-primary)', color: '#080808', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
+              style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '8px 16px', borderRadius: '8px', background: 'var(--text-primary)', color: 'var(--bg)', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}
             >
               <Plus size={15} strokeWidth={2.5} /> New Task
             </button>

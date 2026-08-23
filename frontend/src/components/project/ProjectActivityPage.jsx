@@ -21,7 +21,7 @@ const TYPE_ICONS = {
 };
 
 function getIntensityColor(count) {
-  if (count === 0) return '#161b22';
+  if (count === 0) return 'var(--surface-hover)';
   if (count <= 2)  return '#0e4429';
   if (count <= 4)  return '#006d32';
   if (count <= 6)  return '#26a641';
@@ -84,7 +84,7 @@ export default function ProjectActivityPage() {
   const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
-    <div style={{ height: '100vh', overflow: 'auto', background: '#080808', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif', padding: '28px 32px' }}>
+    <div style={{ height: '100vh', overflow: 'auto', background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif', padding: '28px 32px' }}>
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Activity</h1>
@@ -96,10 +96,10 @@ export default function ProjectActivityPage() {
       {/* Contribution Graph */}
       <div style={{ background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', borderRadius: '10px', padding: '20px 24px', marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#d5d5d5' }}>Contributions — last 90 days</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Contributions — last 90 days</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Less</span>
-            {['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'].map((c) => (
+            {['var(--surface-hover)', '#0e4429', '#006d32', '#26a641', '#39d353'].map((c) => (
               <div key={c} style={{ width: '12px', height: '12px', borderRadius: '2px', background: c }} />
             ))}
             <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>More</span>
@@ -109,7 +109,7 @@ export default function ProjectActivityPage() {
         <div style={{ display: 'flex', gap: '4px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginRight: '4px', paddingTop: '2px' }}>
             {DAY_LABELS.map((d) => (
-              <div key={d} style={{ height: '11px', fontSize: '9px', color: 'var(--focus-ring)', lineHeight: '11px', width: '22px' }}>{d}</div>
+              <div key={d} style={{ height: '11px', fontSize: '9px', color: 'var(--text-secondary)', lineHeight: '11px', width: '22px' }}>{d}</div>
             ))}
           </div>
           {weeks.map((week, wi) => (
@@ -139,7 +139,7 @@ export default function ProjectActivityPage() {
               border: '1px solid',
               borderColor: activeFilter === f.id ? 'var(--text-muted)' : 'var(--border-strong)',
               background: activeFilter === f.id ? 'var(--surface-hover)' : 'transparent',
-              color: activeFilter === f.id ? '#eee' : 'var(--text-muted)',
+              color: activeFilter === f.id ? 'var(--text-primary)' : 'var(--text-muted)',
               cursor: 'pointer', transition: 'all 120ms',
             }}
           >
@@ -156,11 +156,11 @@ export default function ProjectActivityPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
               {events.map((ev) => (
                 <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', borderRadius: '10px', background: 'var(--surface-raised)', border: '1px solid var(--surface-hover)', marginBottom: '10px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--surface-raised)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
                     {TYPE_ICONS[ev.type]}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: '14px', color: '#e5e5e5' }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
                       <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{ev.user}</strong> {ev.action}
                     </span>
                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>

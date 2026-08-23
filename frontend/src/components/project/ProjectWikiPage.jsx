@@ -27,8 +27,8 @@ function useDebounce(fn, delay) {
 // ─── sidebar ─────────────────────────────────────────────────────────────────
 function WikiSidebar({ pages, activeId, onSelect, onCreate, onDelete, onRename, canCreate, canDelete, loading }) {
   return (
-    <div style={{ width: '220px', minWidth: '220px', background: '#0e0e0e', borderRight: '1px solid #1a1a1e', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-      <div style={{ padding: '14px 12px 10px', borderBottom: '1px solid #1a1a1e', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ width: '220px', minWidth: '220px', background: 'var(--surface-item)', borderRight: '1px solid #1a1a1e', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      <div style={{ padding: '14px 12px 10px', borderBottom: '1px solid var(--border-strong)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Pages</span>
         {canCreate && (
           <button onClick={onCreate} title="New page" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', borderRadius: '4px', padding: '3px', transition: 'color 150ms' }}
@@ -49,9 +49,9 @@ function WikiSidebar({ pages, activeId, onSelect, onCreate, onDelete, onRename, 
         )}
         {pages.map(page => (
           <div key={page.id} onClick={() => onSelect(page)}
-            style={{ padding: '8px 10px', borderRadius: '7px', fontSize: '13px', color: activeId === page.id ? 'var(--text-primary)' : 'var(--text-secondary)', background: activeId === page.id ? '#1c1c1c' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 120ms', marginBottom: '2px' }}
-            onMouseEnter={e => e.currentTarget.style.background = activeId === page.id ? '#1c1c1c' : '#141414'}
-            onMouseLeave={e => e.currentTarget.style.background = activeId === page.id ? '#1c1c1c' : 'transparent'}
+            style={{ padding: '8px 10px', borderRadius: '7px', fontSize: '13px', color: activeId === page.id ? 'var(--text-primary)' : 'var(--text-secondary)', background: activeId === page.id ? 'var(--surface-raised)' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 120ms', marginBottom: '2px' }}
+            onMouseEnter={e => e.currentTarget.style.background = activeId === page.id ? 'var(--surface-raised)' : 'var(--surface-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = activeId === page.id ? 'var(--surface-raised)' : 'transparent'}
           >
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{page.title}</span>
 
@@ -93,7 +93,7 @@ function WikiSidebar({ pages, activeId, onSelect, onCreate, onDelete, onRename, 
 function TB({ onClick, active, children, title }) {
   return (
     <button onMouseDown={e => { e.preventDefault(); onClick(); }} title={title}
-      style={{ background: active ? '#2a2a2e' : 'none', border: 'none', color: active ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', padding: '5px 7px', borderRadius: '5px', display: 'flex', alignItems: 'center', transition: 'all 120ms' }}
+      style={{ background: active ? 'var(--border-strong)' : 'none', border: 'none', color: active ? 'var(--text-primary)' : 'var(--text-secondary)', cursor: 'pointer', padding: '5px 7px', borderRadius: '5px', display: 'flex', alignItems: 'center', transition: 'all 120ms' }}
     >{children}</button>
   );
 }
@@ -216,7 +216,7 @@ export default function ProjectWikiPage() {
 
   // ─── render ───────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#080808', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', fontFamily: 'Inter, system-ui, sans-serif', overflow: 'hidden' }}>
       <style>{`
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         .ProseMirror { outline: none; font-size: 14px; color: #d5d5d5; line-height: 1.8; min-height: 200px; }
@@ -244,14 +244,14 @@ export default function ProjectWikiPage() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Toolbar */}
         {editor && canEdit && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '8px 16px', borderBottom: '1px solid #1a1a1e', background: '#0e0e0e', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', padding: '8px 16px', borderBottom: '1px solid var(--border-strong)', background: 'var(--surface-item)', flexShrink: 0 }}>
             <TB onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold"><Bold size={14} /></TB>
             <TB onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic"><Italic size={14} /></TB>
             <TB onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} title="Heading 2"><Heading2 size={14} /></TB>
-            <div style={{ width: '1px', height: '16px', background: '#2a2a2e', margin: '0 4px' }} />
+            <div style={{ width: '1px', height: '16px', background: 'var(--border-strong)', margin: '0 4px' }} />
             <TB onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet List"><List size={14} /></TB>
             <TB onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Ordered List"><ListOrdered size={14} /></TB>
-            <div style={{ width: '1px', height: '16px', background: '#2a2a2e', margin: '0 4px' }} />
+            <div style={{ width: '1px', height: '16px', background: 'var(--border-strong)', margin: '0 4px' }} />
             <TB onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} title="Code Block"><Code size={14} /></TB>
             <div style={{ flex: 1 }} />
             {/* Save status */}
@@ -266,7 +266,7 @@ export default function ProjectWikiPage() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
             <FileText size={44} style={{ marginBottom: '16px', opacity: 0.3 }} />
             <p style={{ fontSize: '14px', margin: '0 0 12px' }}>No wiki pages yet.</p>
-            {canCreate && <button onClick={handleCreate} style={{ padding: '8px 18px', borderRadius: '8px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Create First Page</button>}
+            {canCreate && <button onClick={handleCreate} style={{ padding: '8px 18px', borderRadius: '8px', background: 'var(--text-primary)', color: 'var(--bg)', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700 }}>Create First Page</button>}
           </div>
         )}
 
@@ -292,7 +292,7 @@ export default function ProjectWikiPage() {
                 <span>Updated: {new Date(activePage.updated_at).toLocaleString()}</span>
                 {activePage.updated_by && <span>by {activePage.updated_by}</span>}
               </div>
-              <div style={{ borderTop: '1px solid #1a1a1e', marginBottom: '0' }} />
+              <div style={{ borderTop: '1px solid var(--border-strong)', marginBottom: '0' }} />
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '20px 40px 48px' }}>
               <EditorContent editor={editor} />

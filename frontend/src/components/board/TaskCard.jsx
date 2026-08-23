@@ -74,7 +74,7 @@ export default function TaskCard({ task, onClick }) {
           {task.labels.slice(0, 3).map((label) => (
             <span key={label} style={{
               fontSize: '10px', padding: '1px 7px', borderRadius: '999px',
-              background: '#181818', color: '#666', border: '1px solid #252525',
+              background: '#181818', color: 'var(--text-secondary)', border: '1px solid #252525',
             }}>
               {label}
             </span>

@@ -26,7 +26,7 @@ const ROLE_RANK = { OWNER: 0, Owner: 0, ADMIN: 1, Admin: 1, LEAD: 2, Lead: 2, DE
 /* ─── avatar ─────────────────────────────────────────────────────────────── */
 function Avatar({ name, size = 34 }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: '#2a2a2e', color: '#fff', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.38, flexShrink: 0 }}>
+    <div style={{ width: size, height: size, borderRadius: '50%', background: 'var(--border-strong)', color: '#fff', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.38, flexShrink: 0 }}>
       {(name || '?')[0].toUpperCase()}
     </div>
   );
@@ -60,7 +60,7 @@ function InviteModal({ workspaceId, onClose, onInvited }) {
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#141416', border: '1px solid #2a2a2e', borderRadius: '14px', width: '460px', padding: '28px', position: 'relative', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
+      <div style={{ background: 'var(--surface-item)', border: '1px solid #2a2a2e', borderRadius: '14px', width: '460px', padding: '28px', position: 'relative', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
         <button onClick={onClose} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={16} /></button>
 
         {state === 'success' ? (
@@ -72,7 +72,7 @@ function InviteModal({ workspaceId, onClose, onInvited }) {
         ) : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '9px', background: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <UserPlus size={16} color="#fff" />
               </div>
               <div>
@@ -84,13 +84,13 @@ function InviteModal({ workspaceId, onClose, onInvited }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>NAME (optional)</label>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Their name" style={{ width: '100%', boxSizing: 'border-box', background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="Their name" style={{ width: '100%', boxSizing: 'border-box', background: 'var(--surface-item)', border: '1px solid #2a2a2e', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
               </div>
               <div>
                 <label style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>EMAIL ADDRESS *</label>
                 <div style={{ position: 'relative' }}>
                   <Mail size={13} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input autoFocus value={email} onChange={e => { setEmail(e.target.value); if (state === 'error') setState('idle'); }} onKeyDown={e => e.key === 'Enter' && send()} placeholder="colleague@company.com" type="email" style={{ width: '100%', boxSizing: 'border-box', background: '#0e0e0e', border: `1px solid ${state === 'error' ? '#f87171' : '#2a2a2e'}`, borderRadius: '8px', padding: '10px 14px 10px 34px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
+                  <input autoFocus value={email} onChange={e => { setEmail(e.target.value); if (state === 'error') setState('idle'); }} onKeyDown={e => e.key === 'Enter' && send()} placeholder="colleague@company.com" type="email" style={{ width: '100%', boxSizing: 'border-box', background: 'var(--surface-item)', border: `1px solid ${state === 'error' ? '#f87171' : 'var(--border-strong)'}`, borderRadius: '8px', padding: '10px 14px 10px 34px', fontSize: '14px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
                 </div>
               </div>
               <div>
@@ -104,7 +104,7 @@ function InviteModal({ workspaceId, onClose, onInvited }) {
                 </div>
               </div>
               {state === 'error' && <div style={{ background: '#f8717118', border: '1px solid #f8717144', borderRadius: '7px', padding: '10px 14px', fontSize: '12px', color: '#f87171' }}>{errMsg}</div>}
-              <button onClick={send} disabled={!email.trim() || state === 'loading'} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: email.trim() && state !== 'loading' ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : '#1a1a1e', color: email.trim() && state !== 'loading' ? '#fff' : 'var(--text-muted)', border: 'none', cursor: email.trim() ? 'pointer' : 'not-allowed', fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 120ms' }}>
+              <button onClick={send} disabled={!email.trim() || state === 'loading'} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: email.trim() && state !== 'loading' ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'var(--border-strong)', color: email.trim() && state !== 'loading' ? '#fff' : 'var(--text-muted)', border: 'none', cursor: email.trim() ? 'pointer' : 'not-allowed', fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 120ms' }}>
                 {state === 'loading' && <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />}
                 {state === 'loading' ? 'Sending…' : 'Send Invitation'}
               </button>
@@ -168,7 +168,7 @@ export default function ProjectMembersPage() {
   };
 
   return (
-    <div style={{ height: '100vh', overflow: 'auto', background: '#0d0d0f', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif', padding: '32px 36px' }}>
+    <div style={{ height: '100vh', overflow: 'auto', background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif', padding: '32px 36px' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -187,23 +187,23 @@ export default function ProjectMembersPage() {
           <button
             id="team-invite-btn"
             onClick={() => setShowInvite(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '9px', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, marginTop: '6px', boxShadow: '0 4px 20px rgba(99,102,241,0.3)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '9px', background: 'var(--text-primary)', color: 'var(--bg)', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, marginTop: '6px', boxShadow: '0 4px 20px rgba(99,102,241,0.3)' }}
           >
             <UserPlus size={14} /> Invite People
           </button>
         )}
       </div>
 
-      <div style={{ borderTop: '1px solid #1a1a1e', margin: '20px 0' }} />
+      <div style={{ borderTop: '1px solid var(--border-strong)', margin: '20px 0' }} />
 
       {/* Search */}
       <div style={{ position: 'relative', marginBottom: '20px', maxWidth: '360px' }}>
         <Search size={13} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search members…" style={{ width: '100%', boxSizing: 'border-box', background: '#141416', border: '1px solid #1f1f24', borderRadius: '9px', padding: '9px 12px 9px 34px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search members…" style={{ width: '100%', boxSizing: 'border-box', background: 'var(--surface-item)', border: '1px solid #1f1f24', borderRadius: '9px', padding: '9px 12px 9px 34px', fontSize: '13px', color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit' }} />
       </div>
 
       {/* Members table */}
-      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface-item)', border: '1px solid #1f1f24', borderRadius: '12px', overflow: 'hidden' }}>
         {/* Column headers */}
         <div style={{ display: 'grid', gridTemplateColumns: isOwner ? '2fr 1fr 1fr 1fr auto' : '2fr 1fr 1fr', padding: '10px 20px', borderBottom: '1px solid #1f1f24', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.09em', textTransform: 'uppercase' }}>
           <span>Member</span><span>Role</span><span>Status</span>
@@ -230,7 +230,7 @@ export default function ProjectMembersPage() {
 
             return (
               <div key={member.id} style={{ display: 'grid', gridTemplateColumns: isOwner ? '2fr 1fr 1fr 1fr auto' : '2fr 1fr 1fr', padding: '14px 20px', borderBottom: idx < filtered.length - 1 ? '1px solid #1a1a1e' : 'none', alignItems: 'center', transition: 'background 150ms', opacity: removing === member.id ? 0.4 : 1 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#1a1a1e'}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--border-strong)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 {/* Member info */}

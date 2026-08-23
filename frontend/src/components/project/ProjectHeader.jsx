@@ -36,13 +36,13 @@ export default function ProjectHeader() {
             gap: '5px', padding: '4px 8px', borderRadius: '6px',
             fontSize: '12px', fontWeight: 500, transition: 'background 120ms',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#1c1c1c'}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-raised)'}
           onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
           <ArrowLeft size={13} strokeWidth={2} />
           Projects
         </button>
-        <span style={{ color: '#333' }}>/</span>
+        <span style={{ color: 'var(--border-strong)' }}>/</span>
         <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{projectName}</span>
       </div>
 
