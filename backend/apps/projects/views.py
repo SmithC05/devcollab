@@ -298,15 +298,7 @@ class ProjectListView(APIView):
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
         if not workspace:
-            workspace = Workspace.objects.create(
-                name="Default Workspace",
-                owner=request.user
-            )
-            WorkspaceMembership.objects.create(
-                workspace=workspace,
-                user=request.user,
-                role='OWNER'
-            )
+            return Response({"error": "Workspace not found."}, status=404)
         
         # Enforce free plan limit
         current_project_count = Project.objects.filter(workspace=workspace).count()
@@ -392,6 +384,78 @@ class WorkspaceMembersView(APIView):
             pass
 
         return Response(data)
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from apps.workspaces.views import MiddlewareAuthentication
+
+@method_decorator(csrf_exempt, name='dispatch')
+class WorkspaceMemberDetailView(APIView):
+    authentication_classes = [MiddlewareAuthentication]
+    
+    def delete(self, request, user_id):
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication required"}, status=401)
+            
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace:
+            return Response({"error": "Workspace not found"}, status=404)
+            
+        # Enforce OWNER or ADMIN role
+        has_permission, error_msg = check_workspace_role(request.user, workspace.id, ['OWNER', 'ADMIN'])
+        if not has_permission:
+            return Response({"error": error_msg}, status=403)
+            
+        try:
+            target_membership = WorkspaceMembership.objects.get(workspace=workspace, user_id=user_id)
+        except WorkspaceMembership.DoesNotExist:
+            return Response({"error": "Member not found in workspace"}, status=404)
+            
+        # OWNER protection
+        if target_membership.role == 'OWNER':
+            return Response({"error": "Workspace owner cannot be removed."}, status=403)
+            
+        # Perform removal
+        target_membership.delete()
+        
+        # Remove from tasks (simulate project member removal)
+        tasks = Task.objects.filter(project__workspace=workspace, assignee_id=user_id)
+        tasks.update(assignee=None)
+        
+        return Response({"success": True, "message": "Member removed successfully"})
+
+    def put(self, request, user_id):
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication required"}, status=401)
+            
+        from apps.workspaces.permissions import get_current_workspace
+        workspace = get_current_workspace(request)
+        if not workspace:
+            return Response({"error": "Workspace not found"}, status=404)
+            
+        # Only OWNER can change roles
+        has_permission, error_msg = check_workspace_role(request.user, workspace.id, ['OWNER'])
+        if not has_permission:
+            return Response({"error": "Only the workspace owner can change roles."}, status=403)
+            
+        try:
+            target_membership = WorkspaceMembership.objects.get(workspace=workspace, user_id=user_id)
+        except WorkspaceMembership.DoesNotExist:
+            return Response({"error": "Member not found in workspace"}, status=404)
+            
+        # Cannot change the OWNER's role
+        if target_membership.role == 'OWNER':
+            return Response({"error": "Cannot change the role of the workspace owner."}, status=403)
+            
+        new_role = request.data.get('role')
+        if not new_role or new_role not in ['ADMIN', 'LEAD', 'DEVELOPER']:
+            return Response({"error": "Invalid role specified."}, status=400)
+            
+        target_membership.role = new_role
+        target_membership.save()
+        
+        return Response({"success": True, "message": "Role updated successfully", "role": new_role})
 
 class WorkspaceBillingView(APIView):
     permission_classes = [IsAuthenticated]
