@@ -9,6 +9,20 @@ export const taskApi = {
     return apiClient(url);
   },
 
+  createTask: async (projectId, taskData) => {
+    return apiClient('/tasks/', {
+      method: 'POST',
+      body: JSON.stringify({ ...taskData, project: projectId }),
+    });
+  },
+
+  updateTask: async (taskId, taskData) => {
+    return apiClient(`/tasks/${taskId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(taskData),
+    });
+  },
+
   moveTask: async (taskId, newStatus, newPosition) => {
     return apiClient(`/tasks/${taskId}/move/`, {
       method: 'POST',
