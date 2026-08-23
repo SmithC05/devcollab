@@ -3,8 +3,12 @@ import { Settings2, User, Bell, Palette, AlertTriangle, Save } from 'lucide-reac
 import { useTheme } from '../../hooks/useTheme';
 import PageContainer from '../layout/PageContainer';
 import { Card, Button, Spinner, Input, SectionHeader, Tabs, Tab } from '../ui/index';
+import DeveloperProfileSettings from './DeveloperProfileSettings';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
 
 export default function WorkspaceSettingsPage() {
+  const { activeWorkspace } = useAuthStore();
   const [activeTab, setActiveTab] = useState('Workspace');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -15,9 +19,8 @@ export default function WorkspaceSettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/workspace/settings/');
-        if (!response.ok) throw new Error('Failed to load settings');
-        const json = await response.json();
+        // BUG-18 FIX: Use workspaceApi.getSettings with workspace_id
+        const json = await workspaceApi.getSettings(activeWorkspace?.id);
         setData(json);
       } catch (err) {
         setError(err.message);
@@ -26,18 +29,14 @@ export default function WorkspaceSettingsPage() {
       }
     };
     fetchSettings();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   const handleSaveWorkspace = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch('/api/workspace/settings/', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error('Failed to save');
+      // BUG-18 FIX: Use workspaceApi.updateSettings with workspace_id
+      await workspaceApi.updateSettings(activeWorkspace?.id, data);
     } catch (err) {
       alert(err.message);
     } finally {
@@ -133,15 +132,19 @@ export default function WorkspaceSettingsPage() {
         )}
 
         {activeTab === 'Profile' && (
-          <Card className="p-6">
-            <div className="mb-6">
-              <h2 className="text-[16px] font-semibold text-[var(--fg)] mb-1">Profile</h2>
-              <p className="text-[13px] text-[var(--text-secondary)]">Manage your personal developer profile.</p>
-            </div>
-            <div className="py-12 border border-dashed border-[var(--border-strong)] rounded-xl text-center text-[var(--text-muted)] text-[13px]">
-              Profile fields (Avatar, Bio, GitHub link) — backend schema update pending.
-            </div>
-          </Card>
+          <div className="space-y-6">
+            <Card className="p-6">
+              <div className="mb-6">
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] mb-1">Profile</h2>
+                <p className="text-[13px] text-[var(--text-secondary)]">Manage your personal developer profile.</p>
+              </div>
+              <div className="py-12 border border-dashed border-[var(--border-strong)] rounded-xl text-center text-[var(--text-muted)] text-[13px]">
+                Profile fields (Avatar, Bio) — backend schema update pending.
+              </div>
+            </Card>
+            
+            <DeveloperProfileSettings />
+          </div>
         )}
 
         {activeTab === 'Appearance' && (

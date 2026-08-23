@@ -58,7 +58,7 @@ function SideNavLink({ to, end, onClick, icon: Icon, children, collapsed }) {
   );
 }
 
-export default function Sidebar({ workspaceName, isOpen, onClose }) {
+export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { user, activeWorkspace } = useAuthStore();
   
@@ -143,7 +143,7 @@ export default function Sidebar({ workspaceName, isOpen, onClose }) {
                   </span>
                   {groupIdx === 0 && (
                     <span className="text-[14px] font-semibold text-[var(--text-primary)] mb-2 truncate">
-                      {workspaceName || activeWorkspace?.name || 'Team Thunder'}
+                      {activeWorkspace?.name || 'Team Thunder'}
                     </span>
                   )}
                 </div>

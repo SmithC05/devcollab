@@ -1,6 +1,8 @@
 import { useAuthStore } from '../stores/authStore';
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+// BUG-03 FIX: Use VITE_API_BASE_URL from .env.local instead of hardcoding localhost
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/api`;
+
 
 export const apiClient = async (endpoint, options = {}) => {
   const { accessToken } = useAuthStore.getState();

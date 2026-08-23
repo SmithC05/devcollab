@@ -39,12 +39,26 @@ import JudgeMode                 from '../features/devcollab-intelligence/pages/
 import DevCollabDemoMode, { DemoStartScreen } from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
 import InvitationPage       from '../pages/InvitationPage';
 import LandingPage          from '../pages/LandingPage';
+// L-03 FIX: Moved these imports from mid-file to top where they belong
+import WorkspaceProjectsPage from '../components/workspace/WorkspaceProjectsPage';
+import WorkspaceActivityPage from '../components/workspace/WorkspaceActivityPage';
+import WorkspaceMembersPage from '../components/workspace/WorkspaceMembersPage';
+import WorkspaceBillingPage from '../components/workspace/WorkspaceBillingPage';
+import WorkspaceSettingsPage from '../components/workspace/WorkspaceSettingsPage';
+import WorkspaceAIAssistantPage from '../components/workspace/WorkspaceAIAssistantPage';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
-  const { isAuthenticated, workspaces } = useAuthStore();
+  const { isAuthenticated, isLoading, workspaces, activeWorkspace } = useAuthStore();
+
+  // BUG-06/20 FIX: Don't redirect while the /me call is still in flight.
+  // Previously isLoading wasn't checked, so guards fired during hydration
+  // before workspaces had loaded, causing false redirects to /login.
+  if (isLoading) return null;
 
   if (isAuthenticated) {
+    // BUG-14 FIX: If they already have an active workspace go straight to dashboard
+    if (activeWorkspace) return <Navigate to="/dashboard" replace />;
     if (workspaces?.length > 0) return <Navigate to="/select-workspace" replace />;
     return <Navigate to="/onboarding" replace />;
   }
@@ -53,7 +67,8 @@ function PublicOnlyRoute({ children }) {
 }
 
 function RequireOnboarding({ children }) {
-  const { isAuthenticated, workspaces } = useAuthStore();
+  const { isAuthenticated, isLoading, workspaces } = useAuthStore();
+  if (isLoading) return null;  // BUG-20 FIX: wait for hydration
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (workspaces?.length > 0) return <Navigate to="/select-workspace" replace />;
@@ -62,7 +77,8 @@ function RequireOnboarding({ children }) {
 }
 
 function RequireSelectWorkspace({ children }) {
-  const { isAuthenticated, workspaces } = useAuthStore();
+  const { isAuthenticated, isLoading, workspaces } = useAuthStore();
+  if (isLoading) return null;  // BUG-20 FIX: wait for hydration
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!workspaces || workspaces.length === 0) return <Navigate to="/onboarding" replace />;
@@ -71,7 +87,8 @@ function RequireSelectWorkspace({ children }) {
 }
 
 function RequireWorkspace({ children }) {
-  const { isAuthenticated, workspaces, activeWorkspace } = useAuthStore();
+  const { isAuthenticated, isLoading, workspaces, activeWorkspace } = useAuthStore();
+  if (isLoading) return null;  // BUG-06 FIX: wait for hydration
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!workspaces || workspaces.length === 0) return <Navigate to="/onboarding" replace />;
@@ -80,18 +97,11 @@ function RequireWorkspace({ children }) {
   return children;
 }
 
-import WorkspaceProjectsPage from '../components/workspace/WorkspaceProjectsPage';
-import WorkspaceActivityPage from '../components/workspace/WorkspaceActivityPage';
-import WorkspaceMembersPage from '../components/workspace/WorkspaceMembersPage';
-import WorkspaceBillingPage from '../components/workspace/WorkspaceBillingPage';
-import WorkspaceSettingsPage from '../components/workspace/WorkspaceSettingsPage';
-import WorkspaceAIAssistantPage from '../components/workspace/WorkspaceAIAssistantPage';
-
 // ── Routes ────────────────────────────────────────────────────────────────
 
 export default function AppRoutes() {
   const { activeWorkspace } = useAuthStore();
-  const workspaceName = activeWorkspace?.name || '';
+
 
   return (
     <Routes>
@@ -145,11 +155,13 @@ export default function AppRoutes() {
         path="/dashboard"
         element={
           <RequireWorkspace>
-            <WorkspaceLayout workspaceName={workspaceName} />
+            {/* BUG-15 FIX: WorkspaceLayout reads workspace from store, no prop needed */}
+            <WorkspaceLayout />
           </RequireWorkspace>
         }
       >
-        <Route index element={<WorkspaceOverview setWorkspaceName={() => { }} />} />
+        <Route index element={<WorkspaceOverview />} />
+
         <Route path="projects" element={<WorkspaceProjectsPage />} />
         <Route path="activity" element={<WorkspaceActivityPage />} />
         <Route path="members" element={<WorkspaceMembersPage />} />

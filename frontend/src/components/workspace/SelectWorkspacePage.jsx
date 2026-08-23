@@ -22,6 +22,7 @@ export default function SelectWorkspacePage() {
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [actionError, setActionError] = useState(null);  // L-05: surface errors to UI
 
   useEffect(() => {
     refreshWorkspaces();
@@ -33,15 +34,27 @@ export default function SelectWorkspacePage() {
   };
 
   const handleCreate = async (name, slug, description) => {
-    await workspaceApi.createWorkspace(name, slug, user?.id);
-    await refreshWorkspaces();
-    setIsCreateOpen(false);
+    setActionError(null);
+    try {
+      // BUG-09 FIX: Backend now uses request.user — don't pass user.id
+      await workspaceApi.createWorkspace(name, slug);
+      await refreshWorkspaces();
+      setIsCreateOpen(false);
+    } catch (err) {
+      setActionError(err.message || 'Failed to create workspace');
+    }
   };
 
   const handleJoin = async (inviteCode) => {
-    await workspaceApi.joinWorkspace(inviteCode, user?.id);
-    await refreshWorkspaces();
-    setIsJoinOpen(false);
+    setActionError(null);
+    try {
+      // BUG-10 FIX: Backend now uses request.user — don't pass user.id
+      await workspaceApi.joinWorkspace(inviteCode);
+      await refreshWorkspaces();
+      setIsJoinOpen(false);
+    } catch (err) {
+      setActionError(err.message || 'Failed to join workspace');
+    }
   };
 
   return (
@@ -130,11 +143,13 @@ export default function SelectWorkspacePage() {
                 <div className="mt-8 pt-5 border-t border-[#242424] flex items-center gap-6 text-[#A1A1AA]">
                   <div className="flex items-center gap-2">
                     <Users size={16} />
-                    <span className="text-[14px] font-medium">{ws.members?.length || 1}</span>
+                    {/* BUG-12 FIX: Backend returns memberCount, not members.length */}
+                    <span className="text-[14px] font-medium">{ws.memberCount ?? 1}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <FolderOpen size={16} />
-                    <span className="text-[14px] font-medium">{ws.projectsCount || 0}</span>
+                    {/* BUG-12 FIX: Backend returns projectCount, not projectsCount */}
+                    <span className="text-[14px] font-medium">{ws.projectCount ?? 0}</span>
                   </div>
                 </div>
               </button>
@@ -149,6 +164,13 @@ export default function SelectWorkspacePage() {
             <p className="text-[14px] text-[#A1A1AA] max-w-sm">
               You don't belong to any workspaces yet. Create a new one or join an existing team.
             </p>
+          </div>
+        )}
+
+        {/* L-05: Surface action errors */}
+        {actionError && (
+          <div className="mt-4 px-4 py-3 bg-red-900/30 border border-red-700 rounded-xl text-red-400 text-[13px]">
+            {actionError}
           </div>
         )}
 

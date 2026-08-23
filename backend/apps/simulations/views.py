@@ -21,6 +21,7 @@ def evaluate_scenario(request):
     task_id = data.get('task_id')
     trigger = data.get('trigger', 'MANUAL_EVALUATION')
     candidate_ids = data.get('candidate_ids', [])
+    is_demo = data.get('is_demo', False)
     
     try:
         task = Task.objects.get(id=task_id)
@@ -31,7 +32,7 @@ def evaluate_scenario(request):
     
     for c_id in candidate_ids:
         # run_simulation executes read-only deterministic scoring across all interventions
-        results = run_simulation(task.id, c_id)
+        results = run_simulation(task.id, c_id, is_demo)
         evaluation_results.append({
             "candidate_id": c_id,
             "interventions": results

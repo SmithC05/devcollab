@@ -3,8 +3,11 @@ import { Activity, Clock, Filter, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
 import { Card, CardHeader, Spinner, SectionHeader, StatCard, EmptyState } from '../ui/index';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
 
 export default function WorkspaceActivityPage() {
+  const { activeWorkspace } = useAuthStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,9 +16,8 @@ export default function WorkspaceActivityPage() {
   useEffect(() => {
     const fetchActivity = async () => {
       try {
-        const response = await fetch('/api/workspace/activity/');
-        if (!response.ok) throw new Error('Failed to load activity');
-        const json = await response.json();
+        // BUG-18 FIX: Use workspaceApi.getActivity with workspace_id
+        const json = await workspaceApi.getActivity(activeWorkspace?.id);
         setData(json);
       } catch (err) {
         setError(err.message);
@@ -24,7 +26,7 @@ export default function WorkspaceActivityPage() {
       }
     };
     fetchActivity();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   return (
     <PageContainer>

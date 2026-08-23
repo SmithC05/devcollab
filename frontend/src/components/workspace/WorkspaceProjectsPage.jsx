@@ -7,6 +7,9 @@ import { Button, Spinner, EmptyState, Badge, SearchInput, IconButton, Card, Tabl
 import { useNavigate } from 'react-router-dom';
 import CreateProjectModal from '../project/CreateProjectModal';
 import LaunchScreen from '../project/LaunchScreen';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
+
 // --- Utilities ---
 const formatRelativeTime = (dateString) => {
   if (!dateString) return 'Updated recently';
@@ -57,6 +60,7 @@ const MetricBlock = ({ label, value }) => (
 
 // --- Main Page Component ---
 export default function WorkspaceProjectsPage() {
+  const { activeWorkspace } = useAuthStore();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,10 +74,8 @@ export default function WorkspaceProjectsPage() {
 
   const handleCreateProject = async (name) => {
     try {
-      const newProject = await apiClient('/workspace/projects/', {
-        method: 'POST',
-        body: JSON.stringify({ name })
-      });
+      // BUG-18 FIX: Use workspaceApi.createProject with workspace_id
+      const newProject = await workspaceApi.createProject(activeWorkspace?.id, name);
       setProjects(prev => [newProject, ...prev]);
       setIsCreateModalOpen(false);
     } catch (err) {
@@ -84,7 +86,8 @@ export default function WorkspaceProjectsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await apiClient('/workspace/projects/');
+        // BUG-18 FIX: Use workspaceApi.getProjects with workspace_id
+        const data = await workspaceApi.getProjects(activeWorkspace?.id);
         setProjects(data);
       } catch (err) {
         setError(err.message);
@@ -93,7 +96,7 @@ export default function WorkspaceProjectsPage() {
       }
     };
     fetchProjects();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   const filteredProjects = projects.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());

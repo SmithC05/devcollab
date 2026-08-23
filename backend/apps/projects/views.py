@@ -181,8 +181,10 @@ class SnippetDetailView(APIView):
 # ─── workspace members (fixed: uses actual role from WorkspaceMembership) ─────
 
 class WorkspaceOverviewView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
+        workspace, membership = _get_user_workspace(request)
         if not workspace:
             return Response({
                 "workspace_name": "Workspace", "user_name": "User",
@@ -252,7 +254,7 @@ class WorkspaceOverviewView(APIView):
 
         return Response({
             "workspace_name": workspace.name,
-            "user_name": f"{request.user.first_name} {request.user.last_name}".strip() if request.user.is_authenticated else "dev collab",
+            "user_name": f"{user.first_name} {user.last_name}".strip() or user.username,
             "total_projects": total_projects_count,
             "tasks_pending": tasks_pending_count,
             "tasks_completed": tasks_completed_count,
@@ -268,9 +270,12 @@ class WorkspaceOverviewView(APIView):
 
 
 class ProjectListView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response([])
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response([])
         projects = Project.objects.filter(workspace=workspace)
         data = []
         for p in projects:
@@ -289,11 +294,11 @@ class ProjectListView(APIView):
         return Response(data)
 
     def post(self, request):
-        workspace = Workspace.objects.first()
+        workspace, _ = _get_user_workspace(request)
         if not workspace:
             workspace = Workspace.objects.create(
                 name="Default Workspace",
-                owner=request.user if request.user.is_authenticated else User.objects.first()
+                owner=request.user
             )
             if request.user.is_authenticated:
                 WorkspaceMembership.objects.create(workspace=workspace, user=request.user, role='OWNER')
@@ -317,24 +322,29 @@ class ProjectListView(APIView):
 
 
 class WorkspaceActivityView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response({})
-        projects = Project.objects.filter(workspace=workspace, is_active=True).count()
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response({})
+        projects_count = Project.objects.filter(workspace=workspace, is_active=True).count()
         return Response({
             "total_events": 0, "today_events": 0,
             "active_projects": projects, "recent_activity": [], "heatmap": []
         })
 
 
+
 class WorkspaceMembersView(APIView):
     """Fixed: uses actual WorkspaceMembership.role instead of is_superuser heuristic."""
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response([])
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response([])
         data = []
-        for membership in workspace.memberships.select_related('user').all():
-            m = membership.user
+        for mem in workspace.memberships.select_related('user').all():
+            m = mem.user
             data.append({
                 "id": m.id,
                 "name": f"{m.first_name} {m.last_name}".strip() or m.username,
@@ -366,9 +376,12 @@ class WorkspaceMembersView(APIView):
 
 
 class WorkspaceBillingView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response({})
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response({})
         projects_count = Project.objects.filter(workspace=workspace).count()
         members_count = workspace.memberships.count()
         return Response({
@@ -381,18 +394,66 @@ class WorkspaceBillingView(APIView):
 
 
 class WorkspaceSettingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        workspace = Workspace.objects.first()
-        if not workspace: return Response({})
+        workspace, _ = _get_user_workspace(request)
+        if not workspace:
+            return Response({})
         return Response({
             "name": workspace.name,
-            "slug": workspace.name.lower().replace(" ", "-"),
+            "slug": workspace.slug or workspace.name.lower().replace(" ", "-"),
             "description": "Development Workspace"
         })
 
+
     def put(self, request):
-        workspace = Workspace.objects.first()
-        if workspace:
-            workspace.name = request.data.get('name', workspace.name)
-            workspace.save()
+        workspace, membership = _get_user_workspace(request)
+        if not workspace:
+            return Response({"error": "Workspace not found"}, status=404)
+        if membership and membership.role not in ['OWNER', 'ADMIN']:
+            return Response({"error": "Insufficient permissions"}, status=403)
+        workspace.name = request.data.get('name', workspace.name)
+        workspace.save()
         return Response({"status": "success"})
+
+class ProjectRepositoryMappingView(APIView):
+    def get(self, request, project_id):
+        from apps.projects.models import ProjectRepositoryMapping, Project
+        try:
+            project = Project.objects.get(id=project_id)
+            mapping = ProjectRepositoryMapping.objects.get(project=project)
+            return Response({
+                "github_repository_full_name": mapping.github_repository_full_name,
+                "active": mapping.active
+            })
+        except Project.DoesNotExist:
+            return Response({"error": "Project not found"}, status=404)
+        except ProjectRepositoryMapping.DoesNotExist:
+            return Response({"github_repository_full_name": None, "active": False})
+
+    def post(self, request, project_id):
+        from apps.projects.models import ProjectRepositoryMapping, Project
+        try:
+            project = Project.objects.get(id=project_id)
+            repo_name = request.data.get("github_repository_full_name")
+            active = request.data.get("active", True)
+            
+            if not repo_name:
+                # If they pass empty string or None, they are un-linking
+                ProjectRepositoryMapping.objects.filter(project=project).delete()
+                return Response({"status": "unlinked"})
+                
+            mapping, _ = ProjectRepositoryMapping.objects.update_or_create(
+                project=project,
+                defaults={
+                    "github_repository_full_name": repo_name,
+                    "active": active
+                }
+            )
+            return Response({
+                "github_repository_full_name": mapping.github_repository_full_name,
+                "active": mapping.active
+            })
+        except Project.DoesNotExist:
+            return Response({"error": "Project not found"}, status=404)

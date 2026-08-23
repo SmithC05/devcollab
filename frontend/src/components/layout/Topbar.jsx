@@ -6,7 +6,10 @@ import { useTheme } from '../../hooks/useTheme';
 import { IconButton } from '../ui';
 import { useAuthStore } from '../../stores/authStore';
 
-export default function Topbar({ workspaceName, onMenuClick }) {
+// BUG-15 FIX: workspaceName prop removed; read from store directly
+export default function Topbar({ onMenuClick }) {
+  const { activeWorkspace } = useAuthStore();
+  const workspaceName = activeWorkspace?.name || 'Workspace';
   const [isFocused, setIsFocused] = useState(false);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();

@@ -315,10 +315,10 @@ function buildDemoState() {
       impact: 'Payment API (P0) is owned by an overloaded engineer with 3 downstream dependencies',
       affected_member: 'Smith', affected_project: 'Payments',
       evidence: [
-        { label: 'Capacity', value: '91%', provenance: 'DERIVED' },
-        { label: 'Active Tasks', value: '5', provenance: 'REAL_DB' },
-        { label: 'Critical Tasks', value: '2', provenance: 'REAL_DB' },
-        { label: 'Downstream deps', value: '3', provenance: 'SYNTHETIC_DEMO' },
+        { label: 'Capacity', value: '91%', provenance: 'DERIVED', rationale: 'Derived from member task count.' },
+        { label: 'Active Tasks', value: '5', provenance: 'REAL_DB', rationale: 'Total tasks in In Progress state.' },
+        { label: 'Critical Tasks', value: '2', provenance: 'REAL_DB', rationale: 'Tasks with P0 or P1 priority.' },
+        { label: 'Downstream deps', value: '3', provenance: 'SYNTHETIC_DEMO', rationale: 'Demo data for downstream tasks.' },
       ],
     },
     {
@@ -327,10 +327,10 @@ function buildDemoState() {
       impact: 'Riya owns a P0 task with 2 downstream dependencies and no backup with adequate context',
       affected_member: 'Riya', affected_project: 'Payments',
       evidence: [
-        { label: 'Owner', value: 'Riya', provenance: 'REAL_DB' },
-        { label: 'Backup', value: 'None', provenance: 'DERIVED' },
-        { label: 'Priority', value: 'P0', provenance: 'REAL_DB' },
-        { label: 'Downstream deps', value: '2', provenance: 'SYNTHETIC_DEMO' },
+        { label: 'Owner', value: 'Riya', provenance: 'REAL_DB', rationale: 'Task is assigned to Riya.' },
+        { label: 'Backup', value: 'None', provenance: 'DERIVED', rationale: 'No other engineer has high context.' },
+        { label: 'Priority', value: 'P0', provenance: 'REAL_DB', rationale: 'Highest priority label.' },
+        { label: 'Downstream deps', value: '2', provenance: 'SYNTHETIC_DEMO', rationale: 'Demo data for downstream tasks.' },
       ],
     },
     {
@@ -339,8 +339,8 @@ function buildDemoState() {
       impact: 'Data Pipeline Auth → Dashboard v2 chain is at risk',
       affected_member: 'Riya', affected_project: 'Analytics',
       evidence: [
-        { label: 'Blocked chain', value: 'Data Pipeline → Dashboard', provenance: 'SYNTHETIC_DEMO' },
-        { label: 'Owner capacity', value: '58%', provenance: 'DERIVED' },
+        { label: 'Blocked chain', value: 'Data Pipeline → Dashboard', provenance: 'SYNTHETIC_DEMO', rationale: 'Dependency extracted from demo state.' },
+        { label: 'Owner capacity', value: '58%', provenance: 'DERIVED', rationale: 'Derived from assigned active tasks.' },
       ],
     },
   ];

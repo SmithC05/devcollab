@@ -480,14 +480,21 @@ function ContextInspector({ node, onClose, members, projects, responsibilities }
   );
 }
 
-function InspectorRow({ label, value, prov }) {
+function InspectorRow({ label, value, prov, rationale }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--dv-border-subtle)' }}>
-      <span style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)' }}>{label}</span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 'var(--dv-text-xs)', fontWeight: 600, color: 'var(--dv-text-primary)' }}>{value}</span>
-        {prov && <ProvenancePip prov={prov} />}
+    <div style={{ padding: '8px 0', borderBottom: '1px solid var(--dv-border-subtle)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: rationale ? 4 : 0 }}>
+        <span style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)' }}>{label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 'var(--dv-text-xs)', fontWeight: 600, color: 'var(--dv-text-primary)' }}>{value}</span>
+          {prov && <ProvenancePip prov={prov} />}
+        </div>
       </div>
+      {rationale && (
+        <div style={{ fontSize: 10, color: 'var(--dv-text-faint)', lineHeight: 1.4 }}>
+          {rationale}
+        </div>
+      )}
     </div>
   );
 }
@@ -563,15 +570,22 @@ function MemberInspector({ member }) {
       </InspectorSection>
       <InspectorSection title="Project Context">
         {member.project_contexts.map(ctx => (
-          <div key={ctx.project_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--dv-border-subtle)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)' }}>{ctx.project_name}</span>
-              <DvBadge variant={contextLabelToVariant(ctx.context_label)} size="sm">{ctx.context_label}</DvBadge>
+          <div key={ctx.project_id} style={{ padding: '7px 0', borderBottom: '1px solid var(--dv-border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: ctx.rationale ? 4 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)' }}>{ctx.project_name}</span>
+                <DvBadge variant={contextLabelToVariant(ctx.context_label)} size="sm">{ctx.context_label}</DvBadge>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {mono(`${ctx.context_score}%`, ctx.context_score >= 70 ? 'var(--dv-success)' : ctx.context_score >= 40 ? 'var(--dv-warning)' : 'var(--dv-danger)')}
+                <ProvenancePip prov={ctx.provenance} />
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {mono(`${ctx.context_score}%`, ctx.context_score >= 70 ? 'var(--dv-success)' : ctx.context_score >= 40 ? 'var(--dv-warning)' : 'var(--dv-danger)')}
-              <ProvenancePip prov={ctx.provenance} />
-            </div>
+            {ctx.rationale && (
+              <div style={{ fontSize: 10, color: 'var(--dv-text-faint)', lineHeight: 1.4 }}>
+                {ctx.rationale}
+              </div>
+            )}
           </div>
         ))}
       </InspectorSection>
@@ -631,7 +645,7 @@ function DecisionInspector({ dp, members }) {
       {dp.evidence && (
         <InspectorSection title="Evidence">
           {dp.evidence.map((ev, i) => (
-            <InspectorRow key={i} label={ev.label} value={ev.value} prov={ev.provenance} />
+            <InspectorRow key={i} label={ev.label} value={ev.value} prov={ev.provenance} rationale={ev.rationale} />
           ))}
         </InspectorSection>
       )}
@@ -1065,15 +1079,22 @@ function EvidenceDrawer({ resp, onClose }) {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
           {[
-            { label: 'Observation', value: `${resp.owner} owns ${resp.title}`,    prov: 'REAL_DB' },
-            { label: 'Backup',      value: resp.backup ?? 'None',                prov: 'DERIVED' },
-            { label: 'Backup Context', value: resp.backup ? `${resp.backup_context}%` : 'N/A', prov: 'DERIVED' },
-            { label: 'Downstream',  value: `${resp.dependency_count} tasks`,     prov: 'SYNTHETIC_DEMO' },
+            { label: 'Observation', value: `${resp.owner} owns ${resp.title}`,    prov: 'REAL_DB', rationale: 'Verified assignment in the workspace.' },
+            { label: 'Backup',      value: resp.backup ?? 'None',                prov: 'DERIVED', rationale: 'Highest context alternative.' },
+            { label: 'Backup Context', value: resp.backup ? `${resp.backup_context}%` : 'N/A', prov: 'DERIVED', rationale: 'Context score of the backup engineer.' },
+            { label: 'Downstream',  value: `${resp.dependency_count} tasks`,     prov: 'SYNTHETIC_DEMO', rationale: 'Tasks blocked by this responsibility.' },
           ].map(ev => (
             <div key={ev.label} style={{ padding: '12px', background: 'var(--dv-bg-elevated)', borderRadius: 'var(--dv-radius-md)', border: '1px solid var(--dv-border-subtle)' }}>
               <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{ev.label}</div>
-              <div style={{ fontSize: 'var(--dv-text-sm)', fontWeight: 600, color: 'var(--dv-text-primary)', marginBottom: 6 }}>{ev.value}</div>
-              <ProvenancePip prov={ev.prov} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontSize: 'var(--dv-text-sm)', fontWeight: 600, color: 'var(--dv-text-primary)' }}>{ev.value}</div>
+                <ProvenancePip prov={ev.prov} />
+              </div>
+              {ev.rationale && (
+                <div style={{ fontSize: 10, color: 'var(--dv-text-faint)', lineHeight: 1.4, borderTop: '1px solid var(--dv-border-subtle)', paddingTop: 8 }}>
+                  {ev.rationale}
+                </div>
+              )}
             </div>
           ))}
         </div>
