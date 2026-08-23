@@ -5,6 +5,7 @@ class Workspace(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_workspaces')
+    plan = models.CharField(max_length=20, default='FREE')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -71,3 +72,17 @@ class Invitation(models.Model):
 
     def __str__(self):
         return f"Invite to {self.email} for {self.workspace.name}"
+
+class PaymentTransaction(models.Model):
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name='payments')
+    razorpay_order_id = models.CharField(max_length=255, unique=True)
+    razorpay_payment_id = models.CharField(max_length=255, null=True, blank=True)
+    razorpay_signature = models.CharField(max_length=255, null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default='INR')
+    status = models.CharField(max_length=20, default='CREATED') # CREATED, SUCCESS, FAILED
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.workspace.name} - {self.amount} {self.currency} ({self.status})"

@@ -11,7 +11,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-[#000000] dark:bg-[#000000] light:bg-[#ffffff]"
+      className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-[var(--bg)]"
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
     >
       <ThemeToggle />
@@ -33,19 +33,16 @@ export default function LoginPage() {
 // On small screens: single column, form only, branding hidden.
 // Switching still works but no panel animation (just fade).
 
-import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import LoginForm from "../auth/LoginForm";
 import RegisterForm from "../auth/RegisterForm";
 
 function MobileAuthShell() {
-  const [mode, setMode] = useState('login');
+  const [mode, setMode] = useState("login");
 
   return (
-    <div
-      className="w-full max-w-sm rounded-[22px] border border-[#1e1e1e] p-6"
-      style={{ background: '#0a0a0a' }}
-    >
+    <div className="w-full max-w-sm rounded-[22px] border border-[var(--border-strong)] p-6 bg-[var(--surface)]">
       <AnimatePresence mode="wait">
         <motion.div
           key={mode}
@@ -54,10 +51,10 @@ function MobileAuthShell() {
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.22 }}
         >
-          {mode === 'login' ? (
-            <LoginForm onSwitchToRegister={() => setMode('register')} />
+          {mode === "login" ? (
+            <LoginForm onSwitchToRegister={() => setMode("register")} />
           ) : (
-            <RegisterForm onSwitchToLogin={() => setMode('login')} />
+            <RegisterForm onSwitchToLogin={() => setMode("login")} />
           )}
         </motion.div>
       </AnimatePresence>

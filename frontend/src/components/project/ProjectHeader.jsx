@@ -72,7 +72,7 @@ export default function ProjectHeader() {
         <button className="text-zinc-400 hover:text-zinc-200 transition-colors relative">
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[var(--surface-raised)] text-[8px] text-white flex items-center justify-center font-bold">
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[var(--surface-raised)] text-[8px] text-[var(--text-primary)] flex items-center justify-center font-bold">
               {unreadCount}
             </span>
           )}

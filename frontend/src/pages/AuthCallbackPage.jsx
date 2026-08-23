@@ -72,12 +72,12 @@ export default function AuthCallbackPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-[#000000] dark:bg-[#000000] light:bg-[#ffffff]"
+      className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-[var(--bg)]  "
       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
     >
-      <div className="flex flex-col items-center justify-center gap-4 text-white dark:text-white light:text-black">
-        <Loader2 size={32} className="animate-spin text-white dark:text-white light:text-black" />
-        <p className="text-[15px] text-[#A3A3A3]">Completing sign in...</p>
+      <div className="flex flex-col items-center justify-center gap-4 text-[var(--text-primary)]  ">
+        <Loader2 size={32} className="animate-spin text-[var(--text-primary)]  " />
+        <p className="text-[15px] text-[var(--text-secondary)]">Completing sign in...</p>
       </div>
     </div>
   );
