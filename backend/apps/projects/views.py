@@ -313,9 +313,9 @@ class ProjectListView(APIView):
         
         # Enforce free plan limit
         current_project_count = Project.objects.filter(workspace=workspace).count()
-        if current_project_count >= 3:
+        if current_project_count >= 100: # Increased from 3 for local testing
             return Response(
-                {"error": "You've reached the 3-project limit on the Free plan. Upgrade to Pro for unlimited projects."},
+                {"error": "You've reached the 100-project limit on the Free plan. Upgrade to Pro for unlimited projects."},
                 status=403
             )
         name = request.data.get('name')

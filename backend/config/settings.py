@@ -174,10 +174,10 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     # BUG-07 FIX: Without these, DRF defaults to AllowAny permission, meaning
     # any unauthenticated request could read workspace/project data.
-    # We use SessionAuthentication since JWTAuthMiddleware already populates
-    # request.user from the JWT before DRF's authentication layer runs.
+    # We use CustomMiddlewareAuthentication since JWTAuthMiddleware already populates
+    # request.user from the JWT before DRF's authentication layer runs, without enforcing CSRF.
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
+        "apps.authentication.drf_auth.CustomMiddlewareAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
