@@ -256,6 +256,12 @@ def compare_task_candidates(request):
         score = (features.get("repository_familiarity") or 0.0) * 0.4 + \
                 (features.get("project_familiarity") or 0.0) * 0.4 + \
                 (features.get("technology_familiarity") or 0.0) * 0.2
+                
+        # Business Rule: If task is high priority (P0/P1) and the candidate has almost 
+        # no project familiarity, cap their score so they evaluate as a LOW match.
+        project_fam = features.get("project_familiarity") or 0.0
+        if task.priority in ['P0', 'P1'] and project_fam < 0.2:
+            score = min(score, 0.29)
         
         context_level = "HIGH" if score > 0.6 else "MEDIUM" if score > 0.3 else "LOW"
         
