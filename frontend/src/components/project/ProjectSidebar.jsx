@@ -1,9 +1,9 @@
-import { NavLink, useParams } from 'react-router-dom';
+import { NavLink, useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
   LayoutDashboard, Columns3, Activity, Users,
   BookOpen, Code2, FileCode2, MessageSquare, Sparkles, ChevronLeft, ChevronRight, Settings,
-  BarChart2, ListTodo, Presentation, Clock, PieChart
+  BarChart2, ListTodo, PieChart, Clock, ArrowLeft,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuthStore, ROLES } from '../../stores/authStore';
@@ -135,12 +135,12 @@ const NAV_DEV = [
   },
 ];
 
-// Viewer role has been removed
-
 export default function ProjectSidebar({ project: passedProject }) {
   const { projectId } = useParams();
-  const { role, setRole, can } = useAuthStore();
+  const navigate = useNavigate();
+  const { role, setRole } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
+
   const project = passedProject || { id: projectId || 'P1', name: projectId || 'P1', avatar: 'DC' };
 
   const safeRole = role || 'Dev';
@@ -161,20 +161,31 @@ export default function ProjectSidebar({ project: passedProject }) {
         overflowY: 'auto', overflowX: 'hidden', userSelect: 'none',
       }}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: collapsed ? '16px 0 14px' : '16px 14px 14px', justifyContent: collapsed ? 'center' : 'flex-start', borderBottom: '1px solid var(--surface-hover)', flexShrink: 0, position: 'relative' }}>
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '10px',
+        padding: collapsed ? '14px 0 12px' : '14px 12px 12px',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        borderBottom: '1px solid var(--surface-hover)',
+        flexShrink: 0, position: 'relative',
+      }}>
+        {/* DC Logo — always visible */}
         <div style={{
-          width: '34px', height: '34px', borderRadius: '50%',
-          background: 'var(--surface-hover)', border: '1px solid #2a2a2e', color: 'var(--text-primary)',
+          width: '34px', height: '34px', borderRadius: '8px',
+          background: 'linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 700, fontSize: '14px', flexShrink: 0,
+          fontWeight: 800, fontSize: '13px', color: '#fff',
+          letterSpacing: '-0.5px', flexShrink: 0,
         }}>
-          {project.avatar}
+          DC
         </div>
 
         {!collapsed && (
           <>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '15px', flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+            <span style={{
+              color: 'var(--text-primary)', fontWeight: 600, fontSize: '15px',
+              flex: 1, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+            }}>
               {project.name}
             </span>
 
@@ -185,27 +196,56 @@ export default function ProjectSidebar({ project: passedProject }) {
               fontSize: '11px', fontWeight: 600, color: '#aaa',
               whiteSpace: 'nowrap', flexShrink: 0,
             }}>
-              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ccc' }} />
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4ade80' }} />
               Active
             </span>
           </>
         )}
 
-        {/* Desktop collapse toggle - attached to the marked arrow */}
-        <button 
+        {/* Collapse toggle */}
+        <button
           onClick={() => setCollapsed(!collapsed)}
-          style={{ 
-            background: 'none', border: 'none', cursor: 'pointer', color: 'var(--focus-ring)', 
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer', color: 'var(--focus-ring)',
             display: 'flex', alignItems: 'center', padding: '3px', borderRadius: '5px', flexShrink: 0,
-            ...(collapsed ? { position: 'absolute', right: '-12px', background: 'var(--surface-raised)', border: '1px solid var(--border-strong)', borderRadius: '50%', width: '24px', height: '24px', justifyContent: 'center', padding: 0, zIndex: 10 } : {})
+            ...(collapsed ? {
+              position: 'absolute', right: '-12px',
+              background: 'var(--surface-raised)', border: '1px solid var(--border-strong)',
+              borderRadius: '50%', width: '24px', height: '24px',
+              justifyContent: 'center', padding: 0, zIndex: 10,
+            } : {}),
           }}
         >
           {collapsed ? <ChevronRight size={14} strokeWidth={2.5} /> : <ChevronLeft size={14} strokeWidth={2.5} />}
         </button>
       </div>
 
-      {/* Nav */}
-      <div style={{ flex: 1, padding: '14px 10px', display: 'flex', flexDirection: 'column', gap: '22px', overflowY: 'auto' }}>
+      {/* ── Back to Workspace — always present, all roles ──────── */}
+      <div style={{ padding: collapsed ? '10px 0 4px' : '10px 10px 4px' }}>
+        <button
+          id="sidebar-back-to-workspace"
+          onClick={() => navigate('/dashboard/projects')}
+          title="Back to Projects"
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center',
+            gap: '9px', height: '34px',
+            padding: collapsed ? '0' : '0 10px',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            background: 'none', border: 'none', cursor: 'pointer',
+            borderRadius: '8px',
+            color: 'var(--text-muted)', fontSize: '12px', fontWeight: 500,
+            transition: 'background 120ms, color 120ms',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#1c1c1c'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+        >
+          <ArrowLeft size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
+          {!collapsed && <span>Back to Projects</span>}
+        </button>
+      </div>
+
+      {/* ── Nav ────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, padding: '6px 10px 14px', display: 'flex', flexDirection: 'column', gap: '22px', overflowY: 'auto' }}>
         {navConfig.map((section, sectionIdx) => (
           <div key={section.label} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {!collapsed && (
@@ -222,7 +262,7 @@ export default function ProjectSidebar({ project: passedProject }) {
                 to={`/projects/${project.id}/${path}`}
                 style={({ isActive }) => ({
                   display: 'flex', alignItems: 'center', gap: '11px',
-                  height: '38px', padding: collapsed ? '0' : '0 10px', 
+                  height: '38px', padding: collapsed ? '0' : '0 10px',
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   borderRadius: '8px',
                   fontSize: '14px', fontWeight: isActive ? 500 : 400,
@@ -237,17 +277,21 @@ export default function ProjectSidebar({ project: passedProject }) {
                 <span style={{ width: '18px', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon size={16} strokeWidth={1.75} />
                 </span>
-                {!collapsed && (
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
-                )}
+                {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>}
               </NavLink>
             ))}
           </div>
         ))}
       </div>
 
-      {/* Footer / Role Switcher */}
-      <div style={{ borderTop: '1px solid var(--surface-hover)', padding: collapsed ? '14px 0' : '14px', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: '10px', flexShrink: 0 }}>
+      {/* ── Footer / Role Switcher ─────────────────────────────── */}
+      <div style={{
+        borderTop: '1px solid var(--surface-hover)',
+        padding: collapsed ? '14px 0' : '14px',
+        display: 'flex', alignItems: 'center',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        gap: '10px', flexShrink: 0,
+      }}>
         <div style={{
           width: '34px', height: '34px', borderRadius: '50%',
           background: 'var(--surface-hover)', border: '1px solid var(--border-strong)', color: 'var(--text-primary)',
@@ -259,17 +303,19 @@ export default function ProjectSidebar({ project: passedProject }) {
         {!collapsed && (
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Demo User</span>
-            <select 
+            <select
               value={safeRole}
               onChange={(e) => setRole(e.target.value)}
-              style={{ 
-                fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', background: 'transparent', 
-                border: '1px solid var(--border-strong)', borderRadius: '4px', padding: '2px', outline: 'none',
-                cursor: 'pointer', width: '100%'
+              style={{
+                fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px',
+                background: 'transparent', border: '1px solid var(--border-strong)',
+                borderRadius: '4px', padding: '2px', outline: 'none', cursor: 'pointer', width: '100%',
               }}
             >
               {ROLES.map(r => (
-                <option key={r} value={r} style={{ background: 'var(--surface-raised)', color: 'var(--text-primary)' }}>Role: {r}</option>
+                <option key={r} value={r} style={{ background: 'var(--surface-raised)', color: 'var(--text-primary)' }}>
+                  Role: {r}
+                </option>
               ))}
             </select>
           </div>
