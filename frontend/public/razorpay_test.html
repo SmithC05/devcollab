@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Razorpay Test</title>
+</head>
+<body>
+    <button id="rzp-button1">Pay</button>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        var options = {
+            "key": "rzp_test_TAzIyb2JSyiTDD",
+            "name": "DevCollab",
+            "description": "Test Transaction",
+            "order_id": "order_TT3NoDdgZuCpVm",
+            "handler": function (response){
+                alert(response.razorpay_payment_id);
+            },
+            "theme": {
+                "color": "#D4AF37"
+            }
+        };
+        var rzp1 = new Razorpay(options);
+        rzp1.on('payment.failed', function (response){
+                console.log(response.error.description);
+        });
+        document.getElementById('rzp-button1').onclick = function(e){
+            rzp1.open();
+            e.preventDefault();
+        }
+    </script>
+</body>
+</html>

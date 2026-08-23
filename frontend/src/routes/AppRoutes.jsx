@@ -32,11 +32,13 @@ import AuthCallbackPage     from '../pages/AuthCallbackPage';
 import IntelligenceLayout        from '../features/devcollab-intelligence/pages/IntelligenceLayout';
 import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
 import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence/OrganizationIntelligence';
+import DeveloperEngineeringProfile from '../features/devcollab-intelligence/pages/OrganizationIntelligence/DeveloperEngineeringProfile';
 import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
 import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
 import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
 import JudgeMode                 from '../features/devcollab-intelligence/pages/JudgeMode';
 import DevCollabDemoMode, { DemoStartScreen } from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
+import IncidentResponse from '../features/devcollab-intelligence/pages/IncidentResponse';
 import InvitationPage       from '../pages/InvitationPage';
 import LandingPage          from '../pages/LandingPage';
 // L-03 FIX: Moved these imports from mid-file to top where they belong
@@ -175,11 +177,14 @@ export default function AppRoutes() {
         <Route path="intelligence">
           <Route index element={<Navigate to="organization" replace />} />
           <Route path="organization" element={<OrganizationIntelligence />} />
+          <Route path="engineering-profile" element={<DeveloperEngineeringProfile />} />
           <Route path="decision/:id" element={<DecisionPoint />} />
           <Route path="simulation/task/:id" element={<SimulationCenter />} />
           <Route path="simulation/demo/:id" element={<SimulationCenter />} />
           <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
           <Route path="demo" element={<DevCollabDemoMode />} />
+          <Route path="incident" element={<IncidentResponse />} />
+          <Route path="incident/:eventId" element={<IncidentResponse />} />
         </Route>
       </Route>
 

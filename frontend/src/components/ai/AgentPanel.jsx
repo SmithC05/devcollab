@@ -57,8 +57,8 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-0 right-0 h-full w-[450px] bg-[#161616] border-l border-[#222] shadow-2xl flex flex-col z-50 text-zinc-200">
-      <div className="h-16 border-b border-[#222] flex items-center justify-between px-6 bg-[#0d0d0f]">
+    <div className="fixed top-0 right-0 h-full w-[450px] bg-[var(--surface-hover)] border-l border-[var(--border-strong)] shadow-2xl flex flex-col z-50 text-zinc-200">
+      <div className="h-16 border-b border-[var(--border-strong)] flex items-center justify-between px-6 bg-[#0d0d0f]">
         <div className="flex items-center space-x-2">
           <Sparkles className="w-5 h-5 text-indigo-400" />
           <h2 className="font-medium text-sm">Decision Agent</h2>
@@ -71,7 +71,7 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <div className="space-y-3">
           <label className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Scenario Context</label>
-          <div className="bg-[#1c1c1c] p-3 rounded border border-[#2a2a2a]">
+          <div className="bg-[#1c1c1c] p-3 rounded border border-[var(--border-subtle)]">
             <p className="text-sm text-zinc-300 leading-relaxed">
               Potential decision point detected: A developer owning a critical task has gone offline.
             </p>
@@ -84,12 +84,12 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
             value={request}
             onChange={(e) => setRequest(e.target.value)}
             placeholder="E.g. Smith is unavailable. Can Rahul take over Payment API?"
-            className="w-full bg-[#1c1c1c] border border-[#2a2a2a] rounded p-3 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500 min-h-[80px]"
+            className="w-full bg-[#1c1c1c] border border-[var(--border-subtle)] rounded p-3 text-sm text-zinc-200 focus:outline-none focus:border-indigo-500 min-h-[80px]"
           />
           <button
             onClick={handleAnalyze}
             disabled={isLoading || !request.trim()}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2 px-4 rounded text-sm transition-colors flex justify-center items-center space-x-2"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-[var(--text-primary)] font-medium py-2 px-4 rounded text-sm transition-colors flex justify-center items-center space-x-2"
           >
             {isLoading ? (
               <Activity className="w-4 h-4 animate-spin" />
@@ -103,7 +103,7 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
         {response && !response.error && (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Tool Trace */}
-            <div className="border border-[#2a2a2a] rounded overflow-hidden">
+            <div className="border border-[var(--border-subtle)] rounded overflow-hidden">
               <button 
                 onClick={() => setShowTrace(!showTrace)}
                 className="w-full flex items-center justify-between p-3 bg-[#1c1c1c] text-xs font-medium text-zinc-400"
@@ -115,7 +115,7 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
                 {showTrace ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
               </button>
               {showTrace && (
-                <div className="p-3 bg-[#111] text-xs font-mono text-zinc-500 space-y-2 border-t border-[#2a2a2a]">
+                <div className="p-3 bg-[var(--surface-item)] text-xs font-mono text-zinc-500 space-y-2 border-t border-[var(--border-subtle)]">
                   {response.tool_trace?.map((t, i) => (
                     <div key={i} className="flex items-center space-x-2">
                       <span className="text-green-500">✓</span>
@@ -145,7 +145,7 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
                   </div>
                 </div>
 
-                <div className="space-y-2 pt-2 border-t border-[#2a2a2a]">
+                <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
                   <h4 className="text-xs font-medium text-zinc-400">Reasoning Factors</h4>
                   <ul className="text-xs text-zinc-300 space-y-1 list-disc pl-4">
                     {response.decision.reasoning_factors?.map((r, i) => (
@@ -154,7 +154,7 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
                   </ul>
                 </div>
                 
-                <div className="space-y-2 pt-2 border-t border-[#2a2a2a]">
+                <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
                   <h4 className="text-xs font-medium text-zinc-400">Tradeoffs Considered</h4>
                   <ul className="text-xs text-zinc-300 space-y-1 list-disc pl-4">
                     {response.decision.tradeoffs?.map((t, i) => (
@@ -164,11 +164,11 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
                 </div>
 
                 {/* Simulation Options Table */}
-                <div className="pt-2 border-t border-[#2a2a2a]">
+                <div className="pt-2 border-t border-[var(--border-subtle)]">
                   <h4 className="text-xs font-medium text-zinc-400 mb-2">Simulated Interventions</h4>
                   <div className="space-y-2">
                     {response.decision.options?.map((opt, i) => (
-                      <div key={i} className="flex justify-between items-center text-xs p-2 bg-[#111] rounded border border-[#2a2a2a]">
+                      <div key={i} className="flex justify-between items-center text-xs p-2 bg-[var(--surface-item)] rounded border border-[var(--border-subtle)]">
                         <span className="font-medium text-zinc-300">{opt.type}</span>
                         <div className="flex space-x-4">
                           <span className="text-zinc-500">{opt.estimated_completion}d</span>
@@ -186,7 +186,7 @@ export default function AgentPanel({ projectId, isOpen, onClose }) {
                   <button 
                     onClick={handleApprove}
                     disabled={actionStatus !== null}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold py-2 rounded transition-colors flex items-center justify-center space-x-2"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-[var(--text-primary)] text-xs font-bold py-2 rounded transition-colors flex items-center justify-center space-x-2"
                   >
                     {actionStatus === 'executing' && <Activity className="w-3.5 h-3.5 animate-spin" />}
                     {actionStatus === 'success' && <CheckCircle2 className="w-3.5 h-3.5" />}

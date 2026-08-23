@@ -57,26 +57,44 @@ from rest_framework.exceptions import PermissionDenied
 
 def get_current_workspace(request):
     """
-    Extracts X-Workspace-Id from the request headers and validates that the 
+    Extracts X-Workspace-Id from the request headers and validates that the
     authenticated user is a member of that workspace.
-    Raises PermissionDenied if the header is missing, invalid, or the user is not a member.
+
+    If the header is missing, falls back to the user's first workspace membership
+    instead of raising 403 — this prevents errors on page refresh or when the
+    frontend store hasn't yet set activeWorkspace (e.g. right after login).
+
+    Raises PermissionDenied only if the user is not authenticated, or if the
+    provided workspace ID is invalid / the user is not a member of it.
     """
     if not request.user.is_authenticated:
         raise PermissionDenied("Authentication required")
 
-    # In Django request.META, custom headers like X-Workspace-Id become HTTP_X_WORKSPACE_ID
     workspace_id = request.META.get('HTTP_X_WORKSPACE_ID')
-    
+
     if not workspace_id:
-        raise PermissionDenied("X-Workspace-Id header is required")
-        
+        with open("debug_workspace.txt", "a") as f:
+            f.write("DEBUG: X-Workspace-Id header missing\n")
+        # Fallback: use the user's first workspace membership
+        membership = WorkspaceMembership.objects.select_related('workspace').filter(
+            user=request.user
+        ).order_by('created_at').first()
+        if membership:
+            return membership.workspace
+        # User has no workspaces at all — return None so views can handle gracefully
+        return None
+
     try:
         membership = WorkspaceMembership.objects.select_related('workspace').get(
-            user=request.user, 
+            user=request.user,
             workspace_id=workspace_id
         )
         return membership.workspace
     except WorkspaceMembership.DoesNotExist:
-        raise PermissionDenied("You are not a member of this workspace or it does not exist.")
-    except ValueError:
+        with open("debug_workspace.txt", "a") as f:
+            f.write(f"WorkspaceMembership missing for user={request.user.id}, workspace_id={workspace_id}\n")
+        raise PermissionDenied(f"You are not a member of workspace {workspace_id} or it does not exist.")
+    except ValueError as e:
+        with open("debug_workspace.txt", "a") as f:
+            f.write(f"ValueError in workspace_id format: {e}\n")
         raise PermissionDenied("Invalid workspace ID format.")

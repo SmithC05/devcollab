@@ -3,8 +3,8 @@ const variants = {
   primary:   'bg-[var(--text-primary)] text-[var(--bg)] hover:opacity-90 font-semibold',
   secondary: 'bg-[var(--surface-card)] border border-[var(--border-strong)] text-[var(--fg)] hover:border-[var(--border-focus)] hover:bg-[var(--surface-item)]',
   ghost:     'text-[var(--text-secondary)] hover:text-[var(--fg)] hover:bg-[var(--surface-item)]',
-  danger:    'bg-red-500 text-white hover:bg-red-600',
-  accent:    'bg-blue-500 text-white hover:bg-blue-600',
+  danger:    'bg-red-500 text-[var(--text-primary)] hover:bg-red-600',
+  accent:    'bg-blue-500 text-[var(--text-primary)] hover:bg-blue-600',
 };
 
 const sizes = {

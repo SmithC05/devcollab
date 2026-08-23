@@ -25,19 +25,58 @@ class WebSocketClient {
       this.isConnecting = false;
       this.startHeartbeat();
       console.log('WebSocket connected');
-      // We are active upon connect
-      this.setStatus('ACTIVE');
+      // Only set ACTIVE if not intentionally UNAVAILABLE
+      const unavailableMembers = usePresenceStore.getState().unavailableMembers || {};
+      const { currentUser } = usePresenceStore.getState();
+      const currentUserId = currentUser?.id;
+      if (!currentUserId || !unavailableMembers[currentUserId]) {
+        this.setStatus('ACTIVE');
+      }
     };
+
 
     this.socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
+
       if (data.type === 'presence_update') {
         usePresenceStore.getState().setPresence(data.user_id, data.status);
+
       } else if (data.type === 'engine_event') {
-        // Handle engine events (e.g., task moved) later
-        document.dispatchEvent(new CustomEvent('engine_event', { detail: data.payload }));
-      } else if (data.type === 'notification') {
-        document.dispatchEvent(new CustomEvent('notification_created', { detail: data.payload }));
+        const payload = data.payload || {};
+
+        // ── Route to stores based on event_type ──────────────────────────
+        if (payload.event_type === 'TASK_REASSIGNED' || payload.event_type === 'TASK_ASSIGNED') {
+          // Directly update Kanban store — no page reload needed
+          import('../stores/taskStore').then(({ useTaskStore }) => {
+            useTaskStore.getState().syncEngineEvent(payload);
+          });
+        }
+
+        if (payload.event_type === 'MEMBER_UNAVAILABLE') {
+          usePresenceStore.getState().setUnavailable(
+            payload.user_id,
+            payload.unavailable_until,
+            payload.username
+          );
+        }
+
+        if (payload.event_type === 'PRESENCE_RESTORED') {
+          usePresenceStore.getState().setPresence(payload.user_id, 'ACTIVE');
+          usePresenceStore.getState().clearUnavailable(payload.user_id);
+        }
+
+        if (payload.event_type === 'DECISION_POINT_CREATED') {
+          // Dispatch to notification store for the alert badge
+          import('../stores/notificationStore').then(({ useNotificationStore }) => {
+            if (useNotificationStore?.getState) {
+              useNotificationStore.getState().addDecisionPoint?.(payload);
+            }
+          }).catch(() => {});
+        }
+
+        // Always also dispatch DOM event so legacy listeners (ApprovalPanel) still work
+        document.dispatchEvent(new CustomEvent('engine_event', { detail: payload }));
+
       } else if (data.type === 'task_view_update') {
         if (data.status === 'STARTED') {
           usePresenceStore.getState().addTaskViewer(data.task_id, data.user_id);
@@ -46,6 +85,7 @@ class WebSocketClient {
         }
       }
     };
+
 
     this.socket.onclose = () => {
       this.isConnecting = false;

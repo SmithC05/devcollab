@@ -10,7 +10,7 @@ import { Check } from 'lucide-react';
 
 // BUG-15 FIX: workspaceName prop removed; read from store directly
 export default function Topbar({ onMenuClick }) {
-  const { user, activeWorkspace } = useAuthStore();
+  const { user, activeWorkspace, workspacePlan } = useAuthStore();
   const workspaceName = activeWorkspace?.name || 'Workspace';
   const [isFocused, setIsFocused] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -18,11 +18,11 @@ export default function Topbar({ onMenuClick }) {
   
   const { notifications, unreadCount, isLoaded, fetchNotifications, markAsRead, markAllRead, addNotification } = useNotificationStore();
   const { theme, toggleTheme } = useTheme();
-  
   const userName = user?.first_name
     ? `${user.first_name} ${user.last_name}`.trim()
     : user?.username || 'User';
   const initial = userName.charAt(0).toUpperCase();
+  const isPro = workspacePlan === 'PRO';
 
   // Simple breadcrumb logic based on route
   const getPageName = () => {
@@ -113,7 +113,8 @@ export default function Topbar({ onMenuClick }) {
               id="global-search"
               type="text"
               placeholder="Search or jump to..."
-              className="w-full h-full bg-transparent border-none outline-none pl-9 pr-14 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              className="w-full h-full bg-transparent border-none outline-none text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              style={{ paddingLeft: 44, paddingRight: 72 }}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
             />

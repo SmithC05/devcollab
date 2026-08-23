@@ -62,7 +62,7 @@ function SideNavLink({ to, end, onClick, icon: Icon, children, collapsed }) {
 
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
-  const { user, activeWorkspace } = useAuthStore();
+  const { user, activeWorkspace, role, workspacePlan } = useAuthStore();
   
   const [collapsed, setCollapsed] = useState(false);
 
@@ -85,9 +85,14 @@ export default function Sidebar({ isOpen, onClose }) {
     }
   ];
   
+  // Role is stored normalized as 'Owner', 'Admin', 'Lead', 'Dev' (see authStore roleMap)
+  const isDeveloper = role === 'Dev';
+
   const intelGroup = {
     title: 'INTELLIGENCE',
-    items: [
+    items: isDeveloper ? [
+      { to: '/dashboard/intelligence/engineering-profile', icon: Globe, label: 'Engineering Profile' },
+    ] : [
       { to: '/dashboard/ai', icon: Sparkles, label: 'AI Assistant' },
       { to: '/dashboard/intelligence/organization', icon: Globe, label: 'Organization' },
       { to: '/dashboard/intelligence/decision/dp1', icon: Target, label: 'Decision Points' },
@@ -254,7 +259,7 @@ export default function Sidebar({ isOpen, onClose }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-[#000000] bg-opacity-70 backdrop-blur-sm z-40 md:hidden"
+              className="fixed inset-0 bg-[var(--bg)] bg-opacity-70 backdrop-blur-sm z-40 md:hidden"
               onClick={onClose}
             />
             <motion.div

@@ -182,7 +182,7 @@ def logout_view(request):
 def me_view(request):
     if not request.user or not request.user.is_authenticated:
         return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
-        
+
     if request.method == 'GET':
         import uuid
         from apps.realtime.models import PresenceSession
@@ -201,7 +201,9 @@ def me_view(request):
             "user": safe_user(request.user, request),
             "session_token": session_token
         })
-        
+        set_auth_cookies(response, access_token, refresh_token)
+        return response
+
     elif request.method in ['PATCH', 'POST']:
         try:
             # Handle both JSON and multipart/form-data

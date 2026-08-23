@@ -19,6 +19,9 @@ class PresenceSession(models.Model):
     last_activity = models.DateTimeField(auto_now_add=True)
     current_project = models.ForeignKey('projects.Project', on_delete=models.SET_NULL, null=True, blank=True)
     current_task = models.ForeignKey('tasks.Task', on_delete=models.SET_NULL, null=True, blank=True)
+    # Phase 3: Unavailability tracking
+    unavailable_until = models.DateTimeField(null=True, blank=True)
+    unavailable_reason = models.CharField(max_length=500, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -27,7 +30,7 @@ class PresenceSession(models.Model):
 
 class EngineEvent(models.Model):
     event_type = models.CharField(max_length=100)
-    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='engine_events')
     workspace = models.ForeignKey('workspaces.Workspace', on_delete=models.SET_NULL, null=True, blank=True)
     project = models.ForeignKey('projects.Project', on_delete=models.SET_NULL, null=True, blank=True)
     task = models.ForeignKey('tasks.Task', on_delete=models.SET_NULL, null=True, blank=True)
