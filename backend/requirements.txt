@@ -21,3 +21,4 @@ google-genai>=0.2.0,<1.0
 django-allauth[socialaccount]>=64.2.0,<65.0
 PyJWT>=2.8.0,<3.0
 cryptography>=42.0,<43.0
+razorpay>=1.4.0

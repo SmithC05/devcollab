@@ -167,6 +167,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
 }
 
 # ---------------------------------------------------------------------------
@@ -253,3 +254,9 @@ BREVO_API_KEY = config("BREVO_API_KEY", default="")
 BREVO_SENDER_EMAIL = config("BREVO_SENDER_EMAIL", default="devcollab.workspace@gmail.com")
 BREVO_SENDER_NAME = config("BREVO_SENDER_NAME", default="DevCollab")
 BREVO_API_BASE_URL = config("BREVO_API_BASE_URL", default="https://api.brevo.com/v3")
+
+# ---------------------------------------------------------------------------
+# Razorpay Configuration
+# ---------------------------------------------------------------------------
+RAZORPAY_KEY_ID = config("RAZORPAY_KEY_ID", default="")
+RAZORPAY_KEY_SECRET = config("RAZORPAY_KEY_SECRET", default="")

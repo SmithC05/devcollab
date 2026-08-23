@@ -27,21 +27,79 @@ export default function WorkspaceBillingPage() {
     fetchBilling();
   }, []);
 
-  const handleUpgrade = () => {
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleUpgrade = async () => {
     setUpgrading(true);
-    setTimeout(() => {
-      upgradeWorkspaceToPro();
-      setData((current) => ({
-        ...current,
-        plan: 'PRO',
-        usage: {
-          ...(current?.usage || {}),
-          projects_limit: Math.max(current?.usage?.projects_limit || 0, 999),
-          members_limit: Math.max(current?.usage?.members_limit || 0, 999),
+    setError(null);
+    try {
+      const res = await loadRazorpay();
+      if (!res) throw new Error('Razorpay SDK failed to load');
+
+      const orderRes = await fetch('/api/workspace/billing/create-order/', { method: 'POST' });
+      if (!orderRes.ok) throw new Error('Failed to create order');
+      const orderData = await orderRes.json();
+      if (orderData.error) throw new Error(orderData.error);
+
+      const options = {
+        key: orderData.key_id,
+        name: 'DevCollab',
+        description: 'Upgrade to Pro Plan',
+        order_id: orderData.order_id,
+        handler: async function (response) {
+          try {
+            const verifyRes = await fetch('/api/workspace/billing/verify-payment/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(response)
+            });
+            if (!verifyRes.ok) throw new Error('Payment verification failed');
+            
+            upgradeWorkspaceToPro();
+            setData((current) => ({
+              ...current,
+              plan: 'PRO',
+              usage: {
+                ...(current?.usage || {}),
+                projects_limit: 999,
+                members_limit: 999,
+              },
+            }));
+          } catch (err) {
+            setError(err.message);
+          } finally {
+            setUpgrading(false);
+          }
         },
-      }));
+        theme: {
+          color: '#D4AF37'
+        },
+        modal: {
+          ondismiss: function() {
+            setError("Payment was cancelled. You can try again when you're ready.");
+            setUpgrading(false);
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        setError(response.error.description);
+        setUpgrading(false);
+      });
+      rzp.open();
+    } catch (err) {
+      setError(err.message);
       setUpgrading(false);
-    }, 600);
+    }
   };
 
   const handlePreviousPlan = () => {
@@ -58,7 +116,6 @@ export default function WorkspaceBillingPage() {
   };
 
   if (loading) return <div className="flex items-center justify-center py-32"><Spinner size={22} /></div>;
-  if (error) return <div className="text-center py-32 text-red-400 text-sm">{error}</div>;
 
   const { plan: serverPlan = 'FREE', usage = {} } = data || {};
   const plan = workspacePlan === 'PRO' ? 'PRO' : serverPlan;
@@ -67,6 +124,17 @@ export default function WorkspaceBillingPage() {
 
   return (
     <PageContainer className="w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-10 pt-12 md:pt-14">
+      {error && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-3 text-red-400 text-sm font-medium">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-300">
+            &times;
+          </button>
+        </div>
+      )}
       <div className="mb-10">
         <h1 className="text-[40px] md:text-[44px] font-semibold text-[var(--text-primary)] mb-3 leading-tight">
           Billing & Plans
@@ -161,7 +229,7 @@ export default function WorkspaceBillingPage() {
           <Card className="relative overflow-hidden rounded-lg min-h-[420px] flex flex-col" style={{ padding: '34px 38px' }}>
             <h4 className="text-[24px] font-semibold text-[var(--fg)] mb-4">Starter</h4>
             <div className="flex items-baseline gap-1.5 mb-6">
-              <span className="text-[42px] font-bold text-[var(--fg)] leading-none">$0</span>
+              <span className="text-[42px] font-bold text-[var(--fg)] leading-none">₹0</span>
               <span className="text-[16px] text-[var(--text-muted)]">/ month</span>
             </div>
             <ul className="space-y-4 mb-8 flex-1">
@@ -193,8 +261,8 @@ export default function WorkspaceBillingPage() {
             </div>
             <h4 className={`text-[24px] font-semibold mb-4 pr-28 ${isPro ? 'text-[#D4AF37]' : 'text-[var(--fg)]'}`}>Pro</h4>
             <div className="flex items-baseline gap-1.5 mb-6">
-              <span className="text-[42px] font-bold text-[var(--fg)] leading-none">Contact</span>
-              <span className="text-[16px] text-[var(--text-muted)]">/ Upgrade</span>
+              <span className="text-[42px] font-bold text-[var(--fg)] leading-none">₹999</span>
+              <span className="text-[16px] text-[var(--text-muted)]">/ month</span>
             </div>
             <ul className="space-y-4 mb-8 flex-1">
               {['Unlimited workspaces', 'Unlimited projects', 'Unlimited members', 'AI Assistant', 'AI Code Reviewer', 'Project Summariser', 'Standup Generator', 'Task Breakdown'].map((feature, index) => (

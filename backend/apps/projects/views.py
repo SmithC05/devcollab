@@ -1,9 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from apps.projects.models import Project
-from apps.workspaces.models import Workspace
+from apps.workspaces.models import Workspace, PaymentTransaction
 from apps.tasks.models import Task
 from django.utils import timezone
+import razorpay
+from django.conf import settings
 from datetime import timedelta
 from django.db.models import Count
 
@@ -145,9 +147,15 @@ class ProjectListView(APIView):
     def post(self, request):
         workspace = Workspace.objects.first()
         if not workspace:
-            workspace = Workspace.objects.create(name="Default Workspace")
-            if request.user.is_authenticated:
-                workspace.members.add(request.user)
+            owner = request.user if request.user.is_authenticated else None
+            if not owner:
+                from django.contrib.auth.models import User
+                owner = User.objects.first()
+                
+            workspace = Workspace.objects.create(name="Default Workspace", owner=owner)
+            if owner:
+                from apps.workspaces.models import WorkspaceMembership
+                WorkspaceMembership.objects.create(workspace=workspace, user=owner, role='OWNER')
         
         # Enforce free plan limit
         current_project_count = Project.objects.filter(workspace=workspace).count()
@@ -171,7 +179,7 @@ class ProjectListView(APIView):
             "name": project.name,
             "description": f"Project for {project.name}",
             "status": "Active",
-            "members_count": workspace.members.count(),
+            "members_count": workspace.memberships.count(),
             "tasks_count": 0,
             "progress": 0,
             "updated_at": project.updated_at
@@ -230,13 +238,16 @@ class WorkspaceBillingView(APIView):
         if not workspace: return Response({})
         projects_count = Project.objects.filter(workspace=workspace).count()
         members_count = workspace.memberships.count()
+        
+        is_pro = workspace.plan == 'PRO'
+        
         return Response({
-            "plan": "FREE",
+            "plan": workspace.plan,
             "usage": {
                 "projects": projects_count,
-                "projects_limit": 3,
+                "projects_limit": 999 if is_pro else 3,
                 "members": members_count,
-                "members_limit": 5
+                "members_limit": 999 if is_pro else 5
             }
         })
 
@@ -255,3 +266,83 @@ class WorkspaceSettingsView(APIView):
             workspace.name = request.data.get('name', workspace.name)
             workspace.save()
         return Response({"status": "success"})
+
+class CreateRazorpayOrderView(APIView):
+    def post(self, request):
+        workspace = Workspace.objects.first()
+        if not workspace:
+            return Response({"error": "Workspace not found"}, status=404)
+            
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        amount = 99900 # 999 INR in paise
+        
+        data = {
+            "amount": amount,
+            "currency": "INR",
+            "receipt": f"receipt_{workspace.id}_{int(timezone.now().timestamp())}",
+            "notes": {
+                "workspace_id": workspace.id
+            }
+        }
+        
+        try:
+            payment = client.order.create(data=data)
+            
+            # Record transaction
+            PaymentTransaction.objects.create(
+                workspace=workspace,
+                razorpay_order_id=payment['id'],
+                amount=999.00,
+                currency="INR",
+                status="CREATED"
+            )
+            
+            return Response({
+                "order_id": payment['id'],
+                "amount": amount,
+                "currency": "INR",
+                "key_id": settings.RAZORPAY_KEY_ID
+            })
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
+
+class VerifyRazorpayPaymentView(APIView):
+    def post(self, request):
+        data = request.data
+        razorpay_payment_id = data.get('razorpay_payment_id')
+        razorpay_order_id = data.get('razorpay_order_id')
+        razorpay_signature = data.get('razorpay_signature')
+        
+        if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
+            return Response({"error": "Missing payment parameters"}, status=400)
+            
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        
+        try:
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_signature': razorpay_signature
+            })
+            
+            transaction = PaymentTransaction.objects.filter(razorpay_order_id=razorpay_order_id).first()
+            if transaction:
+                transaction.status = "SUCCESS"
+                transaction.razorpay_payment_id = razorpay_payment_id
+                transaction.razorpay_signature = razorpay_signature
+                transaction.save()
+                
+                # Upgrade plan
+                workspace = transaction.workspace
+                workspace.plan = 'PRO'
+                workspace.save()
+                
+            return Response({"success": True})
+        except razorpay.errors.SignatureVerificationError:
+            transaction = PaymentTransaction.objects.filter(razorpay_order_id=razorpay_order_id).first()
+            if transaction:
+                transaction.status = "FAILED"
+                transaction.save()
+            return Response({"error": "Invalid signature"}, status=400)
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
