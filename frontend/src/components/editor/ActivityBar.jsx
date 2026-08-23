@@ -18,10 +18,10 @@ export default function ActivityBar() {
         </div>
         
         {/* Search */}
-        <Search size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-white" />
+        <Search size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-[var(--text-primary)]" />
         
         {/* Source Control with Badge */}
-        <div style={{ position: 'relative', cursor: 'pointer' }} className="hover:text-white">
+        <div style={{ position: 'relative', cursor: 'pointer' }} className="hover:text-[var(--text-primary)]">
           <GitBranch size={24} strokeWidth={1.5} />
           <div style={{
             position: 'absolute', right: '-6px', bottom: '-2px',
@@ -35,10 +35,10 @@ export default function ActivityBar() {
         </div>
         
         {/* Run and Debug */}
-        <PlaySquare size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-white" />
+        <PlaySquare size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-[var(--text-primary)]" />
         
         {/* Extensions with Warning Badge */}
-        <div style={{ position: 'relative', cursor: 'pointer' }} className="hover:text-white">
+        <div style={{ position: 'relative', cursor: 'pointer' }} className="hover:text-[var(--text-primary)]">
           <Blocks size={24} strokeWidth={1.5} />
           <div style={{
             position: 'absolute', right: '-4px', bottom: '-2px',
@@ -51,12 +51,12 @@ export default function ActivityBar() {
         </div>
 
         {/* Docker Container icon simulation */}
-        <Hexagon size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-white" />
+        <Hexagon size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-[var(--text-primary)]" />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
-        <UserCircle size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-white" />
-        <Settings size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-white" />
+        <UserCircle size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-[var(--text-primary)]" />
+        <Settings size={24} strokeWidth={1.5} style={{ cursor: 'pointer' }} className="hover:text-[var(--text-primary)]" />
       </div>
     </div>
   );

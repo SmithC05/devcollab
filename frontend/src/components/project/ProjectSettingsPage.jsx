@@ -54,16 +54,16 @@ export default function ProjectSettingsPage() {
 
       {/* General Settings */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b border-[#2a2a2e] pb-2">General</h2>
+        <h2 className="text-xl font-semibold border-b border-[var(--border-subtle)] pb-2">General</h2>
         
-        <div className="bg-[var(--surface-raised)113] p-6 rounded-lg border border-[#2a2a2e] space-y-4">
+        <div className="bg-[var(--surface-raised)113] p-6 rounded-lg border border-[var(--border-subtle)] space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">Project Name</label>
             <input 
               type="text" 
               defaultValue="Alpha Release"
               disabled={!canRename}
-              className="w-full bg-[#18181c] border border-[#2a2a2e] rounded px-4 py-2 text-white focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#18181c] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
           
@@ -73,7 +73,7 @@ export default function ProjectSettingsPage() {
               rows={3}
               defaultValue="Core platform modernization phase 1."
               disabled={!canRename}
-              className="w-full bg-[#18181c] border border-[#2a2a2e] rounded px-4 py-2 text-white focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#18181c] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -89,8 +89,8 @@ export default function ProjectSettingsPage() {
 
       {/* GitHub Integration */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b border-[#2a2a2e] pb-2">GitHub Integration</h2>
-        <div className="bg-[var(--surface-raised)113] p-6 rounded-lg border border-[#2a2a2e] space-y-4">
+        <h2 className="text-xl font-semibold border-b border-[var(--border-subtle)] pb-2">GitHub Integration</h2>
+        <div className="bg-[var(--surface-raised)113] p-6 rounded-lg border border-[var(--border-subtle)] space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1">GitHub Repository</label>
             <p className="text-xs text-gray-500 mb-2">Link a GitHub repository to this project for code context (e.g., owner/repo).</p>
@@ -101,13 +101,13 @@ export default function ProjectSettingsPage() {
                 onChange={(e) => setRepoName(e.target.value)}
                 placeholder="e.g. facebook/react"
                 disabled={!canRename}
-                className="w-full bg-[#18181c] border border-[#2a2a2e] rounded px-4 py-2 text-white focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#18181c] border border-[var(--border-subtle)] rounded px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
               {canRename && (
                 <button 
                   onClick={handleSaveRepo}
                   disabled={isSavingRepo}
-                  className="whitespace-nowrap flex items-center gap-2 bg-[#2a2a2e] text-white px-4 py-2 rounded-md hover:bg-[#3a3a3e] transition-colors disabled:opacity-50"
+                  className="whitespace-nowrap flex items-center gap-2 bg-[#2a2a2e] text-[var(--text-primary)] px-4 py-2 rounded-md hover:bg-[#3a3a3e] transition-colors disabled:opacity-50"
                 >
                   {isSavingRepo ? 'Saving...' : 'Link Repository'}
                 </button>
@@ -127,7 +127,7 @@ export default function ProjectSettingsPage() {
             {canArchive && (
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-white font-medium">Archive Project</h3>
+                  <h3 className="text-[var(--text-primary)] font-medium">Archive Project</h3>
                   <p className="text-sm text-gray-400">Mark this project as read-only and hide it from active dashboards.</p>
                 </div>
                 <button className="flex items-center gap-2 px-4 py-2 border border-yellow-700/50 text-yellow-500 hover:bg-yellow-950/30 rounded-md transition-colors">
@@ -141,7 +141,7 @@ export default function ProjectSettingsPage() {
             {canDelete && (
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-white font-medium">Delete Project</h3>
+                  <h3 className="text-[var(--text-primary)] font-medium">Delete Project</h3>
                   <p className="text-sm text-gray-400">Permanently delete this project and all of its data. This cannot be undone.</p>
                 </div>
                 <button className="flex items-center gap-2 px-4 py-2 bg-red-600/10 border border-red-600/30 text-red-500 hover:bg-red-600/20 rounded-md transition-colors">

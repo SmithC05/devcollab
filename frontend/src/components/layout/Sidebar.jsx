@@ -254,7 +254,7 @@ export default function Sidebar({ isOpen, onClose }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-[#000000] bg-opacity-70 backdrop-blur-sm z-40 md:hidden"
+              className="fixed inset-0 bg-[var(--bg)] bg-opacity-70 backdrop-blur-sm z-40 md:hidden"
               onClick={onClose}
             />
             <motion.div

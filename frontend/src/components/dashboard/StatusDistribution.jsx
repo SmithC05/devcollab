@@ -53,7 +53,7 @@ export default function StatusDistribution({ distribution }) {
             <div 
               key={`${status.key}-bar`}
               style={{ width: `${percentage}%` }}
-              className={`h-full ${status.color} border-r border-white dark:border-[#151515] last:border-0`}
+              className={`h-full ${status.color} border-r border-white  last:border-0`}
             ></div>
           );
         })}

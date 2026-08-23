@@ -3,7 +3,7 @@ import { Plus, FolderOpen, MoreHorizontal, Users, CheckSquare, LayoutGrid, List 
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
 import { Spinner, EmptyState, Badge, IconButton, Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '../ui/index';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import CreateProjectModal from '../project/CreateProjectModal';
 import LaunchScreen from '../project/LaunchScreen';
 import { apiClient } from '../../api/client';
@@ -57,7 +57,16 @@ export default function WorkspaceProjectsPage() {
   const [viewMode, setViewMode] = useState('grid');
   
   const navigate = useNavigate();
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const location = useLocation();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(location.state?.openCreateModal || false);
+  
+  useEffect(() => {
+    if (location.state?.openCreateModal) {
+      // Clear the state so refreshing doesn't reopen the modal
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
+
   const [launchingProject, setLaunchingProject] = useState(null);
 
   const handleCreateProject = async (name) => {
@@ -74,6 +83,7 @@ export default function WorkspaceProjectsPage() {
   };
 
   useEffect(() => {
+    if (!activeWorkspace?.id) return;
     const fetchProjects = async () => {
       try {
         const data = await apiClient('/workspace/projects/');
@@ -147,7 +157,7 @@ export default function WorkspaceProjectsPage() {
           <div className="shrink-0 pt-1">
             <button 
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 h-[40px] px-[20px] rounded-[8px] bg-[var(--text-primary)] text-[var(--bg)] font-semibold text-[13px] hover:bg-white transition-colors duration-150 border border-transparent shadow-sm"
+              className="flex items-center gap-2 h-[40px] px-[20px] rounded-[8px] bg-[var(--text-primary)] text-[var(--bg)] font-semibold text-[13px] hover:opacity-90 transition-all duration-150 border border-transparent shadow-sm"
             >
               <Plus size={16} strokeWidth={2.5} />
               New Project →

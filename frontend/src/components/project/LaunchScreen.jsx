@@ -53,9 +53,9 @@ export default function LaunchScreen({ project, onComplete }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#111111] border border-[#2A2A2A] text-[#A3A3A3] text-[12px] md:text-[13px] font-medium tracking-wide uppercase mb-6"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--surface-item)] border border-[var(--border-subtle)] text-[var(--text-secondary)] text-[12px] md:text-[13px] font-medium tracking-wide uppercase mb-6"
           >
-            <Terminal size={14} className="text-[#A3A3A3]" />
+            <Terminal size={14} className="text-[var(--text-secondary)]" />
             Launching Project Environment
           </motion.div>
 
@@ -67,7 +67,7 @@ export default function LaunchScreen({ project, onComplete }) {
             className="mb-10 w-full"
           >
             <h1 
-              className="text-white font-bold uppercase leading-[0.95] tracking-[-3px] md:tracking-[-6px]"
+              className="text-[var(--text-primary)] font-bold uppercase leading-[0.95] tracking-[-3px] md:tracking-[-6px]"
               style={{ fontSize: 'clamp(72px, 10vw, 140px)' }}
             >
               {project?.name || 'PROJECT'}
@@ -82,11 +82,11 @@ export default function LaunchScreen({ project, onComplete }) {
             className="flex flex-col items-center gap-1.5 text-left mb-10 w-full max-w-[420px]"
             style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
           >
-            <div className="flex items-start text-[13px] md:text-[15px] text-[#A3A3A3] w-full">
+            <div className="flex items-start text-[13px] md:text-[15px] text-[var(--text-secondary)] w-full">
               <span className="mr-3 mt-[1px]">▱</span>
               Mounting Virtual Workspace.
             </div>
-            <div className="flex items-start text-[13px] md:text-[15px] text-[#A3A3A3] w-full">
+            <div className="flex items-start text-[13px] md:text-[15px] text-[var(--text-secondary)] w-full">
               <span className="mr-3 mt-[1px]">&gt;</span>
               Initializing Terminal & Editor.
             </div>
@@ -107,7 +107,7 @@ export default function LaunchScreen({ project, onComplete }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: step >= 2 ? 1 : 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-[12px] md:text-[14px] text-[#737373] tracking-wide"
+            className="text-[12px] md:text-[14px] text-[var(--text-muted)] tracking-wide"
           >
             Click or press ESC to enter immediately &rarr;
           </motion.div>

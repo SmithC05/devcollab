@@ -90,10 +90,24 @@ export const useAuthStore = create(
               console.error("Failed to fetch workspaces during init", e);
             }
 
+            // Auto-select workspace: if there's only one, pick it automatically.
+            // If the previously active workspace still exists in the list, keep it.
+            const currentActive = get().activeWorkspace;
+            let nextActive = currentActive;
+            if (currentActive) {
+              const stillExists = fetchedWorkspaces.some((w) => w.id === currentActive.id);
+              if (!stillExists) nextActive = null;
+            }
+            if (!nextActive && fetchedWorkspaces.length === 1) {
+              nextActive = fetchedWorkspaces[0];
+            }
+
             set({
               isAuthenticated: true,
               user: data.user,
               workspaces: fetchedWorkspaces,
+              activeWorkspace: nextActive,
+              role: nextActive?.role ?? get().role,
               isLoading: false,
             });
           } else {
@@ -123,10 +137,16 @@ export const useAuthStore = create(
             console.error("Failed to fetch workspaces during login", e);
           }
 
+          // Auto-select the workspace if there is exactly one — so the X-Workspace-Id
+          // header is sent immediately without requiring the user to visit /select-workspace.
+          const autoWorkspace = fetchedWorkspaces.length === 1 ? fetchedWorkspaces[0] : null;
+
           set({
             isAuthenticated: true,
             user: data.user,
             workspaces: fetchedWorkspaces,
+            activeWorkspace: autoWorkspace,
+            role: autoWorkspace?.role ?? null,
             sessionToken: data.session_token,
             accessToken: data.access_token,
             isLoading: false,
@@ -157,10 +177,15 @@ export const useAuthStore = create(
             console.error("Failed to fetch workspaces during register", e);
           }
 
+          // Auto-select if exactly one workspace exists (e.g., invited before registering)
+          const autoWorkspace = fetchedWorkspaces.length === 1 ? fetchedWorkspaces[0] : null;
+
           set({
             isAuthenticated: true,
             user: data.user,
             workspaces: fetchedWorkspaces,
+            activeWorkspace: autoWorkspace,
+            role: autoWorkspace?.role ?? null,
             sessionToken: data.session_token,
             accessToken: data.access_token,
             isLoading: false,
