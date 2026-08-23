@@ -159,6 +159,28 @@ export async function compareTaskCandidates(taskId) {
   }
 }
 
+export async function getUnassignedTasks() {
+  try {
+    return await apiClient('/intelligence/unassigned-tasks/');
+  } catch (error) {
+    console.error('Failed to fetch unassigned tasks:', error);
+    return { tasks: [] };
+  }
+}
+
+export async function recommendAndAssignTask(taskId, developerId) {
+  try {
+    return await apiClient('/intelligence/recommend-assign/', {
+      method: 'POST',
+      body: JSON.stringify({ task_id: taskId, developer_id: developerId }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Failed to assign task:', error);
+    throw error;
+  }
+}
+
 export async function summarizeMemberEvidence(memberId) {
   try {
     return await apiClient(`/intelligence/members/${memberId}/summarize/`);

@@ -70,10 +70,11 @@ def get_current_workspace(request):
     if not request.user.is_authenticated:
         raise PermissionDenied("Authentication required")
 
-    # In Django request.META, custom headers like X-Workspace-Id become HTTP_X_WORKSPACE_ID
     workspace_id = request.META.get('HTTP_X_WORKSPACE_ID')
 
     if not workspace_id:
+        with open("debug_workspace.txt", "a") as f:
+            f.write("DEBUG: X-Workspace-Id header missing\n")
         # Fallback: use the user's first workspace membership
         membership = WorkspaceMembership.objects.select_related('workspace').filter(
             user=request.user
@@ -90,6 +91,10 @@ def get_current_workspace(request):
         )
         return membership.workspace
     except WorkspaceMembership.DoesNotExist:
+        with open("debug_workspace.txt", "a") as f:
+            f.write(f"WorkspaceMembership missing for user={request.user.id}, workspace_id={workspace_id}\n")
         raise PermissionDenied(f"You are not a member of workspace {workspace_id} or it does not exist.")
-    except ValueError:
+    except ValueError as e:
+        with open("debug_workspace.txt", "a") as f:
+            f.write(f"ValueError in workspace_id format: {e}\n")
         raise PermissionDenied("Invalid workspace ID format.")

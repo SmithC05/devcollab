@@ -58,10 +58,9 @@ def agent_execute_action(request):
             channel_layer = get_channel_layer()
             if channel_layer:
                 async_to_sync(channel_layer.group_send)(
-                    f"project_{task.project_id}",
+                    "workspace_global",
                     {
-                        "type": "broadcast_event",
-                        "event_type": "engine_event",
+                        "type": "engine_event",
                         "payload": {
                             "event_type": "TASK_ASSIGNED",
                             "task_id": task.id,
@@ -76,3 +75,107 @@ def agent_execute_action(request):
             return Response({"error": "Task not found"}, status=404)
             
     return Response({"error": "Unknown action type"}, status=400)
+
+
+@api_view(['POST'])
+def declare_unavailable_view(request):
+    """
+    Direct endpoint to declare the current user unavailable.
+    Bypasses the agent loop — used by the AI Assistant quick-action button.
+    """
+    duration_hours = request.data.get("duration_hours")
+    scope = request.data.get("scope", "CRITICAL_WORK")
+    original_message = request.data.get("original_message", "")
+    project_id = request.data.get("project_id")
+
+    if not duration_hours:
+        return Response({"error": "duration_hours is required"}, status=400)
+
+    if not request.user.is_authenticated:
+        return Response({"error": "Authentication required"}, status=401)
+
+    from apps.ai.tools import declare_unavailable_core
+    result_json = declare_unavailable_core(
+        duration_hours=int(duration_hours),
+        scope=scope,
+        original_message=original_message,
+        user=request.user,
+        project_id=int(project_id) if project_id else None
+    )
+    import json as _json
+    result = _json.loads(result_json)
+
+    if result.get("error"):
+        return Response({"error": result["error"]}, status=500)
+
+    return Response({
+        "success": True,
+        **result
+    })
+
+
+@api_view(['POST'])
+def demo_reset_view(request):
+    """
+    Safely resets the Phase 3 demo state:
+    - Sets Smith's PresenceSession back to ACTIVE
+    - Marks all EVALUATED SimulationScenarios triggered by Smith as REJECTED
+    - Restores Payment Gateway Auth task to unassigned or original owner
+    - Broadcasts presence update via WebSocket
+    """
+    from apps.realtime.models import PresenceSession, Notification
+    from apps.simulations.models import SimulationScenario
+    from django.contrib.auth import get_user_model
+    User_model = get_user_model()
+
+    try:
+        smith = User_model.objects.get(username="Smith")
+    except User_model.DoesNotExist:
+        return Response({"error": "Smith user not found"}, status=404)
+
+    # Reset PresenceSession
+    PresenceSession.objects.filter(user=smith, status='UNAVAILABLE').update(
+        status='ACTIVE',
+        unavailable_until=None,
+        unavailable_reason='',
+    )
+
+    # Reset simulation scenarios triggered by Smith
+    rejected = SimulationScenario.objects.filter(
+        unavailable_member=smith,
+        status="EVALUATED"
+    ).update(status="REJECTED")
+
+    # Reset the demo task if it was created/modified for demo
+    task = Task.objects.filter(title='Payment Gateway Auth').first()
+    if task:
+        # Restore to unassigned (as it would be before Smith claimed it)
+        task.assignee = None
+        task.save()
+
+    # Broadcast presence restore
+    channel_layer = get_channel_layer()
+    if channel_layer:
+        try:
+            async_to_sync(channel_layer.group_send)(
+                "workspace_global",
+                {
+                    "type": "engine_event",
+                    "payload": {
+                        "event_type": "PRESENCE_RESTORED",
+                        "user_id": smith.id,
+                        "username": smith.username,
+                        "status": "ACTIVE",
+                    }
+                }
+            )
+        except Exception:
+            pass
+
+    return Response({
+        "success": True,
+        "message": "Demo state reset. Smith is ACTIVE, simulation scenarios cleared.",
+        "scenarios_rejected": rejected,
+        "task_reset": task.title if task else None,
+    })
+

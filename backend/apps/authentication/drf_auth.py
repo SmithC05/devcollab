@@ -17,7 +17,4 @@ class CustomMiddlewareAuthentication(BaseAuthentication):
         return None
 
     def authenticate_header(self, request):
-        # Returning a non-empty string makes DRF emit a 401 (with
-        # WWW-Authenticate header) instead of a 403 for unauthenticated
-        # requests, which is the correct HTTP semantics.
-        return 'Bearer realm="api"'
+        return 'Bearer'

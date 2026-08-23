@@ -32,6 +32,7 @@ import AuthCallbackPage     from '../pages/AuthCallbackPage';
 import IntelligenceLayout        from '../features/devcollab-intelligence/pages/IntelligenceLayout';
 import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
 import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence/OrganizationIntelligence';
+import DeveloperEngineeringProfile from '../features/devcollab-intelligence/pages/OrganizationIntelligence/DeveloperEngineeringProfile';
 import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
 import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
 import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
@@ -176,6 +177,7 @@ export default function AppRoutes() {
         <Route path="intelligence">
           <Route index element={<Navigate to="organization" replace />} />
           <Route path="organization" element={<OrganizationIntelligence />} />
+          <Route path="engineering-profile" element={<DeveloperEngineeringProfile />} />
           <Route path="decision/:id" element={<DecisionPoint />} />
           <Route path="simulation/task/:id" element={<SimulationCenter />} />
           <Route path="simulation/demo/:id" element={<SimulationCenter />} />

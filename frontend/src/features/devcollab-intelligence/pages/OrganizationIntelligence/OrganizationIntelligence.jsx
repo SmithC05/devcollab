@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Zap, X } from 'lucide-react';
 
 import '../../styles/tokens.css';
 import '../../styles/components.css';
@@ -49,16 +49,21 @@ export default function OrganizationIntelligence() {
   
   const [selectedNode, setSelectedNode] = useState(null);
   const [decisionPoint, setDecisionPoint] = useState(null);
+  const [unavailableBanner, setUnavailableBanner] = useState(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const isFetchingRef = useRef(false);
+  const debounceRef = useRef(null);
+
+  // background=true means: don't flip the loading spinner (used for WebSocket-triggered refetches)
+  const fetchData = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
     try {
       const state = await getOrganizationIntelligenceState(mode);
       setData(state);
     } catch (e) {
       console.error(e);
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [mode]);
 
@@ -66,18 +71,32 @@ export default function OrganizationIntelligence() {
     fetchData();
   }, [fetchData]);
 
-  // Wire realtime event engine_event
+  // Wire realtime event engine_event — debounced so rapid WS messages
+  // (presence pings, status updates) don't hammer the API or disrupt child state
   useEffect(() => {
     if (mode !== 'LIVE') return;
     const handleEngineEvent = (e) => {
-      fetchData(); // Invalidate and refetch
+      // Always handle modal-level decision points immediately
       if (e.detail && e.detail.event_type === 'DECISION_POINT_CREATED') {
         setDecisionPoint(e.detail);
       }
+      if (e.detail && e.detail.event_type === 'MEMBER_UNAVAILABLE') {
+        setUnavailableBanner(e.detail.payload || e.detail);
+      }
+      if (e.detail && e.detail.event_type === 'TASK_REASSIGNED') {
+        setDecisionPoint(null);
+        setUnavailableBanner(null);
+      }
+      // Debounce the data refetch — wait 1.5s of silence before hitting the API
+      clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        fetchData(true); // background=true: no loading spinner
+      }, 1500);
     };
     document.addEventListener('engine_event', handleEngineEvent);
     return () => {
       document.removeEventListener('engine_event', handleEngineEvent);
+      clearTimeout(debounceRef.current);
     };
   }, [mode, fetchData]);
 
@@ -115,6 +134,40 @@ export default function OrganizationIntelligence() {
             <DvButton variant="outline" size="sm" style={{ borderColor: 'var(--dv-warning)' }} onClick={() => setMode('LIVE')}>
               EXIT DEMO
             </DvButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Phase 3: MEMBER_UNAVAILABLE Alert Banner ─────── */}
+      <AnimatePresence>
+        {unavailableBanner && mode === 'LIVE' && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            style={{
+              background: 'var(--dv-danger-subtle)', borderBottom: '2px solid var(--dv-danger-border)',
+              padding: '14px 40px', display: 'flex', alignItems: 'center', gap: 12, overflow: 'hidden'
+            }}
+          >
+            <Zap size={16} color="var(--dv-danger)" style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, color: 'var(--dv-danger)', letterSpacing: '0.08em', marginBottom: 2 }}>
+                DECISION REQUIRED — MEMBER UNAVAILABLE
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--dv-text-secondary)' }}>
+                {unavailableBanner.affected_member?.username || 'A team member'} has declared unavailability
+                {unavailableBanner.affected_member?.duration_hours
+                  ? ` for ${Math.floor(unavailableBanner.affected_member.duration_hours / 24)} day(s)`
+                  : ''}
+                . {(unavailableBanner.affected_tasks || []).length} critical task(s) require reassignment.
+              </div>
+            </div>
+            <DvButton variant="danger" size="sm" onClick={() => navigate(`/dashboard/intelligence/simulation/task/${unavailableBanner.affected_tasks[0]?.id}`)}>
+              REVIEW DECISION
+            </DvButton>
+            <button onClick={() => setUnavailableBanner(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--dv-text-faint)', padding: 4 }}>
+              <X size={14} />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

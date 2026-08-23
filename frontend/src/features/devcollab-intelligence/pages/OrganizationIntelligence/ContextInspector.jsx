@@ -4,7 +4,7 @@ import { X, Loader2 } from 'lucide-react';
 import { slideIn } from '../../motion/presets';
 import { ProvenancePip, mono } from './shared';
 import { DvBadge } from '../../primitives/core';
-import { coverageToVariant, contextLabelToVariant, getMemberEvidence } from '../../data/organizationAdapter';
+import { coverageToVariant, contextLabelToVariant, getMemberEvidence, summarizeMemberEvidence } from '../../data/organizationAdapter';
 
 export default function ContextInspector({ node, onClose, members, projects, responsibilities }) {
   if (!node) return null;
@@ -159,9 +159,10 @@ function ProjectInspector({ project, members, responsibilities }) {
   ) : null;
 }
 
-function MemberInspector({ member }) {
+export function MemberInspector({ member }) {
   const [evidence, setEvidence] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [aiSummary, setAiSummary] = useState('Generating summary...');
 
   useEffect(() => {
     let cancelled = false;
@@ -172,6 +173,14 @@ function MemberInspector({ member }) {
       }
       if (!cancelled) setLoading(false);
     });
+    
+    // Fetch AI Summary concurrently
+    summarizeMemberEvidence(member.id).then(res => {
+        if (!cancelled && res) {
+            setAiSummary(res.summary || 'Summary unavailable.');
+        }
+    });
+    
     return () => { cancelled = true; };
   }, [member.id]);
 
@@ -196,7 +205,7 @@ function MemberInspector({ member }) {
               background: 'var(--dv-bg-elevated)', border: '1px solid var(--dv-border-subtle)',
               color: 'var(--dv-text-secondary)', lineHeight: 1.5
             }}>
-              {evidence.ai_summary}
+              {aiSummary}
             </div>
           </InspectorSection>
           
