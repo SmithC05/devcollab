@@ -123,7 +123,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     def engineering_context(self, request, pk=None):
         task = self.get_object()
         from engine.context.state import get_project_engineering_state
-        from apps.users.serializers import UserSerializer
+        from apps.tasks.serializers import UserSerializer
         from apps.workspaces.models import WorkspaceMembership
 
         # Engineering context
@@ -139,3 +139,8 @@ class TaskViewSet(viewsets.ModelViewSet):
             "project_members": project_members,
         }
         return Response(context)
+
+    @action(detail=True, methods=['get'], url_path='comments')
+    def comments(self, request, pk=None):
+        # Comments model was removed, return empty list to prevent frontend 404s
+        return Response([])
