@@ -77,6 +77,9 @@ def approve_scenario(request, scenario_id):
         
     # State Mutation (For demo: REASSIGN changes owner, KNOWLEDGE_TRANSFER also changes owner but leaves trail)
     if intervention in ["REASSIGN", "KNOWLEDGE_TRANSFER"]:
+        # RBAC: only OWNER/ADMIN/LEAD may approve reassignment scenarios
+        from apps.tasks.permissions import assert_task_permission
+        assert_task_permission(request.user, scenario.task, 'assign')
         scenario.task.assignee = candidate
         scenario.task.save()
         
