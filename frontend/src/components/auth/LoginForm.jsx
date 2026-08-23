@@ -1,36 +1,41 @@
 // src/components/auth/LoginForm.jsx
 // Login form: email, password, social buttons, forgot password, mode toggle.
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
-import AuthInput from './AuthInput';
-import AuthDivider from './AuthDivider';
-import SocialButton from './SocialButton';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
+import AuthInput from "./AuthInput";
+import AuthDivider from "./AuthDivider";
+import SocialButton from "./SocialButton";
 
 export default function LoginForm({ onSwitchToRegister }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
 
-  const { login, loginWithGoogle, loginWithGitHub, workspaces, isLoading } = useAuthStore();
+  const { login, loginWithGoogle, loginWithGitHub, workspaces, isLoading } =
+    useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
 
   const validate = () => {
     const e = {};
-    if (!email.trim()) e.email = 'Email is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Enter a valid email address.';
-    if (!password) e.password = 'Password is required.';
+    if (!email.trim()) e.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      e.email = "Enter a valid email address.";
+    if (!password) e.password = "Password is required.";
     return e;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
     setErrors({});
 
     const result = await login(email, password);
@@ -44,9 +49,9 @@ export default function LoginForm({ onSwitchToRegister }) {
 
       const { workspaces: freshWorkspaces } = useAuthStore.getState();
       if (freshWorkspaces && freshWorkspaces.length > 0) {
-        navigate('/select-workspace');
+        navigate("/select-workspace");
       } else {
-        navigate('/onboarding');
+        navigate("/onboarding");
       }
     } else {
       setErrors({ form: result.error });
@@ -57,10 +62,10 @@ export default function LoginForm({ onSwitchToRegister }) {
     <div className="flex flex-col gap-6 w-full">
       {/* Header */}
       <div>
-        <h1 className="text-[34px] md:text-[36px] font-bold leading-[1.1] tracking-[-1px] text-white dark:text-white mb-[8px]">
+        <h1 className="text-[34px] md:text-[36px] font-bold leading-[1.1] tracking-[-1px] text-[var(--text-primary)] mb-[8px]">
           Sign in to DevCollab
         </h1>
-        <p className="text-[15px] md:text-[16px] leading-[1.5] text-[#A3A3A3]">
+        <p className="text-[15px] md:text-[16px] leading-[1.5] text-[var(--text-secondary)]">
           Enter your email and password to access your workspace.
         </p>
       </div>
@@ -86,7 +91,12 @@ export default function LoginForm({ onSwitchToRegister }) {
       )}
 
       {/* Fields */}
-      <form id="login-form" onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+      <form
+        id="login-form"
+        onSubmit={handleSubmit}
+        noValidate
+        className="flex flex-col gap-4"
+      >
         <AuthInput
           id="login-email"
           label="Email Address"
@@ -94,7 +104,10 @@ export default function LoginForm({ onSwitchToRegister }) {
           icon={Mail}
           placeholder="you@example.com"
           value={email}
-          onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: undefined })); }}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
           autoComplete="email"
           error={errors.email}
           disabled={isLoading}
@@ -108,7 +121,10 @@ export default function LoginForm({ onSwitchToRegister }) {
             icon={Lock}
             placeholder="••••••••"
             value={password}
-            onChange={e => { setPassword(e.target.value); setErrors(prev => ({ ...prev, password: undefined })); }}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setErrors((prev) => ({ ...prev, password: undefined }));
+            }}
             autoComplete="current-password"
             error={errors.password}
             disabled={isLoading}
@@ -116,7 +132,7 @@ export default function LoginForm({ onSwitchToRegister }) {
           <div className="flex justify-end">
             <button
               type="button"
-              className="text-[14px] text-[#A3A3A3] hover:text-white transition-colors mt-[8px]"
+              className="text-[14px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mt-[8px]"
             >
               Forgot password?
             </button>
@@ -131,16 +147,16 @@ export default function LoginForm({ onSwitchToRegister }) {
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
           className="
-            mt-1 w-full h-[60px] rounded-[18px]
-            flex items-center justify-center gap-2
-            bg-white text-black dark:bg-white dark:text-black
-            light:bg-black light:text-white
-            text-[16px] font-bold
-            hover:opacity-90 active:translate-y-[1px]
-            transition-all duration-150 shadow-sm
-            disabled:opacity-60 disabled:cursor-not-allowed
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40
-          "
+ mt-1 w-full h-[60px] rounded-[18px]
+ flex items-center justify-center gap-2
+ bg-white text-black dark:bg-white dark:text-black
+ 
+ text-[16px] font-bold
+ hover:opacity-90 active:translate-y-[1px]
+ transition-all duration-150 shadow-sm
+ disabled:opacity-60 disabled:cursor-not-allowed
+ focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40
+ "
         >
           {isLoading ? (
             <Loader2 size={18} className="animate-spin" />
@@ -160,13 +176,13 @@ export default function LoginForm({ onSwitchToRegister }) {
       </form>
 
       {/* Mode toggle */}
-      <p className="text-center text-[14px] text-[#A3A3A3] mt-2">
-        Don't have an account?{' '}
+      <p className="text-center text-[14px] text-[var(--text-secondary)] mt-2">
+        Don't have an account?{" "}
         <button
           id="switch-to-register"
           type="button"
           onClick={onSwitchToRegister}
-          className="text-white dark:text-white font-bold hover:underline focus-visible:outline-none"
+          className="text-[var(--text-primary)] font-bold hover:underline focus-visible:outline-none"
         >
           Register
         </button>

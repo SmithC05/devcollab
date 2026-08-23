@@ -6,14 +6,17 @@ import StatusDistribution from '../dashboard/StatusDistribution';
 import PageContainer from '../layout/PageContainer';
 import { useAuthStore } from '../../stores/authStore';
 import { workspaceApi } from '../../api/workspaceApi';
+import { useNavigate } from 'react-router-dom';
 
 // BUG-15: setWorkspaceName prop removed; workspace name now read from store
 export default function WorkspaceOverview() {
   const { activeWorkspace } = useAuthStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (!activeWorkspace?.id) return;
     const fetchData = async () => {
       try {
         const data = await apiClient('/workspace/overview/');
@@ -82,7 +85,9 @@ export default function WorkspaceOverview() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-3 shrink-0" style={{ marginTop: '8px' }}>
-            <button style={{
+            <button 
+              onClick={() => navigate('/dashboard/ai')}
+              style={{
               display: 'flex', alignItems: 'center', gap: '7px',
               height: '38px', padding: '0 18px',
               border: '1px solid var(--border-strong)', background: 'var(--surface-raised)',
@@ -96,7 +101,9 @@ export default function WorkspaceOverview() {
               <Sparkles size={14} />
               Ask AI
             </button>
-            <button style={{
+            <button 
+              onClick={() => navigate('/dashboard/projects', { state: { openCreateModal: true } })}
+              style={{
               display: 'flex', alignItems: 'center', gap: '7px',
               height: '38px', padding: '0 20px',
               background: 'var(--text-primary)', color: 'var(--bg)',

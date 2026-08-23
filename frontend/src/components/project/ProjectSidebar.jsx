@@ -138,7 +138,7 @@ const NAV_DEV = [
 export default function ProjectSidebar({ project: passedProject }) {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { role, user } = useAuthStore();
+  const { role, setRole, user } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
 
   const project = passedProject || { id: projectId || 'P1', name: projectId || 'P1', avatar: 'DC' };
@@ -303,16 +303,21 @@ export default function ProjectSidebar({ project: passedProject }) {
         {!collapsed && (
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name || 'User'}</span>
-            <div
+            <select
+              value={safeRole}
+              onChange={(e) => setRole(e.target.value)}
               style={{
                 fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px',
                 background: 'transparent', border: '1px solid var(--border-strong)',
-                borderRadius: '4px', padding: '4px 6px', width: 'fit-content',
-                textTransform: 'uppercase', letterSpacing: '0.05em'
+                borderRadius: '4px', padding: '2px', outline: 'none', cursor: 'pointer', width: '100%',
               }}
             >
-              {safeRole}
-            </div>
+              {ROLES.map(r => (
+                <option key={r} value={r} style={{ background: 'var(--surface-raised)', color: 'var(--text-primary)' }}>
+                  Role: {r}
+                </option>
+              ))}
+            </select>
           </div>
         )}
       </div>

@@ -8,3 +8,6 @@ export { SectionHeader } from './SectionHeader';
 export { SearchInput } from './SearchInput';
 export { StatCard } from './StatCard';
 export { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from './Table';
+export { default as SuccessModal } from './SuccessModal';
+export { default as ConfirmModal } from './ConfirmModal';
+
