@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Search, Bell, Command, Sun, Moon } from 'lucide-react';
+import { Menu, Search, Bell, Command, Sun, Moon, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
@@ -10,12 +10,13 @@ export default function Topbar({ workspaceName, onMenuClick }) {
   const [isFocused, setIsFocused] = useState(false);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
-  const { user } = useAuthStore();
+  const { user, workspacePlan } = useAuthStore();
   
   const userName = user?.first_name
     ? `${user.first_name} ${user.last_name}`.trim()
     : user?.username || 'User';
   const initial = userName.charAt(0).toUpperCase();
+  const isPro = workspacePlan === 'PRO';
 
   // Simple breadcrumb logic based on route
   const getPageName = () => {
@@ -34,7 +35,7 @@ export default function Topbar({ workspaceName, onMenuClick }) {
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="sticky top-0 z-20 shrink-0 flex items-center justify-center h-[56px] bg-[var(--topbar-bg)] border-b border-[var(--border-subtle)] w-full"
+      className="sticky top-0 z-20 shrink-0 flex items-center justify-center h-16 bg-[var(--topbar-bg)] border-b border-[var(--border-subtle)] w-full"
     >
       <div 
         className="flex items-center w-[92%] md:w-[90%] lg:w-[85%] max-w-[1440px] px-6 md:px-10 h-full box-border"
@@ -58,27 +59,28 @@ export default function Topbar({ workspaceName, onMenuClick }) {
         </div>
 
         {/* ── Center: Global Command Search ──────────────────────────────── */}
-        <div className="flex-1 flex justify-center px-4 max-w-xl shrink-0">
+        <div className="flex-1 flex justify-center px-4 max-w-2xl shrink-0">
           <motion.div
             animate={{
-              width: isFocused ? '440px' : '400px',
+              width: isFocused ? '520px' : '500px',
               borderColor: isFocused ? 'var(--focus-ring)' : 'var(--border-default)',
               backgroundColor: isFocused ? 'var(--surface-hover)' : 'var(--surface-raised)'
             }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="relative flex items-center h-[34px] rounded-lg border w-full max-w-full overflow-hidden group cursor-text"
+            className="relative flex items-center h-10 rounded-lg border w-full max-w-full overflow-hidden group cursor-text"
             onClick={() => document.getElementById('global-search')?.focus()}
           >
             <Search 
-              size={14} 
-              className="absolute left-3 transition-colors" 
-              style={{ color: isFocused ? 'var(--text-primary)' : 'var(--text-muted)' }}
+              size={15} 
+              className="absolute transition-colors pointer-events-none" 
+              style={{ left: 14, color: isFocused ? 'var(--text-primary)' : 'var(--text-muted)' }}
             />
             <input
               id="global-search"
               type="text"
               placeholder="Search or jump to..."
-              className="w-full h-full bg-transparent border-none outline-none pl-9 pr-14 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              className="w-full h-full bg-transparent border-none outline-none text-[14px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+              style={{ paddingLeft: 44, paddingRight: 72 }}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
             />
@@ -116,9 +118,25 @@ export default function Topbar({ workspaceName, onMenuClick }) {
           <motion.button 
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
-            className="w-8 h-8 rounded-full bg-[#8B6B5D] flex items-center justify-center text-[12px] font-semibold text-white cursor-pointer outline-none shrink-0 overflow-hidden select-none"
+            className={`relative flex items-center justify-center cursor-pointer outline-none shrink-0 overflow-visible select-none ${
+              isPro
+                ? 'w-[64px] h-9 rounded-full bg-[#D4AF37] text-black border border-[#F5D76E] shadow-[0_0_0_3px_rgba(212,175,55,0.12)] gap-1.5 px-2'
+                : 'w-8 h-8 rounded-full bg-[#8B6B5D] text-white'
+            } text-[12px] font-semibold`}
           >
-            {initial}
+            {isPro ? (
+              <>
+                <span className="w-5 h-5 rounded-full bg-black/15 flex items-center justify-center text-[11px] font-bold">
+                  {initial}
+                </span>
+                <span className="text-[11px] font-bold uppercase tracking-wide">Pro</span>
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#FFE08A] border border-[#B88900] flex items-center justify-center">
+                  <Crown size={11} strokeWidth={2.3} />
+                </span>
+              </>
+            ) : (
+              initial
+            )}
           </motion.button>
         </div>
       </div>

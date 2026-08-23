@@ -67,6 +67,7 @@ export const useAuthStore = create(
       user: null,
       role: 'Owner', // Temporary default for RBAC simulation
       activeWorkspace: null,
+      workspacePlan: 'FREE',
       sessionToken: null,
       accessToken: null,
       isAuthenticated: false,
@@ -187,6 +188,7 @@ export const useAuthStore = create(
             user: null,
             role: null,
             activeWorkspace: null,
+            workspacePlan: 'FREE',
             workspaces: [],
             sessionToken: null,
             accessToken: null,
@@ -220,13 +222,53 @@ export const useAuthStore = create(
       setActiveWorkspace: (workspaceId) => {
         const ws = get().workspaces.find(w => w.id === workspaceId);
         if (ws) {
-          set({ activeWorkspace: ws, role: ws.role });
+          set({ activeWorkspace: ws, role: ws.role, workspacePlan: (ws.plan || 'FREE').toUpperCase() });
         }
       },
 
-      setWorkspace: (workspace) => set({ activeWorkspace: workspace, role: workspace?.role }),
+      setWorkspace: (workspace) => set({
+        activeWorkspace: workspace,
+        role: workspace?.role,
+        workspacePlan: (workspace?.plan || 'FREE').toUpperCase(),
+      }),
       
       setRole: (role) => set({ role }),
+
+      upgradeWorkspaceToPro: () => set((state) => {
+        const activeWorkspace = state.activeWorkspace
+          ? { ...state.activeWorkspace, plan: 'PRO' }
+          : state.activeWorkspace;
+
+        const workspaces = state.workspaces.map((workspace) => (
+          state.activeWorkspace && workspace.id === state.activeWorkspace.id
+            ? { ...workspace, plan: 'PRO' }
+            : workspace
+        ));
+
+        return {
+          activeWorkspace,
+          workspaces,
+          workspacePlan: 'PRO',
+        };
+      }),
+
+      downgradeWorkspaceToFree: () => set((state) => {
+        const activeWorkspace = state.activeWorkspace
+          ? { ...state.activeWorkspace, plan: 'FREE' }
+          : state.activeWorkspace;
+
+        const workspaces = state.workspaces.map((workspace) => (
+          state.activeWorkspace && workspace.id === state.activeWorkspace.id
+            ? { ...workspace, plan: 'FREE' }
+            : workspace
+        ));
+
+        return {
+          activeWorkspace,
+          workspaces,
+          workspacePlan: 'FREE',
+        };
+      }),
 
       can: (action) => {
         const currentRole = get().role || 'Dev';

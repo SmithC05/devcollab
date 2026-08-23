@@ -8,6 +8,7 @@ import {
   CreditCard,
   Settings,
   Sparkles,
+  Crown,
   ChevronLeft,
   ChevronRight,
   X
@@ -56,7 +57,7 @@ function SideNavLink({ to, end, onClick, icon: Icon, children, collapsed }) {
 
 export default function Sidebar({ workspaceName, isOpen, onClose }) {
   const navigate = useNavigate();
-  const { user, activeWorkspace } = useAuthStore();
+  const { user, activeWorkspace, workspacePlan } = useAuthStore();
   
   const [collapsed, setCollapsed] = useState(false);
 
@@ -64,6 +65,7 @@ export default function Sidebar({ workspaceName, isOpen, onClose }) {
     ? `${user.first_name} ${user.last_name}`.trim()
     : user?.username || 'User';
   const initial = userName.charAt(0).toLowerCase();
+  const isPro = workspacePlan === 'PRO';
 
   const navGroups = [
     {
@@ -105,7 +107,7 @@ export default function Sidebar({ workspaceName, isOpen, onClose }) {
         )}
 
         {/* ── Brand ──────────────────────────────────────────── */}
-        <div className="h-[56px] px-4 flex items-center shrink-0 border-b border-[var(--border-subtle)]" style={{ justifyContent: isCollapsed ? 'center' : 'space-between' }}>
+        <div className="h-[56px] flex items-center shrink-0 border-b border-[var(--border-subtle)]" style={{ justifyContent: isCollapsed ? 'center' : 'space-between', paddingLeft: isCollapsed ? '0' : '16px', paddingRight: '16px' }}>
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-[28px] h-[28px] rounded-full bg-[var(--text-primary)] text-[var(--bg)] flex items-center justify-center text-[12px] font-bold shrink-0">
               DC
@@ -130,7 +132,7 @@ export default function Sidebar({ workspaceName, isOpen, onClose }) {
           {navGroups.map((group, groupIdx) => (
             <div key={group.title}>
               {!isCollapsed && (
-                <div className="px-5 mb-3 flex flex-col gap-1.5">
+                <div className="mb-3 flex flex-col gap-1.5" style={{ paddingLeft: '16px', paddingRight: '16px' }}>
                   <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
                     {group.title}
                   </span>
@@ -163,19 +165,33 @@ export default function Sidebar({ workspaceName, isOpen, onClose }) {
         </div>
 
         {/* ── User Footer ──────────────────────────────────── */}
-        <div className="shrink-0 p-4 flex items-center justify-between mt-auto">
+        <div className="shrink-0 flex items-center justify-between mt-auto" style={{ paddingLeft: isCollapsed ? '0' : '16px', paddingRight: '16px', paddingBottom: '16px', paddingTop: '16px' }}>
           <button
             onClick={() => navigate('/dashboard/settings')}
             className="flex items-center gap-3 min-w-0 bg-transparent border-none outline-none cursor-pointer w-full group"
             style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}
           >
-            <div className="w-[30px] h-[30px] rounded-full bg-[#8B6B5D] text-white flex items-center justify-center text-[13px] font-semibold shrink-0">
+            <div className={`relative w-[30px] h-[30px] rounded-full flex items-center justify-center text-[13px] font-semibold shrink-0 ${
+              isPro ? 'bg-[#D4AF37] text-black border border-[#F5D76E]' : 'bg-[#8B6B5D] text-white'
+            }`}>
+              {isPro && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FFE08A] border border-[#B88900] flex items-center justify-center">
+                  <Crown size={9} strokeWidth={2.4} />
+                </span>
+              )}
               {initial}
             </div>
             {!isCollapsed && (
-              <span className="text-[13px] font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] truncate transition-colors">
-                {userName.toLowerCase()}
-              </span>
+              <div className="min-w-0 flex items-center gap-2">
+                <span className="text-[13px] font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] truncate transition-colors">
+                  {userName.toLowerCase()}
+                </span>
+                {isPro && (
+                  <span className="shrink-0 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#D4AF37]">
+                    Pro
+                  </span>
+                )}
+              </div>
             )}
           </button>
         </div>
