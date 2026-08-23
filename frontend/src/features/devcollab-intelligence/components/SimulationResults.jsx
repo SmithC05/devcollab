@@ -36,17 +36,19 @@ export function SimulationResults({ result }) {
             </div>
 
             <DvDivider />
-            <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 11, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-muted)', marginBottom: 12 }}>WHY THIS RESPONSE?</div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {recommended.reason && recommended.reason.map((r, i) => (
-                  <li key={i} style={{ display: 'flex', gap: 8, fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)', alignItems: 'flex-start' }}>
-                    <ArrowRight size={14} color="var(--dv-success)" style={{ marginTop: 2, flexShrink: 0 }} />
-                    <span>{r}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {recommended.reason && recommended.reason.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 11, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-muted)', marginBottom: 12 }}>WHY THIS RESPONSE?</div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {recommended.reason.map((r, i) => (
+                    <li key={i} style={{ display: 'flex', gap: 8, fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)', alignItems: 'flex-start' }}>
+                      <ArrowRight size={14} color="var(--dv-success)" style={{ marginTop: 2, flexShrink: 0 }} />
+                      <span>{r}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             
             <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
                <DvButton variant="primary" onClick={() => onReview && onReview(recommended)}>
@@ -73,10 +75,12 @@ export function SimulationResults({ result }) {
                 <tr style={{ borderBottom: '1px solid var(--dv-border-subtle)' }}>
                   <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>INTERVENTION</th>
                   <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>CANDIDATE</th>
-                  <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>COMPLETION (EST)</th>
-                  <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>TRANSFER EFFORT</th>
-                  <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>RISK</th>
-                  <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>DEADLINE MISS PROB</th>
+                  {interventions.some(i => i.estimated_completion !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>COMPLETION (EST)</th>}
+                  {interventions.some(i => i.context_transfer_effort !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>TRANSFER EFFORT</th>}
+                  {interventions.some(i => i.risk !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>RISK</th>}
+                  {interventions.some(i => i.workload_impact !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>WORKLOAD IMPACT</th>}
+                  {interventions.some(i => i.dependency_impact !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>DEP. IMPACT</th>}
+                  {interventions.some(i => i.responsibility_coverage !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>COVERAGE</th>}
                 </tr>
               </thead>
               <tbody>
@@ -92,23 +96,46 @@ export function SimulationResults({ result }) {
                     <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
                        {inv.candidate_name || '—'}
                     </td>
-                    <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-primary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Clock size={12} color="var(--dv-text-faint)" />
-                        {fmtHrs(inv.estimated_completion)}
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
-                       {fmtHrs(inv.predicted_transfer_effort_hours)}
-                    </td>
-                    <td style={{ padding: '16px' }}>
-                      <DvBadge variant={inv.risk === 'HIGH' ? 'danger' : inv.risk === 'MEDIUM' ? 'warning' : 'success'} dot>
-                        {inv.risk}
-                      </DvBadge>
-                    </td>
-                    <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
-                       {inv.deadline_probability !== null ? `${Math.round(inv.deadline_probability * 100)}%` : '—'}
-                    </td>
+                    {interventions.some(i => i.estimated_completion !== undefined) && (
+                      <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-primary)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Clock size={12} color="var(--dv-text-faint)" />
+                          {inv.estimated_completion !== undefined ? fmtHrs(inv.estimated_completion) : '—'}
+                        </div>
+                      </td>
+                    )}
+                    {interventions.some(i => i.context_transfer_effort !== undefined) && (
+                      <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
+                        {inv.context_transfer_effort !== undefined ? fmtHrs(inv.context_transfer_effort) : '—'}
+                      </td>
+                    )}
+                    {interventions.some(i => i.risk !== undefined) && (
+                      <td style={{ padding: '16px' }}>
+                        {inv.risk !== undefined ? (
+                          <DvBadge variant={
+                            inv.risk === 'HIGH' ? 'danger' : 
+                            inv.risk === 'MEDIUM' ? 'warning' : 'success'
+                          }>
+                            {inv.risk}
+                          </DvBadge>
+                        ) : '—'}
+                      </td>
+                    )}
+                    {interventions.some(i => i.workload_impact !== undefined) && (
+                      <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
+                        {inv.workload_impact || '—'}
+                      </td>
+                    )}
+                    {interventions.some(i => i.dependency_impact !== undefined) && (
+                      <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
+                        {inv.dependency_impact || '—'}
+                      </td>
+                    )}
+                    {interventions.some(i => i.responsibility_coverage !== undefined) && (
+                      <td style={{ padding: '16px', fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
+                        {inv.responsibility_coverage || '—'}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

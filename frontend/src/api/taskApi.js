@@ -43,4 +43,8 @@ export const taskApi = {
       body: JSON.stringify({ content }),
     });
   },
+
+  getTaskEngineeringContext: async (taskId) => {
+    return apiClient(`/tasks/${taskId}/engineering-context/`);
+  },
 };

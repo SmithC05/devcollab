@@ -73,7 +73,7 @@ function WorkflowStepper({ activeStepId }) {
 export function DemoStartScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
 
   return (
     <div style={{ padding: 40, maxWidth: 800, margin: '0 auto' }}>

@@ -24,7 +24,6 @@ import {
   DvBadge, DvCard, DvPanel, DvButton, DvDivider,
   DvProgressBar, DvProgressRing, DvAvatar, DvSkeleton,
 } from '../primitives/core';
-import { DvAgentStatus, DvAgentStep } from '../primitives/agent';
 import { DvPredictionMetric } from '../primitives/engineering';
 
 import {
@@ -173,11 +172,11 @@ function EngineeringGraph({ members, projects, decisionPoints, onSelectNode }) {
 
   // Key task nodes — P0/P1 only, max 6
   const keyTasks = members
-    .flatMap(m => m.owned_tasks.filter(t => t.priority === 'P0' || t.priority === 'P1'))
+    .flatMap(m => (m.owned_tasks || []).filter(t => t.priority === 'P0' || t.priority === 'P1'))
     .slice(0, 6);
   const taskSpacing = (W - 80) / Math.max(keyTasks.length, 1);
   const taskNodes = keyTasks.map((t, i) => {
-    const ownerNode = memberNodes.find(mn => mn.payload.owned_tasks.some(ot => ot.id === t.id));
+    const ownerNode = memberNodes.find(mn => (mn.payload.owned_tasks || []).some(ot => ot.id === t.id));
     return {
       id: `task-${t.id}`, type: 'task', payload: t,
       label: t.title, sublabel: t.priority,
@@ -520,7 +519,7 @@ function OrgInspector({ members, projects }) {
 }
 
 function ProjectInspector({ project, members, responsibilities }) {
-  const r = responsibilities.filter(r => r.project_name === project?.name);
+  const r = (responsibilities || []).filter(r => r.project_name === project?.name);
   return project ? (
     <>
       <InspectorSection title="Health">
@@ -577,15 +576,25 @@ function MemberInspector({ member }) {
         ))}
       </InspectorSection>
       <InspectorSection title="Owned Tasks">
-        {member.owned_tasks.slice(0, 4).map(task => (
-          <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--dv-border-subtle)' }}>
-            <DvBadge variant={task.priority === 'P0' ? 'danger' : task.priority === 'P1' ? 'warning' : 'muted'} size="sm">{task.priority}</DvBadge>
-            <span style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-secondary)', flex: 1 }}>{task.title}</span>
-            {task.dependency_count > 0 && (
-              <span style={{ fontSize: 9, color: 'var(--dv-text-faint)', fontFamily: 'var(--dv-font-mono)' }}>{task.dependency_count} deps</span>
-            )}
+        {!member.owned_tasks ? (
+          <div style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)', fontStyle: 'italic', padding: '10px 0' }}>
+            NOT AVAILABLE FROM CURRENT WORKSPACE DATA
           </div>
-        ))}
+        ) : member.owned_tasks.length === 0 ? (
+          <div style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)', padding: '10px 0' }}>
+            No tasks currently owned
+          </div>
+        ) : (
+          member.owned_tasks.slice(0, 4).map(task => (
+            <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--dv-border-subtle)' }}>
+              <DvBadge variant={task.priority === 'P0' ? 'danger' : task.priority === 'P1' ? 'warning' : 'muted'} size="sm">{task.priority}</DvBadge>
+              <span style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-secondary)', flex: 1 }}>{task.title}</span>
+              {task.dependency_count > 0 && (
+                <span style={{ fontSize: 9, color: 'var(--dv-text-faint)', fontFamily: 'var(--dv-font-mono)' }}>{task.dependency_count} deps</span>
+              )}
+            </div>
+          ))
+        )}
       </InspectorSection>
     </>
   ) : null;
@@ -641,7 +650,7 @@ function DecisionInspector({ dp, members }) {
 // MEMBER INTELLIGENCE — Capacity / Context / Responsibility
 // ─────────────────────────────────────────────────────────────────────────────
 function MemberIntelligenceCard({ member, responsibilities, onClick }) {
-  const criticalResps = responsibilities.filter(
+  const criticalResps = (responsibilities || []).filter(
     r => r.owner === member.name && (r.coverage === 'CRITICAL' || r.coverage === 'FRAGILE')
   );
 
@@ -687,7 +696,7 @@ function MemberIntelligenceCard({ member, responsibilities, onClick }) {
             <div style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: cap(member.capacity_pct), fontWeight: 700 }}>
               {member.capacity_pct}%
             </div>
-            <ProvenancePip prov="DERIVED" />
+            
           </div>
 
           {/* Context — top project context */}
@@ -703,7 +712,7 @@ function MemberIntelligenceCard({ member, responsibilities, onClick }) {
                 <div style={{ fontSize: 8, color: 'var(--dv-text-faint)', marginTop: 2 }}>{ctx.project_name}</div>
               </div>
             ))}
-            <ProvenancePip prov="DERIVED" />
+            
           </div>
 
           {/* Responsibility */}
@@ -715,7 +724,7 @@ function MemberIntelligenceCard({ member, responsibilities, onClick }) {
             <div style={{ fontSize: 9, color: criticalResps.length > 0 ? 'var(--dv-danger)' : 'var(--dv-text-faint)' }}>
               {criticalResps.length > 0 ? `${criticalResps.length} critical` : 'tasks'}
             </div>
-            <div style={{ marginTop: 3 }}><ProvenancePip prov="REAL_DB" /></div>
+            
           </div>
         </div>
 
@@ -851,7 +860,7 @@ function DependencyChain({ dependencies, projectFilter }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 10, color: 'var(--dv-text-faint)' }}>Owner: {dep.owner}</span>
                 <DvBadge variant={depStatusToVariant(dep.status)} size="sm">{dep.status}</DvBadge>
-                <ProvenancePip prov={dep.provenance} />
+                
               </div>
             </div>
             {dep.status === 'AT_RISK' && <AlertTriangle size={14} color="var(--dv-warning)" />}
@@ -868,134 +877,60 @@ function DependencyChain({ dependencies, projectFilter }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AGENT ANALYSIS PANEL
+// ENGINEERING ANALYSIS PANEL
 // ─────────────────────────────────────────────────────────────────────────────
-function AgentAnalysisPanel({ agentActivity, analysisSummary, decisionPoints, org }) {
-  const [showSummary, setShowSummary] = useState(false);
-
-  // Reveal summary after steps complete
-  useEffect(() => {
-    const doneCount = agentActivity.filter(a => a.status === 'done').length;
-    if (doneCount >= agentActivity.length - 2) {
-      const t = setTimeout(() => setShowSummary(true), 800);
-      return () => clearTimeout(t);
-    }
-  }, [agentActivity]);
-
-  const agentStatus = agentActivity.find(a => a.status === 'running') ? 'ANALYZING' : 'MONITORING';
+function EngineeringAnalysisPanel({ decisionPoints, responsibilities, onViewDecisionPoints }) {
+  const criticalResps = responsibilities?.filter(r => r.coverage === 'CRITICAL' || r.coverage === 'FRAGILE') || [];
+  const noBackup = responsibilities?.filter(r => !r.backup) || [];
+  const dpCount = decisionPoints?.length || 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Agent header card */}
-      <DvCard style={{ padding: '16px 18px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div>
-            <div style={{
-              fontSize: 9, fontFamily: 'var(--dv-font-mono)', fontWeight: 700,
-              letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--dv-analyzing)', marginBottom: 3,
-            }}>
-              DevCollab Agent
+      <DvCard style={{ padding: '20px 24px', borderColor: 'var(--dv-accent-border)', background: 'var(--dv-accent-subtle)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <Brain size={14} color="var(--dv-accent)" />
+          <span style={{ fontSize: 10, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--dv-accent)' }}>
+            Engineering Analysis
+          </span>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+          {dpCount > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-primary)', fontWeight: 500 }}>
+              <Zap size={14} color="var(--dv-danger)" />
+              <span><strong>{dpCount}</strong> decision point{dpCount > 1 ? 's' : ''} identified</span>
             </div>
-            <div style={{ fontSize: 'var(--dv-text-sm)', fontWeight: 700, color: 'var(--dv-text-primary)' }}>
-              Analyzing Organization
+          )}
+          {criticalResps.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-primary)', fontWeight: 500 }}>
+              <Users size={14} color="var(--dv-warning)" />
+              <span><strong>{criticalResps.length}</strong> critical ownership concentration{criticalResps.length > 1 ? 's' : ''}</span>
             </div>
-          </div>
-          <DvAgentStatus status={agentStatus} />
-        </div>
-
-        <DvDivider />
-
-        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 3 }}>
-          {agentActivity.map((step, i) => (
-            <DvAgentStep
-              key={step.id}
-              label={step.label}
-              status={step.status}
-              detail={step.detail}
-            />
-          ))}
-        </div>
-
-        {/* Current focus */}
-        <div style={{
-          marginTop: 14, padding: '10px 12px', borderRadius: 'var(--dv-radius-md)',
-          background: 'var(--dv-analyzing-subtle)', border: '1px solid var(--dv-analyzing-border)',
-        }}>
-          <div style={{ fontSize: 9, color: 'var(--dv-analyzing)', fontFamily: 'var(--dv-font-mono)', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Current Focus
-          </div>
-          <div style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-secondary)' }}>
-            Payments / Payment API — responsibility coverage analysis
-          </div>
-        </div>
-      </DvCard>
-
-      {/* Tool activity indicator */}
-      <DvCard style={{ padding: '14px 18px' }}>
-        <div style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--dv-text-faint)', marginBottom: 12 }}>
-          Tool Activity
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {agentActivity.map(step => (
-            <div key={step.id} style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px',
-              borderRadius: 'var(--dv-radius-sm)',
-              background: step.status === 'running' ? 'var(--dv-analyzing-subtle)' : step.status === 'done' ? 'transparent' : 'transparent',
-              border: `1px solid ${step.status === 'running' ? 'var(--dv-analyzing-border)' : step.status === 'done' ? 'var(--dv-border-subtle)' : 'transparent'}`,
-            }}>
-              <span style={{
-                fontFamily: 'var(--dv-font-mono)', fontSize: 9,
-                color: step.status === 'running' ? 'var(--dv-analyzing)' : step.status === 'done' ? 'var(--dv-success)' : 'var(--dv-text-faint)',
-              }}>
-                {step.status === 'running' ? '◉' : step.status === 'done' ? '✓' : '○'}
-              </span>
-              <span style={{ fontFamily: 'var(--dv-font-mono)', fontSize: 9, color: 'var(--dv-text-faint)' }}>{step.tool}</span>
-              <span style={{ fontSize: 9, color: 'var(--dv-text-muted)', flex: 1, textAlign: 'right' }}>{step.label}</span>
+          )}
+          {noBackup.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-primary)', fontWeight: 500 }}>
+              <Shield size={14} color="var(--dv-warning)" />
+              <span><strong>{noBackup.length}</strong> responsibilit{noBackup.length > 1 ? 'ies' : 'y'} without qualified backup</span>
             </div>
-          ))}
-        </div>
-      </DvCard>
-
-      {/* Decision Points alert */}
-      {decisionPoints.length > 0 && (
-        <DvCard style={{ padding: '14px 18px', borderColor: 'var(--dv-danger-border)', background: 'var(--dv-danger-subtle)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <Zap size={12} color="var(--dv-danger)" />
-            <span style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--dv-danger)' }}>
-              {decisionPoints.length} Decision Point{decisionPoints.length > 1 ? 's' : ''} Identified
-            </span>
-          </div>
-          {decisionPoints.map(dp => (
-            <div key={dp.id} style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid var(--dv-danger-border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                <DvBadge variant="danger" size="sm">{dp.severity}</DvBadge>
-                <span style={{ fontSize: 10, color: 'var(--dv-text-secondary)' }}>{dp.affected_project}</span>
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--dv-text-muted)', lineHeight: 1.4 }}>{dp.trigger}</div>
+          )}
+          {dpCount === 0 && criticalResps.length === 0 && noBackup.length === 0 && (
+            <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
+              No critical risks identified.
             </div>
-          ))}
-        </DvCard>
-      )}
+          )}
+        </div>
 
-      {/* Analysis summary — shown after steps complete */}
-      <AnimatePresence>
-        {showSummary && analysisSummary && (
-          <motion.div variants={scenarioTransition} initial="hidden" animate="visible" exit="exit">
-            <DvCard style={{ padding: '14px 18px', borderColor: 'var(--dv-accent-border)', background: 'var(--dv-accent-subtle)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <Brain size={12} color="var(--dv-accent)" />
-                <span style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--dv-accent)' }}>
-                  Analysis Summary
-                </span>
-                <ProvenancePip prov="DERIVED" />
-              </div>
-              <p style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-secondary)', lineHeight: 1.6, margin: 0 }}>
-                {analysisSummary}
-              </p>
-            </DvCard>
-          </motion.div>
+        {dpCount > 0 && (
+          <DvButton
+             variant="outline"
+             size="sm"
+             style={{ width: '100%', borderColor: 'var(--dv-accent)', color: 'var(--dv-text-primary)' }}
+             onClick={onViewDecisionPoints}
+          >
+             VIEW DECISION POINTS
+          </DvButton>
         )}
-      </AnimatePresence>
+      </DvCard>
     </div>
   );
 }
@@ -1087,7 +1022,13 @@ function ProjectIntelligencePanel({ projects, dependencies, responsibilities, on
             {/* Right: dependency chain */}
             <div>
               <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Dependency Chain</div>
-              <DependencyChain dependencies={dependencies} projectFilter={activeProject.name} />
+              {dependencies === null ? (
+                <div style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)', fontStyle: 'italic', padding: '10px 0' }}>
+                  NOT AVAILABLE FROM CURRENT WORKSPACE DATA
+                </div>
+              ) : (
+                <DependencyChain dependencies={dependencies} projectFilter={activeProject.name} />
+              )}
             </div>
           </div>
         </motion.div>
@@ -1152,14 +1093,43 @@ function EvidenceDrawer({ resp, onClose }) {
 export default function OrganizationIntelligence() {
   const navigate = useNavigate();
   const location = useLocation();
-  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
-  const [data] = useState(() => getOrganizationIntelligenceState());
+  const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
+  
+  const [mode, setMode] = useState('LIVE');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
   const [selectedNode, setSelectedNode] = useState(null);
   const [evidenceResp, setEvidenceResp] = useState(null);
   const [depProjectFilter, setDepProjectFilter] = useState(null);
 
-  const { organization: org, members, projects, responsibilities, dependencies,
-          decisionPoints, agentActivity, analysisSummary, systemStatus } = data;
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const state = await getOrganizationIntelligenceState(mode);
+      setData(state);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Wire realtime event engine_event
+  useEffect(() => {
+    if (mode !== 'LIVE') return;
+    const handleEngineEvent = () => {
+      fetchData(); // Invalidate and refetch
+    };
+    document.addEventListener('engine_event', handleEngineEvent);
+    return () => {
+      document.removeEventListener('engine_event', handleEngineEvent);
+    };
+  }, [mode, fetchData]);
 
   // Build graph node selectors
   const handleSelectNode = useCallback((node) => {
@@ -1167,15 +1137,47 @@ export default function OrganizationIntelligence() {
   }, []);
 
   const sortedMembers = useMemo(() =>
-    [...members].sort((a, b) => b.capacity_pct - a.capacity_pct), [members]);
+    data?.members ? [...data.members].sort((a, b) => b.capacity_pct - a.capacity_pct) : [], [data?.members]);
+
+  if (loading && !data) {
+    return <div style={{ padding: 40, color: 'var(--dv-text-secondary)' }}>Loading organization state...</div>;
+  }
+  if (!data) return null;
+
+  const { organization: org, members, projects, responsibilities, dependencies,
+          decisionPoints, systemStatus } = data;
 
   return (
     <div className="dv-intelligence" style={{ minHeight: '100vh', paddingBottom: 80, position: 'relative' }}>
 
+      {/* ── Demo Banner ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {mode === 'DEMO' && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            style={{
+              background: 'var(--dv-warning-subtle)', borderBottom: '1px solid var(--dv-warning-border)',
+              padding: '12px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--dv-warning)' }}>
+              <AlertTriangle size={16} />
+              <div style={{ fontSize: 'var(--dv-text-sm)' }}>
+                 <strong>CONTROLLED DEMO SCENARIO</strong> &mdash; This view uses a controlled scenario. No live workspace data is being modified.
+              </div>
+            </div>
+            <DvButton variant="outline" size="sm" style={{ borderColor: 'var(--dv-warning)' }} onClick={() => setMode('LIVE')}>
+              EXIT DEMO
+            </DvButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Page Header ─────────────────────────────────────── */}
       <div style={{
         padding: '28px 40px 22px', borderBottom: '1px solid var(--dv-border-subtle)',
-        background: 'var(--dv-bg-canvas)', position: 'sticky', top: 52, zIndex: 'var(--dv-z-sticky)',
+        background: 'var(--dv-bg-canvas)', position: 'sticky', top: mode === 'DEMO' ? 0 : 52, zIndex: 'var(--dv-z-sticky)',
       }}>
         <motion.div variants={panelEnter} initial="hidden" animate="visible"
           style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
@@ -1192,7 +1194,17 @@ export default function OrganizationIntelligence() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <SourceChip source={systemStatus.source} />
+            {mode === 'LIVE' && (
+              <DvButton variant="outline" size="sm" onClick={() => setMode('DEMO')}>
+                SIMULATE DEMO
+              </DvButton>
+            )}
+            {mode === 'DEMO' && (
+              <DvButton variant="outline" size="sm" onClick={() => setMode('LIVE')}>
+                EXIT DEMO
+              </DvButton>
+            )}
+            <SourceChip source={mode === 'DEMO' ? 'CONTROLLED DEMO STATE' : systemStatus.source} />
           </div>
         </motion.div>
       </div>
@@ -1241,12 +1253,18 @@ export default function OrganizationIntelligence() {
                 />
               </div>
               <div style={{ position: 'sticky', top: 160 }}>
-                <SectionLabel label="Agent Analysis" icon={Brain} />
-                <AgentAnalysisPanel
-                  agentActivity={agentActivity}
-                  analysisSummary={analysisSummary}
+                <SectionLabel label="Engineering Analysis" icon={Brain} />
+                <EngineeringAnalysisPanel
                   decisionPoints={decisionPoints}
-                  org={org}
+                  responsibilities={responsibilities}
+                  onViewDecisionPoints={() => {
+                    const dpEl = document.getElementById('decision-concentration');
+                    if (dpEl) {
+                      dpEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -1305,12 +1323,18 @@ export default function OrganizationIntelligence() {
                 </div>
               }
             />
-            <motion.div variants={staggerChildren} initial="hidden" animate="visible"
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
-              {responsibilities.map(resp => (
-                <ResponsibilityCard key={resp.id} resp={resp} onViewEvidence={r => setEvidenceResp(r)} />
-              ))}
-            </motion.div>
+            {responsibilities === null ? (
+              <div style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)', fontStyle: 'italic', padding: '10px 0' }}>
+                NOT AVAILABLE FROM CURRENT WORKSPACE DATA
+              </div>
+            ) : (
+              <motion.div variants={staggerChildren} initial="hidden" animate="visible"
+                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 12 }}>
+                {responsibilities.map(resp => (
+                  <ResponsibilityCard key={resp.id} resp={resp} onViewEvidence={r => setEvidenceResp(r)} />
+                ))}
+              </motion.div>
+            )}
           </motion.div>
 
           {/* ── Dependency Intelligence ── */}
@@ -1318,6 +1342,12 @@ export default function OrganizationIntelligence() {
             <SectionLabel label="Dependency Intelligence" icon={Link2}
               right={<span style={{ fontSize: 10, color: 'var(--dv-text-faint)' }}>Observational only</span>} />
             <DvCard style={{ padding: '16px 20px' }}>
+              {dependencies === null ? (
+                <div style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)', fontStyle: 'italic', padding: '10px 0' }}>
+                  NOT AVAILABLE FROM CURRENT WORKSPACE DATA
+                </div>
+              ) : (
+                <>
               <div style={{ marginBottom: 14, display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => setDepProjectFilter(null)}
@@ -1343,12 +1373,14 @@ export default function OrganizationIntelligence() {
                 ))}
               </div>
               <DependencyChain dependencies={dependencies} projectFilter={depProjectFilter} />
+                </>
+              )}
             </DvCard>
           </motion.div>
 
           {/* ── Decision Concentration ── */}
           <motion.div variants={fadeUp}>
-            <SectionLabel label="Decision Concentration" icon={AlertTriangle} />
+            <SectionLabel id="decision-concentration" label="Decision Concentration" icon={AlertTriangle} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 14 }}>
               {decisionPoints.map(dp => {
                 const affectedMember = members.find(m => m.name === dp.affected_member);
@@ -1357,7 +1389,7 @@ export default function OrganizationIntelligence() {
                     padding: '16px', borderColor: dp.severity === 'CRITICAL' ? 'var(--dv-danger-border)' : 'var(--dv-warning-border)',
                     background: dp.severity === 'CRITICAL' ? 'var(--dv-danger-subtle)' : 'var(--dv-warning-subtle)',
                     position: 'relative', overflow: 'hidden', cursor: 'pointer'
-                  }} onClick={() => navigate(`/intelligence/decision/${dp.id}`)}>
+                  }} onClick={() => navigate(`${prefix}/decision/${dp.id}`)}>
                     <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: dp.severity === 'CRITICAL' ? 'var(--dv-danger)' : 'var(--dv-warning)' }} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <DvBadge variant={dp.severity === 'CRITICAL' ? 'danger' : 'warning'} dot size="sm">{dp.severity}</DvBadge>
@@ -1371,7 +1403,7 @@ export default function OrganizationIntelligence() {
                           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '2px 7px', background: 'rgba(0,0,0,0.15)', borderRadius: 3 }}>
                             <span style={{ fontSize: 9, color: 'var(--dv-text-muted)' }}>{ev.label}</span>
                             <span style={{ fontSize: 9, fontWeight: 700, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-secondary)' }}>{ev.value}</span>
-                            <ProvenancePip prov={ev.provenance} />
+                            
                           </div>
                         ))}
                       </div>

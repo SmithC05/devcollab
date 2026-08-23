@@ -110,3 +110,24 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(task)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='engineering-context')
+    def engineering_context(self, request, pk=None):
+        task = self.get_object()
+        from engine.context.state import get_project_engineering_state
+        from apps.users.serializers import UserSerializer
+        from apps.workspaces.models import WorkspaceMembership
+
+        # Engineering context
+        state = get_project_engineering_state(task.project_id)
+        
+        # Project members (Workspace members for now)
+        memberships = WorkspaceMembership.objects.filter(workspace=task.project.workspace).select_related('user')
+        project_members = UserSerializer([m.user for m in memberships], many=True).data
+
+        context = {
+            "task": self.get_serializer(task).data,
+            "project_state": state,
+            "project_members": project_members,
+        }
+        return Response(context)
