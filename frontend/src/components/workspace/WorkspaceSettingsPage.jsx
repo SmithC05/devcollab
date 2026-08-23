@@ -50,15 +50,15 @@ export default function WorkspaceSettingsPage() {
   const handleSaveWorkspace = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     try {
-      const res = await fetch('/api/workspace/settings/', {
+      // apiClient automatically attaches the JWT Authorization header
+      await apiClient('/workspace/settings/', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ name: data.name, slug: data.slug, description: data.description }),
       });
-      if (!res.ok) throw new Error('Failed to save');
     } catch (err) {
-      alert(err.message);
+      setError(err.message || 'Failed to save workspace settings.');
     } finally {
       setSaving(false);
     }

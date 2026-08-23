@@ -90,7 +90,7 @@ export default function Sidebar({ isOpen, onClose }) {
     items: [
       { to: '/dashboard/ai', icon: Sparkles, label: 'AI Assistant' },
       { to: '/dashboard/intelligence/organization', icon: Globe, label: 'Organization' },
-      { to: '/dashboard/intelligence/decision/dp1', icon: Target, label: 'Decision Points' },
+      { to: '/dashboard/intelligence/decision', icon: Target, label: 'Decision Points' },
       { to: '/dashboard/intelligence/simulation/demo/sc1', icon: PlayCircle, label: 'Simulations' },
       { to: '/dashboard/intelligence/knowledge-transfer/kt1', icon: Share2, label: 'Knowledge Transfer' },
     ]

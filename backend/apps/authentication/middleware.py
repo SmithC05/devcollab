@@ -8,7 +8,7 @@ class JWTAuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
         access_token = None
         
-        auth_header = request.headers.get('Authorization')
+        auth_header = request.headers.get('Authorization') or request.META.get('HTTP_AUTHORIZATION')
         if auth_header and auth_header.startswith('Bearer '):
             access_token = auth_header.split(' ')[1]
             
@@ -20,7 +20,10 @@ class JWTAuthMiddleware(MiddlewareMixin):
                 payload = decode_token(access_token)
                 user_id = payload.get('user_id')
                 if user_id:
-                    user = User.objects.filter(id=user_id).first()
+                    if isinstance(user_id, int) or (isinstance(user_id, str) and user_id.isdigit()):
+                        user = User.objects.filter(id=int(user_id)).first()
+                    else:
+                        user = User.objects.filter(username=str(user_id)).first()
                     if user:
                         request.user = user
             except Exception as e:

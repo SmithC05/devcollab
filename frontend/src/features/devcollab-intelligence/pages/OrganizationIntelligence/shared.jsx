@@ -52,6 +52,7 @@ export function timeAgo(dateString) {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
+  if (isNaN(diffInSeconds)) return '';
   if (diffInSeconds < 60) return 'just now';
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes} min ago`;

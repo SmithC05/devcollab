@@ -75,9 +75,9 @@ export function SimulationResults({ result }) {
                 <tr style={{ borderBottom: '1px solid var(--dv-border-subtle)' }}>
                   <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>INTERVENTION</th>
                   <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>CANDIDATE</th>
-                  {interventions.some(i => i.estimated_completion !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>COMPLETION (EST)</th>}
+                  {interventions.some(i => i.estimated_completion !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>REMAINING TIME</th>}
                   {interventions.some(i => i.context_transfer_effort !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>TRANSFER EFFORT</th>}
-                  {interventions.some(i => i.risk !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>RISK</th>}
+                  {interventions.some(i => i.risk !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>EXECUTION RISK</th>}
                   {interventions.some(i => i.workload_impact !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>WORKLOAD IMPACT</th>}
                   {interventions.some(i => i.dependency_impact !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>DEP. IMPACT</th>}
                   {interventions.some(i => i.responsibility_coverage !== undefined) && <th style={{ padding: '12px 16px', fontSize: 10, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)', fontWeight: 400 }}>COVERAGE</th>}
@@ -112,12 +112,19 @@ export function SimulationResults({ result }) {
                     {interventions.some(i => i.risk !== undefined) && (
                       <td style={{ padding: '16px' }}>
                         {inv.risk !== undefined ? (
-                          <DvBadge variant={
-                            inv.risk === 'HIGH' ? 'danger' : 
-                            inv.risk === 'MEDIUM' ? 'warning' : 'success'
-                          }>
-                            {inv.risk}
-                          </DvBadge>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {inv.deadline_probability != null && !isNaN(inv.deadline_probability) && (
+                              <span style={{ fontSize: 'var(--dv-text-sm)', fontWeight: 700, color: 'var(--dv-text-primary)' }}>
+                                {Math.round((1 - Number(inv.deadline_probability)) * 100)}%
+                              </span>
+                            )}
+                            <DvBadge variant={
+                              inv.risk === 'HIGH' ? 'danger' : 
+                              inv.risk === 'MEDIUM' ? 'warning' : 'success'
+                            }>
+                              {inv.risk}
+                            </DvBadge>
+                          </div>
                         ) : '—'}
                       </td>
                     )}

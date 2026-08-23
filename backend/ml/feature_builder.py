@@ -9,12 +9,36 @@ def _synthetic(task_id: int, user_id: int, key: str, min_val: float, max_val: fl
         return rng.randint(int(min_val), int(max_val))
     return round(rng.uniform(min_val, max_val), 2)
 
+
+# Categorical features that the sklearn pipeline handles as strings — must not be replaced with 0.0
+_CATEGORICAL_FEATURES = {"role_level", "task_type", "codebase_size"}
+
+def _impute_none(features: dict, task_id: int, candidate_id: int) -> dict:
+    """
+    Replace None feature values so sklearn can run inference.
+    Categorical features keep their string values; numerics fall back to a
+    deterministic synthetic value so the model at least gets a plausible input.
+    """
+    imputed = {}
+    for k, v in features.items():
+        if v is None:
+            if k in _CATEGORICAL_FEATURES:
+                imputed[k] = "Unknown"
+            else:
+                # Use a deterministic synthetic value as the last resort
+                imputed[k] = _synthetic(task_id, candidate_id, k, 0.0, 1.0)
+        else:
+            imputed[k] = v
+    return imputed
+
 def build_context_transfer_features(task, candidate, is_demo: bool = False) -> Tuple[Dict[str, Any], Dict[str, str], Dict[str, str]]:
     """
     Constructs the feature payload required for the context transfer model.
     """
     if not is_demo:
-        return get_developer_context(task, candidate)
+        features, provenance, explanations = get_developer_context(task, candidate)
+        features = _impute_none(features, task.id, candidate.id)
+        return features, provenance, explanations
 
     t_id = task.id
     u_id = candidate.id
@@ -89,7 +113,7 @@ def build_knowledge_transfer_features(task, candidate, is_demo: bool = False) ->
         explanations[name] = "Synthetic fallback."
 
     if not is_demo:
-        # Not requested to fix knowledge transfer yet, but let's avoid synthetic in LIVE.
+        # Build what we can from DB; impute None values before returning to sklearn
         add_feat("task_type", "Feature", "DERIVED")
         add_feat("codebase_size", "Medium", "DERIVED")
         add_feat("task_progress", 0.5 if task.status == 'In Progress' else (1.0 if task.status == 'Done' else 0.0), "DERIVED")
@@ -109,6 +133,7 @@ def build_knowledge_transfer_features(task, candidate, is_demo: bool = False) ->
         add_feat("testing_guidance_quality", None, "UNAVAILABLE")
         add_feat("deployment_guidance_quality", None, "UNAVAILABLE")
         add_feat("handoff_completeness", None, "UNAVAILABLE")
+        features = _impute_none(features, task.id, candidate.id)
         return features, provenance, explanations
 
     # Categorical

@@ -117,8 +117,12 @@ export async function getOrganizationIntelligenceState(mode = 'LIVE') {
     // Explicitly map snake_case to camelCase and set null for unavailable signals
     const data = {
       organization: rawData.organization,
-      projects: rawData.projects,
-      members: rawData.members,
+      projects: (rawData.projects || []).map(p => ({
+        ...p,
+        critical_tasks: p.critical_tasks ?? p.at_risk_tasks ?? 0,
+        blocked_tasks: p.blocked_tasks ?? 0,
+      })),
+      members: rawData.members || [],
       decisionPoints: rawData.decision_points || [],
       systemStatus: rawData.system_status || { source: 'LIVE', last_synced: new Date().toISOString(), agent_status: 'IDLE' },
       responsibilities: null, 

@@ -65,7 +65,7 @@ export function ApprovalPanel({ scenarioId, baseline, recommendation, onComplete
       // We don't mark as EXECUTED here, we wait for the WebSocket event!
       await Promise.all([
         advanceStaging(),
-        approveSimulation(scenarioId, recommendation.candidate_name || recommendation.candidate, recommendation.type || recommendation.intervention)
+        approveSimulation(scenarioId, recommendation.candidate_id, recommendation.type || recommendation.intervention)
       ]);
       // After API resolves, we wait in 'syncing' state until WebSocket fires
     } catch (err) {

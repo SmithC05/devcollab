@@ -496,10 +496,42 @@ class WorkspaceSettingsView(APIView):
     def put(self, request):
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
-        if workspace:
-            workspace.name = request.data.get('name', workspace.name)
-            workspace.save()
-        return Response({"status": "success"})
+        # Fallback: pick first workspace this user owns
+        if not workspace and request.user.is_authenticated:
+            membership = WorkspaceMembership.objects.filter(
+                user=request.user, role='OWNER'
+            ).select_related('workspace').first()
+            if membership:
+                workspace = membership.workspace
+        if not workspace:
+            return Response({"error": "Workspace not found"}, status=404)
+
+        new_name = request.data.get('name', workspace.name).strip()
+        new_slug = request.data.get('slug', workspace.slug)
+        if new_slug:
+            new_slug = new_slug.strip().lower().replace(' ', '-')
+
+        if not new_name:
+            return Response({"error": "Workspace name cannot be empty"}, status=400)
+
+        # Check slug uniqueness — only error if the conflicting slug belongs to a DIFFERENT workspace
+        if new_slug and new_slug != workspace.slug:
+            from apps.workspaces.models import Workspace as WS
+            if WS.objects.filter(slug=new_slug).exclude(id=workspace.id).exists():
+                return Response({"error": f"The slug '{new_slug}' is already taken."}, status=400)
+
+        try:
+            workspace.name = new_name
+            if new_slug:
+                workspace.slug = new_slug
+            workspace.save(update_fields=['name', 'slug', 'updated_at'])
+            return Response({
+                "status": "success",
+                "name": workspace.name,
+                "slug": workspace.slug,
+            })
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)
 
 class ProjectRepositoryMappingView(APIView):
     def get(self, request, project_id):

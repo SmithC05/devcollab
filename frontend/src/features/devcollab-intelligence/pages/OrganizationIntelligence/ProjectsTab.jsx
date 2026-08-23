@@ -66,9 +66,9 @@ export default function ProjectsTab({ data, onSelectNode }) {
                       variant={activeProject.health === 'HIGH' || activeProject.health === 'CRITICAL' ? 'danger' : activeProject.health === 'MEDIUM' ? 'warning' : 'recommended'} />
                     <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, textAlign: 'center' }}>
                       {[
-                        { label: 'Active',   value: activeProject.active_tasks,   color: 'var(--dv-text-primary)' },
-                        { label: 'Blocked',  value: activeProject.blocked_tasks,   color: activeProject.blocked_tasks > 0 ? 'var(--dv-danger)' : 'var(--dv-text-muted)' },
-                        { label: 'Critical', value: activeProject.critical_tasks,  color: activeProject.critical_tasks > 0 ? 'var(--dv-warning)' : 'var(--dv-text-muted)' },
+                        { label: 'Active',   value: activeProject.active_tasks ?? 0,   color: 'var(--dv-text-primary)' },
+                        { label: 'Blocked',  value: activeProject.blocked_tasks ?? 0,   color: (activeProject.blocked_tasks || 0) > 0 ? 'var(--dv-danger)' : 'var(--dv-text-muted)' },
+                        { label: 'Critical', value: activeProject.critical_tasks ?? activeProject.at_risk_tasks ?? 0,  color: (activeProject.critical_tasks || activeProject.at_risk_tasks || 0) > 0 ? 'var(--dv-warning)' : 'var(--dv-text-muted)' },
                       ].map(({ label, value, color }) => (
                         <div key={label} style={{ padding: '8px 4px', background: 'var(--dv-bg-elevated)', borderRadius: 'var(--dv-radius-sm)', border: '1px solid var(--dv-border-subtle)' }}>
                           <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', marginBottom: 3 }}>{label}</div>

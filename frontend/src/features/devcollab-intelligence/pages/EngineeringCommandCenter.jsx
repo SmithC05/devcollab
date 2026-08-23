@@ -58,6 +58,7 @@ function DpIcon({ name, size = 16 }) {
 function fmtSyncTime(iso) {
   if (!iso) return '–';
   const secs = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
+  if (isNaN(secs)) return '–';
   if (secs < 5)  return 'just now';
   if (secs < 60) return `${secs}s ago`;
   return `${Math.round(secs / 60)}m ago`;

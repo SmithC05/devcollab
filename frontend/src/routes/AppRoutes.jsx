@@ -30,6 +30,7 @@ import ProjectMyTasksPage from '../components/project/ProjectMyTasksPage';
 import ProjectMyTeamPage from '../components/project/ProjectMyTeamPage';
 import AuthCallbackPage     from '../pages/AuthCallbackPage';
 import IntelligenceLayout        from '../features/devcollab-intelligence/pages/IntelligenceLayout';
+import EngineeringCommandCenter from '../features/devcollab-intelligence/pages/EngineeringCommandCenter';
 import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
 import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence/OrganizationIntelligence';
 import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
@@ -173,15 +174,30 @@ export default function AppRoutes() {
         
         {/* ── Phase Integration 1: Unified Intelligence Experience ── */}
         <Route path="intelligence">
-          <Route index element={<Navigate to="organization" replace />} />
+          <Route index element={<EngineeringCommandCenter />} />
           <Route path="organization" element={<OrganizationIntelligence />} />
+          <Route path="decision" element={<DecisionPoint />} />
           <Route path="decision/:id" element={<DecisionPoint />} />
           <Route path="simulation/task/:id" element={<SimulationCenter />} />
           <Route path="simulation/demo/:id" element={<SimulationCenter />} />
           <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
           <Route path="demo" element={<DevCollabDemoMode />} />
         </Route>
+        <Route path="decision" element={<DecisionPoint />} />
+        <Route path="decision/:id" element={<DecisionPoint />} />
       </Route>
+
+      {/* Top level decision route alias */}
+      <Route
+        path="/decision/:id"
+        element={
+          <RequireWorkspace>
+            <WorkspaceLayout>
+              <DecisionPoint />
+            </WorkspaceLayout>
+          </RequireWorkspace>
+        }
+      />
 
       {/* Project routes */}
       <Route

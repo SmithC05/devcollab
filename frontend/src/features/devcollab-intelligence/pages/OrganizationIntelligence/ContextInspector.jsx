@@ -1,9 +1,9 @@
-// ─────────────────────────────────────────────────────────────────────────────
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { slideIn } from '../../motion/presets';
 import { ProvenancePip, mono } from './shared';
-import { DvBadge } from '../../primitives/core';
+import { DvBadge, DvButton } from '../../primitives/core';
 import { coverageToVariant, contextLabelToVariant } from '../../data/organizationAdapter';
 
 export default function ContextInspector({ node, onClose, members, projects, responsibilities }) {
@@ -134,9 +134,9 @@ function ProjectInspector({ project, members, responsibilities }) {
       <InspectorSection title="Health">
         <InspectorRow label="Health"          value={project.health}        prov="DERIVED" />
         <InspectorRow label="Progress"        value={`${project.progress}%`}  prov="DERIVED" />
-        <InspectorRow label="Active Tasks"    value={project.active_tasks}  prov="REAL_DB" />
-        <InspectorRow label="Blocked Tasks"   value={project.blocked_tasks} prov="REAL_DB" />
-        <InspectorRow label="Critical Tasks"  value={project.critical_tasks}prov="REAL_DB" />
+        <InspectorRow label="Active Tasks"    value={project.active_tasks ?? 0}  prov="REAL_DB" />
+        <InspectorRow label="Blocked Tasks"   value={project.blocked_tasks ?? 0} prov="REAL_DB" />
+        <InspectorRow label="Critical Tasks"  value={project.critical_tasks ?? project.at_risk_tasks ?? 0} prov="REAL_DB" />
         <InspectorRow label="Knowledge Owner" value={project.knowledge_concentration} prov="DERIVED" />
       </InspectorSection>
       {r.length > 0 && (
@@ -171,7 +171,7 @@ function MemberInspector({ member }) {
         <InspectorRow label="Critical"      value={member.critical_task_count} prov="REAL_DB" />
       </InspectorSection>
       <InspectorSection title="Project Context">
-        {member.project_contexts.map(ctx => (
+        {(member.project_contexts || []).map(ctx => (
           <div key={ctx.project_id} style={{ padding: '7px 0', borderBottom: '1px solid var(--dv-border-subtle)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: ctx.rationale ? 4 : 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -230,7 +230,8 @@ function TaskInspector({ task }) {
 }
 
 function DecisionInspector({ dp, members }) {
-  const affectedMember = members.find(m => m.name === dp?.affected_member);
+  const navigate = useNavigate();
+  const affectedMember = (members || []).find(m => m.name === dp?.affected_member);
   return dp ? (
     <>
       <div style={{
@@ -257,6 +258,18 @@ function DecisionInspector({ dp, members }) {
           <InspectorRow label="Capacity"   value={`${affectedMember.capacity_pct}%`}  prov="DERIVED" />
           <InspectorRow label="Availability" value={affectedMember.availability}   prov="DERIVED" />
         </InspectorSection>
+      )}
+      {dp.id && (
+        <div style={{ marginTop: 16 }}>
+          <DvButton
+            variant="primary"
+            size="sm"
+            style={{ width: '100%' }}
+            onClick={() => navigate(`/dashboard/intelligence/decision/${dp.id}`)}
+          >
+            ANALYZE DECISION POINT
+          </DvButton>
+        </div>
       )}
     </>
   ) : null;

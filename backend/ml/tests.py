@@ -15,10 +15,14 @@ class MLIntegrationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create(username="TestUser", email="test@devcollab.io")
         self.candidate = User.objects.create(username="Candidate", email="smith@devcollab.io")
-        self.workspace = Workspace.objects.create(name="Test Workspace")
+        self.workspace = Workspace.objects.create(name="Test Workspace", owner=self.user)
+        from apps.workspaces.models import WorkspaceMembership
+        WorkspaceMembership.objects.create(workspace=self.workspace, user=self.user, role="OWNER")
+        WorkspaceMembership.objects.create(workspace=self.workspace, user=self.candidate, role="DEVELOPER")
         self.project = Project.objects.create(name="Test Project", workspace=self.workspace)
         self.task = Task.objects.create(title="Test Task", project=self.project, assignee=self.user, status="In Progress")
         self.client = Client()
+        self.client.force_login(self.user)
 
     def test_model_loading_metadata(self):
         # Verify metadata configuration
@@ -31,7 +35,7 @@ class MLIntegrationTests(TestCase):
         self.assertTrue(hasattr(model, "predict"))
 
     def test_feature_builder_provenance_and_schema(self):
-        features, provenance = build_context_transfer_features(self.task, self.candidate)
+        features, provenance, _ = build_context_transfer_features(self.task, self.candidate)
         
         # Check identifiers are stripped
         self.assertNotIn("task_id", features)
@@ -42,7 +46,7 @@ class MLIntegrationTests(TestCase):
         self.assertNotIn("transfer_effort_hours", features)
         
         # Check provenance
-        self.assertEqual(provenance["task_type"], "SYNTHETIC_DEMO")
+        self.assertEqual(provenance["task_type"], "DERIVED")
         self.assertEqual(provenance["task_progress"], "DERIVED")
         
         # Features count

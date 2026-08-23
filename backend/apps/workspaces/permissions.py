@@ -67,16 +67,21 @@ def get_current_workspace(request):
     # In Django request.META, custom headers like X-Workspace-Id become HTTP_X_WORKSPACE_ID
     workspace_id = request.META.get('HTTP_X_WORKSPACE_ID')
     
-    if not workspace_id:
-        raise PermissionDenied("X-Workspace-Id header is required")
-        
-    try:
-        membership = WorkspaceMembership.objects.select_related('workspace').get(
-            user=request.user, 
-            workspace_id=workspace_id
-        )
+    if workspace_id:
+        try:
+            membership = WorkspaceMembership.objects.select_related('workspace').get(
+                user=request.user, 
+                workspace_id=workspace_id
+            )
+            return membership.workspace
+        except WorkspaceMembership.DoesNotExist:
+            raise PermissionDenied("You are not a member of this workspace or it does not exist.")
+        except ValueError:
+            raise PermissionDenied("Invalid workspace ID format.")
+
+    # Graceful fallback for initial page requests or when header is not yet present
+    membership = WorkspaceMembership.objects.select_related('workspace').filter(user=request.user).first()
+    if membership:
         return membership.workspace
-    except WorkspaceMembership.DoesNotExist:
-        raise PermissionDenied("You are not a member of this workspace or it does not exist.")
-    except ValueError:
-        raise PermissionDenied("Invalid workspace ID format.")
+        
+    raise PermissionDenied("No workspace found for this user.")

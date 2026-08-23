@@ -65,8 +65,8 @@ export default function OverviewTab({ data, onSyncSuccess }) {
   const navigate = useNavigate();
   const { organization: org, projects, decisionPoints, responsibilities, members } = data;
 
-  const criticalTasks = (projects || []).reduce((acc, p) => acc + p.critical_tasks, 0);
-  const blockedTasks = (projects || []).reduce((acc, p) => acc + p.blocked_tasks, 0);
+  const criticalTasks = (projects || []).reduce((acc, p) => acc + (p.critical_tasks ?? p.at_risk_tasks ?? 0), 0);
+  const blockedTasks = (projects || []).reduce((acc, p) => acc + (p.blocked_tasks ?? 0), 0);
   
   const atRiskProjects = (projects || []).filter(p => p.health === 'HIGH' || p.health === 'CRITICAL');
   const overloadedMembers = (members || []).filter(m => m.availability === 'OVERLOADED');
@@ -83,18 +83,18 @@ export default function OverviewTab({ data, onSyncSuccess }) {
       <motion.div variants={fadeUp}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14 }}>
           {[
-            { label: 'Members',        value: org.member_count,        icon: Users,      color: 'var(--dv-text-primary)' },
-            { label: 'Projects',       value: org.project_count,       icon: Layers,     color: 'var(--dv-accent)' },
-            { label: 'Active Tasks',   value: org.active_task_count,   icon: Activity,   color: 'var(--dv-text-primary)' },
-            { label: 'Critical Tasks', value: criticalTasks,           icon: AlertCircle,color: criticalTasks > 0 ? 'var(--dv-warning)' : 'var(--dv-text-muted)' },
-            { label: 'Blocked Tasks',  value: blockedTasks,            icon: Shield,     color: blockedTasks > 0 ? 'var(--dv-danger)' : 'var(--dv-text-muted)' },
-            { label: 'Decision Pts',   value: org.decision_point_count,icon: Zap,        color: org.decision_point_count > 0 ? 'var(--dv-danger)' : 'var(--dv-text-muted)' },
+            { label: 'Members',        value: org?.member_count ?? 0,        icon: Users,      color: 'var(--dv-text-primary)' },
+            { label: 'Projects',       value: org?.project_count ?? 0,       icon: Layers,     color: 'var(--dv-accent)' },
+            { label: 'Active Tasks',   value: org?.active_task_count ?? 0,   icon: Activity,   color: 'var(--dv-text-primary)' },
+            { label: 'Critical Tasks', value: criticalTasks,                 icon: AlertCircle,color: criticalTasks > 0 ? 'var(--dv-warning)' : 'var(--dv-text-muted)' },
+            { label: 'Blocked Tasks',  value: blockedTasks,                  icon: Shield,     color: blockedTasks > 0 ? 'var(--dv-danger)' : 'var(--dv-text-muted)' },
+            { label: 'Decision Pts',   value: org?.decision_point_count ?? 0,icon: Zap,        color: (org?.decision_point_count || 0) > 0 ? 'var(--dv-danger)' : 'var(--dv-text-muted)' },
           ].map(({ label, value, icon: Icon, color }) => (
             <DvCard key={label} style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Icon size={16} color="var(--dv-text-faint)" />
               <div>
                 <div style={{ fontSize: 10, color: 'var(--dv-text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--dv-font-mono)', color, lineHeight: 1 }}>{value}</div>
+                <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'var(--dv-font-mono)', color, lineHeight: 1 }}>{value ?? 0}</div>
               </div>
             </DvCard>
           ))}

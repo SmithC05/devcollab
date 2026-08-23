@@ -17,6 +17,7 @@ import { SimulationResults } from '../components/SimulationResults';
 import { ApprovalPanel } from '../components/ApprovalPanel';
 import { fadeUp, panelEnter, staggerChildren, slideIn } from '../motion/presets';
 import { taskApi } from '../../../api/taskApi';
+import { apiClient } from '../../../api/client';
 
 const SIMULATION_STEPS = [
   { id: 'baseline',   label: 'Reading baseline state' },
@@ -52,32 +53,28 @@ export default function SimulationCenter() {
   useEffect(() => {
     if (isLiveTask) {
       taskApi.getTaskEngineeringContext(id).then(data => {
-        const { task, project_state, project_members } = data;
-        
-        // Filter out current owner
-        const currentOwnerId = task.assignee?.id;
-        const currentOwnerName = task.assignee?.name || task.assignee?.username || 'Unassigned';
-        
-        const eligibleCandidates = project_members
-          .filter(m => m.id !== currentOwnerId)
-          .map(m => ({ id: m.id, name: m.name || m.username }));
+        // Intentionally bypassed, use real Decision Point API instead
+      }).catch(() => {});
 
-        setBaseline({
-          isLive: true,
-          project: task.project_name || `Project ${task.project_id}`,
-          task: task.title,
-          taskId: task.id,
-          trigger: {
-            label: 'OWNER_UNAVAILABLE',
-            before: { member: currentOwnerName }
-          }
+      apiClient(`/intelligence/decision/${id}/`)
+        .then(data => {
+          setBaseline(data);
+          
+          // Use real candidate IDs from the snapshot instead of fake ones
+          const eligibleCandidates = data.engineeringSnapshot.candidates.map(c => ({
+            id: c.id, 
+            name: c.name
+          }));
+          
+          setScenarioConfig(prev => ({ 
+            ...prev, 
+            candidates: eligibleCandidates 
+          }));
+        })
+        .catch(err => {
+          console.error("Failed to load decision point for simulation", err);
+          navigate(`${prefix}`);
         });
-        
-        setScenarioConfig(prev => ({ ...prev, candidates: eligibleCandidates }));
-      }).catch(err => {
-        console.error("Failed to load live task simulation context", err);
-        navigate(`${prefix}`);
-      });
     } else {
       // Load demo baseline state using existing data adapter
       const data = getDecisionPointState(id);
@@ -119,7 +116,7 @@ export default function SimulationCenter() {
     // Concurrently run API and staging
     try {
       const [results] = await Promise.all([
-        fetchSimulation(id, baseline.trigger.label, scenarioConfig.candidates),
+        fetchSimulation(isLiveTask ? baseline.decision.task_id : id, baseline.trigger.label, scenarioConfig.candidates),
         advanceStaging()
       ]);
       setSimResults(results);
@@ -136,13 +133,26 @@ export default function SimulationCenter() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 0 60px 0' }}>
       
-      {/* Simulation Warning Banner */}
-      <div style={{ background: 'var(--dv-warning-subtle)', borderBottom: '1px solid var(--dv-warning-border)', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', borderRadius: 'var(--dv-radius-md)' }}>
-        <Shield size={16} color="var(--dv-warning)" />
-        <span style={{ fontSize: '13px', color: 'var(--dv-warning-text)', fontWeight: 500 }}>
-          <strong>SIMULATION MODE</strong> — This analysis is hypothetical and does not modify your workspace.
-        </span>
-      </div>
+      {/* Demo Warning Banner */}
+      <AnimatePresence>
+        {!isLiveTask && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            style={{
+              background: 'var(--dv-warning-subtle)', borderBottom: '1px solid var(--dv-warning-border)',
+              padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              overflow: 'hidden', marginBottom: '24px', borderRadius: 'var(--dv-radius-md)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--dv-warning)' }}>
+              <Shield size={16} />
+              <div style={{ fontSize: 'var(--dv-text-sm)' }}>
+                 <strong>CONTROLLED DEMO SCENARIO</strong> &mdash; This analysis is hypothetical and does not modify your workspace.
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 1. Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>

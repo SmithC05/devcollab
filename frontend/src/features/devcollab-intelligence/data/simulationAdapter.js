@@ -23,16 +23,56 @@ export async function fetchSimulation(decisionId, trigger, candidates) {
   const taskId = isLiveTask ? parseInt(decisionId, 10) : (DEMO_TASK_MAP[decisionId] || 1);
   
   // Candidates is now expected to be an array of objects {id, name}
-  // For live tasks we extract IDs. For demo, we fallback to names mapped to IDs.
   let candidateIds = [];
   if (isLiveTask) {
-    candidateIds = candidates.map(c => c.id);
+    candidateIds = candidates.map(c => c.id).filter(id => id !== undefined && id !== null);
   } else {
     candidateIds = candidates.map(c => DEMO_USER_MAP[c.name] || DEMO_USER_MAP[c]).filter(id => id);
   }
   
   if (candidateIds.length === 0) {
     throw new Error('No valid candidates mapped for simulation.');
+  }
+
+  if (!isLiveTask) {
+    // Isolated Demo Mode: Do not hit the backend. Return synthetic results.
+    const mockData = {
+      scenario_id: 'demo-scenario-1',
+      task_id: taskId,
+      evaluation_results: candidateIds.map(cId => ({
+        candidate_id: cId,
+        interventions: [
+          {
+            type: "WAIT",
+            score: 0.2,
+            estimated_completion: 6.0,
+            risk: "MEDIUM",
+            deadline_probability: 0.3,
+            reason: ["Waiting adds dead time to delivery."]
+          },
+          {
+            type: "REASSIGN",
+            score: 0.8,
+            estimated_completion: 4.5,
+            risk: "LOW",
+            deadline_probability: 0.8,
+            predicted_transfer_effort_hours: 2.0,
+            reason: ["Reassignment incurs full transfer cost."]
+          },
+          {
+            type: "KNOWLEDGE_TRANSFER",
+            score: 0.9,
+            estimated_completion: 3.5,
+            risk: "LOW",
+            deadline_probability: 0.95,
+            predicted_transfer_effort_hours: 2.0,
+            predicted_transfer_effort_reduction_hours: 1.2,
+            reason: ["Knowledge transfer significantly reduces effort."]
+          }
+        ]
+      }))
+    };
+    return new Promise(resolve => setTimeout(() => resolve(formatSimulationResult(mockData, candidates, isLiveTask)), 800));
   }
 
   const payload = {
@@ -67,10 +107,14 @@ export async function fetchSimulation(decisionId, trigger, candidates) {
   }
 }
 
-export async function approveSimulation(scenarioId, candidateName, intervention) {
-  const candidateId = DEMO_USER_MAP[candidateName];
+export async function approveSimulation(scenarioId, candidateId, intervention) {
   if (!candidateId) {
-    throw new Error(`Invalid candidate mapped for approval: ${candidateName}`);
+    throw new Error(`Invalid candidate mapped for approval`);
+  }
+
+  // If scenarioId is a string like 'demo-scenario-1', it's a demo approval.
+  if (typeof scenarioId === 'string' && scenarioId.startsWith('demo-')) {
+    return new Promise(resolve => setTimeout(() => resolve({ success: true, message: "Demo simulation approved successfully. No DB mutations were made." }), 500));
   }
 
   const payload = {
@@ -93,7 +137,6 @@ export async function approveSimulation(scenarioId, candidateName, intervention)
 
     if (!response.ok) {
       const errorText = await response.text();
-      // Handle Conflict (stale simulation) or NotFound gracefully if possible, or throw
       if (response.status === 400 || response.status === 404 || response.status === 409) {
          throw new Error(JSON.parse(errorText).error || 'Simulation could not be approved.');
       }
@@ -107,10 +150,6 @@ export async function approveSimulation(scenarioId, candidateName, intervention)
   }
 }
 
-/**
- * Transforms the backend response into the format expected by SimulationResults.jsx.
- * Also appends a derived 'recommended' flag based on backend heuristic output.
- */
 function formatSimulationResult(data, candidates, isLiveTask) {
   let allInterventions = [];
   
@@ -126,6 +165,7 @@ function formatSimulationResult(data, candidates, isLiveTask) {
     
     candResult.interventions.forEach(inv => {
       allInterventions.push({
+        candidate_id: cId,
         candidate_name: cName,
         ...inv
       });

@@ -31,6 +31,8 @@ import {
   availStatusColor, contextScoreToLabel, provenanceLabel,
   provenanceColor, relativeTime,
 } from '../data/decisionAdapter';
+import { apiClient } from '../../../api/client';
+import { useAuthStore } from '../../../stores/authStore';
 
 import {
   fadeUp, fadeIn, staggerChildren, panelEnter, slideIn,
@@ -84,16 +86,42 @@ function SectionLabel({ label, icon: Icon, sub, id }) {
 }
 
 function CapacityRing({ value, size = 44 }) {
-  const variant = value >= 85 ? 'danger' : value >= 55 ? 'warning' : 'recommended';
+  const num = typeof value === 'number' && !isNaN(value) ? value : 0;
+  const variant = num >= 85 ? 'danger' : num >= 55 ? 'warning' : 'recommended';
   return (
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-      <DvProgressRing value={value} max={100} size={size} stroke={3} variant={variant} />
+      <DvProgressRing value={num} max={100} size={size} stroke={3} variant={variant} />
       <span style={{
         position: 'absolute', fontSize: 9, fontWeight: 700,
         fontFamily: 'var(--dv-font-mono)',
-        color: value >= 85 ? 'var(--dv-danger)' : value >= 55 ? 'var(--dv-warning)' : 'var(--dv-success)',
+        color: num >= 85 ? 'var(--dv-danger)' : num >= 55 ? 'var(--dv-warning)' : 'var(--dv-success)',
       }}>
-        {value}%
+        {num}%
+      </span>
+    </div>
+  );
+}
+
+function SourceChip({ source }) {
+  const isLive = source === 'LIVE';
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px',
+      borderRadius: 'var(--dv-radius-md)',
+      border: `1px solid ${isLive ? 'var(--dv-success-border)' : 'var(--dv-warning-border)'}`,
+      background: isLive ? 'var(--dv-success-subtle)' : 'var(--dv-warning-subtle)',
+    }}>
+      <span style={{
+        width: 6, height: 6, borderRadius: '50%',
+        background: isLive ? 'var(--dv-success)' : 'var(--dv-warning)',
+        animation: isLive ? 'dv-pulse 2s ease-in-out infinite' : 'none', flexShrink: 0,
+      }} />
+      <span style={{
+        fontSize: 10, fontFamily: 'var(--dv-font-mono)', fontWeight: 700,
+        letterSpacing: '0.1em', textTransform: 'uppercase',
+        color: isLive ? 'var(--dv-success)' : 'var(--dv-warning)',
+      }}>
+        {isLive ? 'LIVE STATE' : 'DEMO STATE'}
       </span>
     </div>
   );
@@ -168,18 +196,6 @@ function DecisionHero({ decision, systemStatus, onBack }) {
             </div>
           </div>
 
-          {/* Agent status pill */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
-            <DvAgentStatus status={systemStatus.agent_status === 'READY_FOR_SIMULATION' ? 'WAITING_FOR_APPROVAL' : 'ANALYZING'} />
-            <div style={{
-              padding: '6px 12px', borderRadius: 'var(--dv-radius-md)',
-              background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)',
-              fontSize: 9, fontFamily: 'var(--dv-font-mono)', color: 'var(--dv-text-faint)',
-              textTransform: 'uppercase', letterSpacing: '0.1em',
-            }}>
-              DEMO STATE
-            </div>
-          </div>
         </div>
       </div>
     </motion.div>
@@ -748,11 +764,16 @@ function DependencyPressure({ chain }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 10: Scenario Builder ("What should DevCollab evaluate?")
 // ─────────────────────────────────────────────────────────────────────────────
-function ScenarioBuilder({ defaults, decisionId }) {
-  const [duration,      setDuration]      = useState(defaults.duration_hours);
-  const [candidates,    setCandidates]    = useState(defaults.candidates);
+function ScenarioBuilder({ defaults = {}, decisionId }) {
+  const durationOptions = defaults?.duration_options || [24, 48, 72];
+  const candidateList = defaults?.candidates || [];
+  const objectiveList = defaults?.objectives || [];
+  const interventionOptions = defaults?.interventionOptions || [];
+
+  const [duration,      setDuration]      = useState(defaults?.duration_hours || durationOptions[0] || 48);
+  const [candidates,    setCandidates]    = useState(candidateList);
   const [intervention,  setIntervention]  = useState(null);
-  const [objectives,    setObjectives]    = useState([defaults.objectives[0]?.id].filter(Boolean));
+  const [objectives,    setObjectives]    = useState([objectiveList[0]?.id].filter(Boolean));
   const [ready,         setReady]         = useState(false);
 
   // Become "ready" once intervention is chosen
@@ -812,7 +833,7 @@ function ScenarioBuilder({ defaults, decisionId }) {
               Scenario Duration
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              {defaults.duration_options.map(h => (
+              {durationOptions.map(h => (
                 <button key={h}
                   onClick={() => setDuration(h)}
                   style={{
@@ -834,12 +855,20 @@ function ScenarioBuilder({ defaults, decisionId }) {
               Candidate Pool
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {defaults.candidates.map(name => (
-                <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: 'var(--dv-bg-elevated)', border: '1px solid var(--dv-border-default)', borderRadius: 'var(--dv-radius-md)' }}>
-                  <DvAvatar name={name} size={18} />
-                  <span style={{ fontSize: 11, color: 'var(--dv-text-secondary)', fontWeight: 600 }}>{name}</span>
-                </div>
-              ))}
+              {candidateList.length === 0 ? (
+                <span style={{ fontSize: 11, color: 'var(--dv-text-muted)', fontStyle: 'italic' }}>No additional candidates available</span>
+              ) : (
+                candidateList.map((c, idx) => {
+                  const name = typeof c === 'string' ? c : (c?.name || 'Member');
+                  const key = typeof c === 'object' && c?.id ? c.id : `${name}-${idx}`;
+                  return (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: 'var(--dv-bg-elevated)', border: '1px solid var(--dv-border-default)', borderRadius: 'var(--dv-radius-md)' }}>
+                      <DvAvatar name={name} size={18} />
+                      <span style={{ fontSize: 11, color: 'var(--dv-text-secondary)', fontWeight: 600 }}>{name}</span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -849,7 +878,7 @@ function ScenarioBuilder({ defaults, decisionId }) {
               Simulation Objectives
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              {defaults.objectives.map(obj => {
+              {objectiveList.map(obj => {
                 const isSelected = objectives.includes(obj.id);
                 return (
                   <button key={obj.id}
@@ -878,7 +907,7 @@ function ScenarioBuilder({ defaults, decisionId }) {
             Available Interventions
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {defaults.interventionOptions.map(opt => {
+            {interventionOptions.map(opt => {
               const isSelected = intervention === opt.id;
               return (
                 <button key={opt.id}
@@ -909,24 +938,7 @@ function ScenarioBuilder({ defaults, decisionId }) {
         </div>
       </div>
 
-      {/* Prediction inputs preview */}
-      <div style={{ marginTop: 20, padding: '12px 14px', background: 'var(--dv-bg-elevated)', borderRadius: 'var(--dv-radius-md)', border: '1px solid var(--dv-border-subtle)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <BarChart2 size={11} color="var(--dv-text-faint)" />
-          <span style={{ fontSize: 9, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, color: 'var(--dv-text-faint)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Prediction Inputs</span>
-          <DvBadge variant="muted" size="sm">Pending simulation</DvBadge>
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {defaults.predictionInputLabels.map(label => (
-            <span key={label} style={{ fontSize: 9, padding: '2px 8px', background: 'var(--dv-bg-surface)', border: '1px solid var(--dv-border-subtle)', borderRadius: 'var(--dv-radius-sm)', color: 'var(--dv-text-faint)' }}>
-              {label}
-            </span>
-          ))}
-        </div>
-        <div style={{ marginTop: 8, fontSize: 10, color: 'var(--dv-text-faint)', fontStyle: 'italic' }}>
-          Prediction inputs will be evaluated during simulation.
-        </div>
-      </div>
+
 
       {/* CTA */}
       <AnimatePresence>
@@ -992,7 +1004,7 @@ function EvidenceSection({ evidence }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // CALL TO ACTION
 // ─────────────────────────────────────────────────────────────────────────────
-function CtaSection({ decisionId, decisionSeverity, status }) {
+function CtaSection({ decisionId, decisionSeverity, mode, task_id }) {
   const navigate = useNavigate();
   const location = useLocation();
   const prefix = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
@@ -1018,21 +1030,15 @@ function CtaSection({ decisionId, decisionSeverity, status }) {
       </div>
 
       <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-        <button
-          onClick={() => navigate(`${prefix}/organization`)}
-          style={{
-            padding: '10px 18px', borderRadius: 'var(--dv-radius-md)', cursor: 'pointer',
-            border: '1px solid var(--dv-border-default)', background: 'transparent',
-            color: 'var(--dv-text-muted)', fontSize: 'var(--dv-text-xs)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
-          }}>
-          <ArrowLeft size={13} />
-          Engineering State
-        </button>
-
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => navigate(`${prefix}/simulation/demo/${decisionId}`)}
+          onClick={() => {
+            const isLive = mode === 'LIVE';
+            const simPath = isLive ? 'task' : 'demo';
+            const navId = isLive ? (task_id || decisionId) : 'dp1';
+            navigate(`${prefix}/simulation/${simPath}/${navId}`);
+          }}
           style={{
             padding: '10px 22px', borderRadius: 'var(--dv-radius-md)', cursor: 'pointer',
             border: 'none', background: 'var(--dv-accent)',
@@ -1047,39 +1053,284 @@ function CtaSection({ decisionId, decisionSeverity, status }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Page
-// ─────────────────────────────────────────────────────────────────────────────
+
+
 export default function DecisionPoint() {
-  const { id = 'dp1' } = useParams();
+  const { id } = useParams();
   const navigate        = useNavigate();
   const location        = useLocation();
-  const prefix          = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
+  const { isAuthenticated, isLoading: authLoading, accessToken } = useAuthStore();
+  const isDemoPath      = location.pathname.startsWith('/intelligence/demo');
+  const isDirectSynthetic = ['dp1', 'dp2', 'dp3'].includes(id);
+  const prefix          = isDemoPath ? '/intelligence/demo' : '/dashboard/intelligence';
 
-  const data = useMemo(() => getDecisionPointState(id), [id]);
+  // Rule 2 & 3: Direct synthetic entry (/decision/dp1) starts in DEMO.
+  // Real Decision Point ID (/decision/<real-id>) MUST start in LIVE.
+  const [mode, setMode] = useState(isDirectSynthetic || isDemoPath ? 'DEMO' : 'LIVE');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Sync mode whenever id or route path changes
+  useEffect(() => {
+    if (isDirectSynthetic || isDemoPath) {
+      setMode('DEMO');
+    } else {
+      setMode('LIVE');
+    }
+  }, [id, isDirectSynthetic, isDemoPath]);
+
+  useEffect(() => {
+    if (mode === 'LIVE' && authLoading) return;
+    let active = true;
+    setLoading(true);
+    setError(null);
+    
+    if (mode === 'DEMO') {
+      const demoId = ['dp1', 'dp2', 'dp3'].includes(id) ? id : 'dp1';
+      const mockData = getDecisionPointState(demoId);
+      if (mockData) {
+        if (active) {
+          setData(mockData);
+          setLoading(false);
+        }
+      } else {
+        if (active) {
+          setError('Invalid demo decision point');
+          setLoading(false);
+        }
+      }
+    } else {
+      // LIVE MODE: Fetch real Decision Point data
+      if (['dp1', 'dp2', 'dp3'].includes(id)) {
+        if (active) {
+          setError('Invalid decision point ID in live mode.');
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!id) {
+        // Direct entry at /decision: resolve first active real decision point from workspace state
+        apiClient('/intelligence/command-center/')
+          .then(cc => {
+            const firstDp = cc?.decision_points?.[0];
+            if (firstDp) {
+              return apiClient(`/intelligence/decision/${firstDp.id}/`);
+            } else {
+              // Live default state from real workspace projects and members
+              const activeProj = cc?.projects?.[0];
+              const primaryMember = cc?.members?.[0];
+              return {
+                decision: {
+                  id: 'live-active',
+                  title: `${activeProj?.name || 'Workspace'} — Live Engineering Observation`,
+                  severity: 'MEDIUM',
+                  type: 'SYSTEM_OBSERVATION',
+                  project: activeProj?.name || 'Workspace',
+                  task: 'Active Operations',
+                  description: 'Engineering decision intelligence monitoring is active. Workspace signals are stable.',
+                  detected_at: new Date().toISOString(),
+                },
+                trigger: {
+                  label: 'MONITORING ACTIVE',
+                  type: 'ENGINEERING_HEALTH',
+                  before: { member: primaryMember?.name || 'Team', status: 'MONITORING', capacity: 40, role: 'Engineering', provenance: 'REAL_DB' },
+                  after: { member: primaryMember?.name || 'Team', status: 'STABLE', capacity: 40, role: 'Engineering', provenance: 'REAL_DB' },
+                },
+                engineeringSnapshot: {
+                  owner: { name: primaryMember?.name || 'Engineering Lead', capacity: 40, status: 'AVAILABLE', provenance: 'REAL_DB' },
+                  candidates: (cc?.members || []).slice(1).map(m => ({ id: m.id, name: m.name, capacity: m.capacity_pct || 30, status: m.availability || 'AVAILABLE', contextScore: 50 })),
+                },
+                scenarioDefaults: {
+                  duration_hours: 48,
+                  duration_options: [24, 48, 72],
+                  candidates: (cc?.members || []).map(m => m.name),
+                  interventionOptions: [
+                    { id: 'opt1', label: 'Monitor Workload', description: 'Continuously track context score and capacity load across team members.' },
+                    { id: 'opt2', label: 'Cross-Training', description: 'Promote responsibility coverage across project boundaries.' },
+                  ],
+                  objectives: [
+                    { id: 'obj1', label: 'Maintain balanced capacity' },
+                    { id: 'obj2', label: 'Prevent ownership concentration' },
+                  ],
+                },
+                systemStatus: { source: 'LIVE', last_synced: new Date().toISOString(), agent_status: 'MONITORING' },
+              };
+            }
+          })
+          .then(res => {
+            if (active && res) {
+              setData(res);
+              setLoading(false);
+            }
+          })
+          .catch(err => {
+            if (active) {
+              console.error("Failed to load active decision point", err);
+              setError(err.message || 'Failed to load');
+              setLoading(false);
+            }
+          });
+        return;
+      }
+
+      apiClient(`/intelligence/decision/${id}/`)
+        .then(res => {
+          if (active) {
+            setData(res);
+            setLoading(false);
+          }
+        })
+        .catch(err => {
+          if (active) {
+            console.error("Failed to load live decision point", err);
+            setError(err.message || 'Failed to load');
+            setLoading(false);
+          }
+        });
+    }
+      
+    return () => { active = false; };
+  }, [id, mode, authLoading, accessToken]);
+
+  const handleSimulateDemo = () => {
+    // Explicit user action: enter demo mode
+    setMode('DEMO');
+  };
+
+  const handleExitDemo = () => {
+    // Requirement 5 & 6:
+    // If entered directly from synthetic /decision/dp1: fallback to Command Center (/dashboard/intelligence)
+    // If entered from a real Decision Point (/decision/<real-id>): return to LIVE mode on the same real ID
+    if (isDirectSynthetic) {
+      navigate('/dashboard/intelligence');
+    } else {
+      setMode('LIVE');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="dv-intelligence" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--dv-text-muted)', fontFamily: 'var(--dv-font-mono)', fontSize: 12 }}>LOADING DECISION POINT...</div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="dv-intelligence" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+        <div style={{ color: 'var(--dv-danger)' }}>Error: {error || 'No data found'}</div>
+        <DvButton variant="outline" size="sm" onClick={() => navigate('/dashboard/intelligence')}>
+          Return to Command Center
+        </DvButton>
+      </div>
+    );
+  }
+
   const { decision, trigger, whyItMatters, impactMap, engineeringSnapshot,
           knowledgeConcentration, responsibilityCoverage, dependencyChain,
           agentActivity, scenarioDefaults, evidence, systemStatus } = data;
 
+  // Safe fallbacks for live data that doesn't have synthetic-only sections
+  const effectiveWhyItMatters = whyItMatters || {
+    text: `${decision?.title || 'Decision point detected'}. ${decision?.description || ''}`,
+    evidence: (evidence || [
+      { label: 'Trigger Type', value: decision?.type || 'TRIGGER', prov: 'DERIVED' },
+      { label: 'Project', value: decision?.project || 'Project', prov: 'REAL_DB' },
+      { label: 'Task', value: decision?.task || 'Task', prov: 'REAL_DB' },
+      { label: 'Severity', value: decision?.severity || 'HIGH', prov: 'DERIVED' },
+    ]).map(e => ({
+      label: e.label,
+      value: e.value,
+      prov: e.prov || e.source || e.provenance || 'REAL_DB',
+    })),
+  };
+
+  const effectiveImpactMap = impactMap || {
+    project: { name: decision?.project || 'Project', health: decision?.severity || 'MEDIUM', provenance: 'REAL_DB' },
+    task: { name: decision?.task || 'Task', priority: decision?.severity === 'CRITICAL' ? 'P0' : 'P1', status: 'In Progress', provenance: 'REAL_DB' },
+    owner: {
+      name: trigger?.after?.member || engineeringSnapshot?.owner?.name || 'Unassigned',
+      status: trigger?.after?.status || engineeringSnapshot?.owner?.status || 'AVAILABLE',
+      capacity: trigger?.after?.capacity ?? engineeringSnapshot?.owner?.capacity ?? 0,
+      provenance: trigger?.after?.provenance || 'DERIVED',
+    },
+    deadline: { label: 'Active', value: 24, unit: 'hours', provenance: 'DERIVED' },
+    downstream: [],
+    responsibilities: [{ name: decision?.task || 'Task', coverage: decision?.severity === 'CRITICAL' ? 'CRITICAL' : 'PARTIAL', provenance: 'DERIVED' }],
+    availableMembers: (engineeringSnapshot?.candidates || []).map(c => ({
+      name: c.name,
+      capacity: c.capacity ?? 0,
+      status: c.status || 'AVAILABLE',
+      contextScore: c.contextScore ?? 0,
+      contextLabel: contextScoreToLabel(c.contextScore ?? 0),
+      provenance: 'DERIVED',
+    })),
+    aiWorkers: [
+      { name: 'Coding Agent', status: 'AVAILABLE', capability: 'Implementation support' },
+      { name: 'Review Agent', status: 'AVAILABLE', capability: 'Code review assistance' },
+    ],
+  };
+
+  const isLive = mode === 'LIVE';
+
   return (
     <div className="dv-intelligence" style={{ minHeight: '100vh', paddingBottom: 80 }}>
+      {/* Demo Warning Banner */}
+      <AnimatePresence>
+        {!isLive && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            style={{
+              background: 'var(--dv-warning-subtle)', borderBottom: '1px solid var(--dv-warning-border)',
+              padding: '12px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--dv-warning)' }}>
+              <Shield size={16} />
+              <div style={{ fontSize: 'var(--dv-text-sm)' }}>
+                 <strong>CONTROLLED DEMO SCENARIO</strong> &mdash; This view uses a controlled scenario. No live workspace data is being modified.
+              </div>
+            </div>
+            <DvButton variant="outline" size="sm" onClick={handleExitDemo} style={{ borderColor: 'var(--dv-warning)', color: 'var(--dv-warning)' }}>
+              Exit Demo
+            </DvButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Sticky sub-header ── */}
       <div style={{
         padding: '10px 40px', borderBottom: '1px solid var(--dv-border-subtle)',
-        background: 'var(--dv-bg-canvas)', position: 'sticky', top: 52, zIndex: 10,
-        display: 'flex', alignItems: 'center', gap: 12,
+        background: 'var(--dv-bg-canvas)', position: 'sticky', top: isLive ? 52 : 0, zIndex: 10,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <button onClick={() => navigate(`${prefix}/organization`)} style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 5, color: 'var(--dv-text-muted)', fontSize: 11,
-        }}>
-          <ArrowLeft size={12} />
-          Organization Intelligence
-        </button>
-        <span style={{ color: 'var(--dv-text-faint)' }}>/</span>
-        <span style={{ fontSize: 11, color: 'var(--dv-text-secondary)' }}>Decision Point</span>
-        <DvBadge variant={severityToVariant(decision.severity)} size="sm" dot>{decision.severity}</DvBadge>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={() => navigate(-1)} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5, color: 'var(--dv-text-muted)', fontSize: 11,
+          }}>
+            <ArrowLeft size={12} />
+            Back
+          </button>
+          <span style={{ color: 'var(--dv-text-faint)' }}>/</span>
+          <span style={{ fontSize: 11, color: 'var(--dv-text-secondary)' }}>Decision Point</span>
+          {decision?.severity && (
+            <DvBadge variant={severityToVariant(decision.severity)} size="sm" dot>{decision.severity}</DvBadge>
+          )}
+          <div style={{ width: 1, height: 14, background: 'var(--dv-border-subtle)' }} />
+          <SourceChip source={mode} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {mode === 'LIVE' && (
+            <DvButton variant="outline" size="sm" onClick={handleSimulateDemo} icon={AlertTriangle}>
+              Simulate Demo
+            </DvButton>
+          )}
+        </div>
       </div>
 
       {/* ── Page body ── */}
@@ -1088,26 +1339,13 @@ export default function DecisionPoint() {
           style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
           {/* Hero */}
-          <DecisionHero decision={decision} systemStatus={systemStatus} onBack={() => navigate(-1)} />
+          {decision && <DecisionHero decision={decision} systemStatus={systemStatus} onBack={() => navigate(-1)} />}
 
-          {/* Two-column layout: left content + right agent panel */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
-
-            {/* LEFT */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <motion.div variants={fadeUp}><TriggerSection trigger={trigger} /></motion.div>
-              <motion.div variants={fadeUp}><WhyItMatters data={whyItMatters} /></motion.div>
-              <motion.div variants={fadeUp}><ImpactMap impactMap={impactMap} /></motion.div>
-              <motion.div variants={fadeUp}><EngineeringSnapshot snapshot={engineeringSnapshot} /></motion.div>
-              <motion.div variants={fadeUp}><KnowledgeConcentration data={knowledgeConcentration} /></motion.div>
-              <motion.div variants={fadeUp}><ResponsibilityCoverage data={responsibilityCoverage} /></motion.div>
-              <motion.div variants={fadeUp}><DependencyPressure chain={dependencyChain} /></motion.div>
-            </div>
-
-            {/* RIGHT — sticky agent panel */}
-            <div style={{ position: 'sticky', top: 110 }}>
-              <AgentPanel agentActivity={agentActivity} />
-            </div>
+          {/* Main content layout */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {trigger && <motion.div variants={fadeUp}><TriggerSection trigger={trigger} /></motion.div>}
+            <motion.div variants={fadeUp}><WhyItMatters data={effectiveWhyItMatters} /></motion.div>
+            <motion.div variants={fadeUp}><ImpactMap impactMap={effectiveImpactMap} /></motion.div>
           </div>
 
           {/* Full-width: Scenario builder */}
@@ -1115,14 +1353,10 @@ export default function DecisionPoint() {
             <ScenarioBuilder defaults={scenarioDefaults} decisionId={id} />
           </motion.div>
 
-          {/* Evidence */}
-          <motion.div variants={fadeUp}>
-            <EvidenceSection evidence={evidence} />
-          </motion.div>
 
           {/* CTA */}
           <motion.div variants={fadeUp}>
-            <CtaSection decisionId={id} decisionSeverity={decision.severity} />
+            <CtaSection decisionId={id} decisionSeverity={decision?.severity} mode={mode} task_id={decision?.task_id} />
           </motion.div>
         </motion.div>
       </div>

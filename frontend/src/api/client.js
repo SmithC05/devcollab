@@ -5,7 +5,20 @@ const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8
 
 
 export const apiClient = async (endpoint, options = {}) => {
-  const { accessToken, activeWorkspace } = useAuthStore.getState();
+  let { accessToken, activeWorkspace } = useAuthStore.getState();
+
+  // Fallback to persisted storage if zustand store is hydrating during initial mount
+  if (!accessToken || !activeWorkspace) {
+    try {
+      const persisted = JSON.parse(localStorage.getItem('devcollab_auth') || '{}');
+      if (!accessToken && persisted?.state?.accessToken) {
+        accessToken = persisted.state.accessToken;
+      }
+      if (!activeWorkspace && persisted?.state?.activeWorkspace) {
+        activeWorkspace = persisted.state.activeWorkspace;
+      }
+    } catch (_) {}
+  }
 
   const headers = { ...options.headers };
   if (options.body && options.body instanceof FormData) {
@@ -39,7 +52,7 @@ export const apiClient = async (endpoint, options = {}) => {
     }
     
     const errorBody = await response.json().catch(() => ({}));
-    throw new Error(errorBody.error || errorBody.message || 'API request failed');
+    throw new Error(errorBody.error || errorBody.message || errorBody.detail || 'API request failed');
   }
 
   return response.json();
