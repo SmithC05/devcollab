@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from apps.projects.models import Project
 from apps.workspaces.models import Workspace, WorkspaceMembership
 from apps.tasks.models import Task
+from apps.realtime.models import PresenceSession
 from django.utils import timezone
 from django.db.models import Count, Q
 from django.contrib.auth import get_user_model
@@ -128,6 +129,26 @@ class EngineeringCommandCenterView(APIView):
                         "context_score": context_score,
                     })
 
+            # Presence/availability — check real PresenceSession status
+            presence_session = PresenceSession.objects.filter(
+                user=user
+            ).order_by('-last_activity').first()
+            presence_status = presence_session.status if presence_session else 'OFFLINE'
+            unavailable_until = (
+                presence_session.unavailable_until.isoformat()
+                if presence_session and presence_session.unavailable_until else None
+            )
+            unavailable_reason = (
+                presence_session.unavailable_reason
+                if presence_session else ''
+            )
+
+            # Override availability if PresenceSession says UNAVAILABLE
+            if presence_status == 'UNAVAILABLE':
+                availability = 'UNAVAILABLE'
+            else:
+                availability = cap_data["availability"]
+
             members_data.append({
                 "id":                   user.id,
                 "name":                 f"{user.first_name} {user.last_name}".strip() or user.username,
@@ -135,6 +156,9 @@ class EngineeringCommandCenterView(APIView):
                 "email":                user.email,
                 "role":                 membership.role,
                 "availability":         availability,
+                "presence_status":      presence_status,
+                "unavailable_until":    unavailable_until,
+                "unavailable_reason":   unavailable_reason,
                 "capacity_pct":         raw_capacity,
                 "active_task_count":    cap_data["active_task_count"],
                 "in_progress_tasks":    in_progress_tasks.count(),
@@ -145,6 +169,7 @@ class EngineeringCommandCenterView(APIView):
                     for t in active_user_tasks
                 ]
             })
+
 
         # ── Decision points (derived from real signals) ───────────────────
         decision_points = []
@@ -246,9 +271,16 @@ def compare_task_candidates(request):
     all_tasks = Task.objects.all()
     
     candidates = []
+    # Get all UNAVAILABLE user IDs so we can exclude/flag them
+    unavailable_user_ids = set(
+        PresenceSession.objects.filter(status='UNAVAILABLE').values_list('user_id', flat=True)
+    )
+
     for m in eligible_memberships:
         u = m.user
         if "admin" in u.email: continue
+        # Exclude UNAVAILABLE members from candidate pool
+        if u.id in unavailable_user_ids: continue
         
         cap_data = calculate_capacity(u, all_tasks)
         features, provenance, explanations = get_developer_context(task, u)
@@ -269,6 +301,7 @@ def compare_task_candidates(request):
             "provenance": provenance,
             "evidence": evidence_arr
         })
+        
         
     return Response({
         "task": {"id": task.id, "title": task.title, "project_name": task.project.name},
@@ -302,7 +335,6 @@ def get_member_evidence(request, pk):
         "ai_summary": ai_summary
     })
 
-import google.generativeai as genai
 from django.conf import settings
 from apps.developers.models import EngineeringEvidence
 
@@ -325,9 +357,68 @@ def summarize_member_evidence(request, pk):
     """
     
     try:
+        import google.generativeai as genai
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-3.6-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
         return Response({"summary": response.text.strip()})
+    except ImportError:
+        return Response({"summary": "AI summarization unavailable (google-generativeai not installed)."})
     except Exception as e:
         return Response({"summary": "Could not generate summary at this time.", "error": str(e)})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 3: Unavailability Status Endpoint
+# GET /api/intelligence/unavailability-status/<user_id>/
+# Returns live unavailability state + blast radius for a given member.
+# Used by DecisionPoint live mode and SimulationCenter stale-state check.
+# ─────────────────────────────────────────────────────────────────────────────
+@api_view(['GET'])
+def unavailability_status(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+
+    session = PresenceSession.objects.filter(user=user).order_by('-last_activity').first()
+    is_unavailable = session and session.status == 'UNAVAILABLE'
+
+    # Critical affected tasks
+    affected_tasks = []
+    downstream_impact = []
+    if is_unavailable:
+        from apps.ai.tools import _collect_downstream
+        critical_tasks = Task.objects.filter(
+            assignee=user,
+            priority__in=['P0', 'P1'],
+            status__in=['To Do', 'In Progress', 'In Review']
+        )
+        for task in critical_tasks:
+            affected_tasks.append({
+                "id": task.id,
+                "title": task.title,
+                "priority": task.priority,
+                "status": task.status,
+                "project_name": task.project.name,
+            })
+            downstream_impact.extend(_collect_downstream(task))
+
+    # Check for active simulation scenarios
+    from apps.simulations.models import SimulationScenario
+    active_scenario = SimulationScenario.objects.filter(
+        unavailable_member=user,
+        status="EVALUATED"
+    ).order_by('-created_at').first()
+
+    return Response({
+        "user_id": user.id,
+        "username": user.username,
+        "is_unavailable": is_unavailable,
+        "presence_status": session.status if session else "OFFLINE",
+        "unavailable_until": session.unavailable_until.isoformat() if (session and session.unavailable_until) else None,
+        "unavailable_reason": session.unavailable_reason if session else "",
+        "affected_tasks": affected_tasks,
+        "downstream_impact": downstream_impact,
+        "has_active_decision": active_scenario is not None,
+        "active_scenario_id": active_scenario.id if active_scenario else None,
+    })
+
+

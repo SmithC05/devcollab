@@ -38,7 +38,10 @@ export async function fetchSimulation(decisionId, trigger, candidates) {
   const payload = {
     task_id: taskId,
     trigger: trigger || 'MANUAL_EVALUATION',
-    candidate_ids: candidateIds
+    candidate_ids: candidateIds,
+    // Phase 3: Pass unavailable member for stale-state validation
+    unavailable_member_id: candidates.find?.(c => c.unavailable_member_id)?.unavailable_member_id || null,
+    duration_hours: 72, // default for Phase 3 scenario
   };
 
   try {
@@ -68,7 +71,11 @@ export async function fetchSimulation(decisionId, trigger, candidates) {
 }
 
 export async function approveSimulation(scenarioId, candidateName, intervention) {
-  const candidateId = DEMO_USER_MAP[candidateName];
+  // For live tasks: if candidateName is a numeric ID, use it directly
+  const candidateId = isNaN(candidateName)
+    ? DEMO_USER_MAP[candidateName]
+    : parseInt(candidateName, 10);
+
   if (!candidateId) {
     throw new Error(`Invalid candidate mapped for approval: ${candidateName}`);
   }
@@ -93,14 +100,30 @@ export async function approveSimulation(scenarioId, candidateName, intervention)
 
     if (!response.ok) {
       const errorText = await response.text();
-      // Handle Conflict (stale simulation) or NotFound gracefully if possible, or throw
       if (response.status === 400 || response.status === 404 || response.status === 409) {
          throw new Error(JSON.parse(errorText).error || 'Simulation could not be approved.');
       }
       throw new Error(`Approval failed: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    // Phase 3 fallback: if task_data is returned, update the Kanban store immediately
+    // (in case WebSocket broadcast is delayed or misses)
+    if (data.task_data) {
+      setTimeout(() => {
+        import('../../../stores/taskStore').then(({ useTaskStore }) => {
+          useTaskStore.getState().syncEngineEvent({
+            event_type: 'TASK_REASSIGNED',
+            task_data: data.task_data,
+            task_id: data.task_data.id,
+            new_assignee_id: data.new_assignee?.id,
+          });
+        }).catch(() => {});
+      }, 3000); // 3s fallback window — WS should fire before this
+    }
+
+    return data;
   } catch (err) {
     console.error('Approval Adapter Error:', err);
     throw err;

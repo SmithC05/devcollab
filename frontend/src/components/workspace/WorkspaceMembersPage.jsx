@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Copy, UserPlus, MoreHorizontal, Shield, Users, Search, ChevronDown } from 'lucide-react';
+import { Copy, UserPlus, MoreHorizontal, Shield, Users, Search, ChevronDown, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { Button } from '../ui/index';
 import InviteMemberModal from './InviteMemberModal';
 import { useAuthStore } from '../../stores/authStore';
+import { usePresenceStore } from '../../stores/presenceStore';
 import { canInviteMembers, canRemoveMember } from '../../utils/permissions';
 import { apiClient } from '../../api/client';
 
@@ -79,8 +80,80 @@ export default function WorkspaceMembersPage() {
   const currentUserRole = currentUser?.role || 'DEVELOPER';
   const showInviteButton = canInviteMembers(currentUserRole);
 
+  // Phase 3: UNAVAILABLE self-view
+  const { unavailableMembers } = usePresenceStore();
+  const myUnavailability = user?.id ? unavailableMembers[user.id] : null;
+  const [resettingDemo, setResettingDemo] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  const handleBecomeAvailable = async () => {
+    setResettingDemo(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      await fetch('http://localhost:8000/api/ai/demo-reset/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      usePresenceStore.getState().clearUnavailable(user.id);
+      setResetSuccess(true);
+      setTimeout(() => setResetSuccess(false), 3000);
+    } catch (err) {
+      alert('Could not reset availability. Please try again.');
+    } finally {
+      setResettingDemo(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-[1180px] mx-auto px-[48px] pt-[48px] pb-[80px]">
+
+      {/* Phase 3: UNAVAILABLE Self-View Banner */}
+      {myUnavailability && (
+        <div style={{
+          background: 'linear-gradient(90deg, rgba(255,26,68,0.1) 0%, rgba(255,107,74,0.05) 100%)',
+          border: '1px solid rgba(255,26,68,0.3)',
+          borderRadius: 14, padding: '16px 22px',
+          display: 'flex', alignItems: 'center', gap: 16,
+          marginBottom: 28,
+        }}>
+          <AlertTriangle size={18} color="#ff4466" style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: '#ff4466', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+              YOUR AVAILABILITY
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>UNAVAILABLE</span>
+              {myUnavailability.until && (
+                <span style={{ fontSize: 12, color: '#a3a3a3', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Clock size={11} />
+                  Until: {new Date(myUnavailability.until).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: '#737373', marginTop: 4 }}>Your critical work is under review. Team leads have been notified.</div>
+          </div>
+          {resetSuccess ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#22c55e', fontSize: 13, fontWeight: 600 }}>
+              <CheckCircle size={16} /> Available
+            </div>
+          ) : (
+            <button
+              onClick={handleBecomeAvailable}
+              disabled={resettingDemo}
+              style={{
+                padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
+                color: '#fff', transition: 'all 0.15s ease', opacity: resettingDemo ? 0.6 : 1,
+              }}
+            >
+              {resettingDemo ? 'Resetting...' : 'Become Available Again'}
+            </button>
+          )}
+        </div>
+      )}
       
       {/* Top Header & Actions */}
       <div className="flex items-start justify-between mb-2">
