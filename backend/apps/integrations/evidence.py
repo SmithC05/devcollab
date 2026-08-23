@@ -19,7 +19,7 @@ def get_developer_context(task: Task, developer) -> Tuple[Dict[str, Any], Dict[s
     Constructs the feature payload required for the context transfer model.
     Returns:
         features (dict): The feature values to be passed to the model.
-        provenance (dict): Mapping of feature names to their data source (REAL_DB, REAL_GITHUB, DERIVED, UNAVAILABLE).
+        provenance (dict): Mapping of feature names to their data source (REAL_DB, REAL_GITHUB, HISTORICAL_PROFILE, DERIVED, UNAVAILABLE).
         explanations (dict): Human-readable explanations of the evidence.
     """
     
@@ -47,7 +47,6 @@ def get_developer_context(task: Task, developer) -> Tuple[Dict[str, Any], Dict[s
     except Exception:
         pass
 
-    # 2. Extract mappings and counts
     mapped_repo = mapping.github_repository_full_name if mapping and mapping.active else None
     
     repo_stats = {}
@@ -56,20 +55,33 @@ def get_developer_context(task: Task, developer) -> Tuple[Dict[str, Any], Dict[s
     architecture = {}
     dependencies = {}
     
+    has_github = False
+    has_historical = False
+    
     if github_evidence:
+        has_github = True
         total_repos = github_evidence.repository_count
         repo_items = github_evidence.repositories.get("items", [])
-        
-        # We find the specific mapped repository if it exists
         if mapped_repo:
             for r in repo_items:
                 if f"{r.get('owner')}/{r.get('name')}" == mapped_repo:
                     repo_stats = r
                     break
-        
         technologies = github_evidence.technology_evidence or {}
         architecture = github_evidence.architecture_evidence or {}
         dependencies = github_evidence.dependency_evidence or {}
+    elif historical_profile:
+        has_historical = True
+        hist_repos = historical_profile.get("repositories", [])
+        total_repos = len(hist_repos)
+        if mapped_repo and mapped_repo.split('/')[-1] in hist_repos:
+            repo_stats = {"name": mapped_repo.split('/')[-1]}
+        elif hist_repos:
+            repo_stats = {"name": hist_repos[0]} # just any match
+            
+        technologies = {t: 1000 for t in historical_profile.get("technologies", [])}
+        architecture = {r: ["src"] for r in hist_repos}
+        dependencies = {r: ["package.json"] for r in hist_repos}
 
     # Initialize return dictionaries
     features = {}
@@ -81,10 +93,72 @@ def get_developer_context(task: Task, developer) -> Tuple[Dict[str, Any], Dict[s
         provenance[name] = result.source
         explanations[name] = result.evidence
 
-    # =========================================================================
-    # Categorical
-    # =========================================================================
-    
+    source_tag = "REAL_GITHUB" if has_github else ("HISTORICAL_PROFILE" if has_historical else "UNAVAILABLE")
+
+    if repo_stats:
+        add_feat("repository_familiarity", EvidenceResult(
+            0.9, source_tag, f"Developer has mapped repository experience."
+        ))
+    elif total_repos > 0:
+        add_feat("repository_familiarity", EvidenceResult(
+            min(1.0, total_repos / 30.0), source_tag, f"Developer has contributed to {total_repos} generic repositories."
+        ))
+    else:
+        add_feat("repository_familiarity", EvidenceResult(
+            None, "UNAVAILABLE", "Insufficient mapped repository evidence."
+        ))
+
+    if technologies:
+        total_bytes = sum(technologies.values())
+        if total_bytes > 0:
+            add_feat("technology_familiarity", EvidenceResult(
+                min(1.0, 0.5 + (len(technologies) / 20.0)), source_tag, 
+                f"Exposed to {len(technologies)} languages."
+            ))
+        else:
+            add_feat("technology_familiarity", EvidenceResult(0.1, source_tag, "No significant byte counts."))
+    else:
+        add_feat("technology_familiarity", EvidenceResult(
+            None, "UNAVAILABLE", "No technology evidence."
+        ))
+
+    user_task_count = Task.objects.filter(assignee=developer, project=project).count()
+    if historical_profile and project.name in historical_profile.get("projects", []):
+        add_feat("project_familiarity", EvidenceResult(
+            0.8, "HISTORICAL_PROFILE", f"Historical evidence shows experience in project {project.name}."
+        ))
+    elif user_task_count > 0:
+        add_feat("project_familiarity", EvidenceResult(
+            min(1.0, 0.2 + (user_task_count / 10.0)), "REAL_DB", f"Developer previously assigned to {user_task_count} tasks in project {project.name}."
+        ))
+    elif mapped_repo and repo_stats:
+        add_feat("project_familiarity", EvidenceResult(
+            0.5, "DERIVED", f"No prior tasks, but has contributed to mapped repository."
+        ))
+    else:
+        add_feat("project_familiarity", EvidenceResult(
+            0.1, "DERIVED", f"No prior tasks in {project.name}."
+        ))
+
+    if architecture:
+        add_feat("architecture_familiarity", EvidenceResult(
+            0.5, source_tag, f"Analyzed top-level architecture modules."
+        ))
+    else:
+        add_feat("architecture_familiarity", EvidenceResult(
+            None, "UNAVAILABLE", "Current evidence does not contain sufficient architecture/module history."
+        ))
+
+    if historical_profile:
+        sim_count = historical_profile.get("similar_task_count", 0)
+        add_feat("similar_task_count", EvidenceResult(
+            sim_count + user_task_count, "HISTORICAL_PROFILE", f"Historical + DB count: {sim_count + user_task_count} tasks."
+        ))
+    else:
+        add_feat("similar_task_count", EvidenceResult(
+            user_task_count, "REAL_DB", f"Counted {user_task_count} previous tasks in the same project."
+        ))
+        
     add_feat("role_level", EvidenceResult(
         "Senior" if "smith" in developer.email.lower() else "Junior", 
         "DERIVED", 
@@ -93,7 +167,6 @@ def get_developer_context(task: Task, developer) -> Tuple[Dict[str, Any], Dict[s
     add_feat("task_type", EvidenceResult("Feature", "DERIVED", "Task type is 'Feature' based on title heuristically."))
     add_feat("codebase_size", EvidenceResult("Medium", "DERIVED", "Assuming medium codebase."))
 
-    # Numeric - Derived from DB
     add_feat("task_progress", EvidenceResult(
         0.5 if task.status == 'In Progress' else (1.0 if task.status == 'Done' else 0.0),
         "REAL_DB",
@@ -105,115 +178,30 @@ def get_developer_context(task: Task, developer) -> Tuple[Dict[str, Any], Dict[s
         "Calculated from task progress"
     ))
     
-    add_feat("years_experience", EvidenceResult(
-        None, "UNAVAILABLE", "No structured experience data"
-    ))
-    
-    # =========================================================================
-    # REPOSITORY FAMILIARITY
-    # =========================================================================
-    if mapped_repo and repo_stats:
-        add_feat("repository_familiarity", EvidenceResult(
-            0.9, "REAL_GITHUB", f"Developer contributed to mapped repository {mapped_repo} recently."
-        ))
-    elif total_repos > 0:
-        # Generic familiarity since we don't have a mapped repo
-        add_feat("repository_familiarity", EvidenceResult(
-            min(1.0, total_repos / 30.0), "REAL_GITHUB", f"Developer has contributed to {total_repos} generic repositories."
-        ))
-    else:
-        add_feat("repository_familiarity", EvidenceResult(
-            None, "UNAVAILABLE", "Insufficient mapped repository evidence."
-        ))
+    add_feat("years_experience", EvidenceResult(None, "UNAVAILABLE", "No structured experience data"))
 
-    # =========================================================================
-    # TECHNOLOGY FAMILIARITY
-    # =========================================================================
-    if technologies:
-        # Determine total byte exposure
-        total_bytes = sum(technologies.values())
-        if total_bytes > 0:
-            add_feat("technology_familiarity", EvidenceResult(
-                min(1.0, 0.5 + (len(technologies) / 20.0)), "DERIVED", 
-                f"Exposed to {len(technologies)} languages, totaling {total_bytes} bytes across GitHub."
-            ))
-        else:
-            add_feat("technology_familiarity", EvidenceResult(0.1, "DERIVED", "No significant byte counts."))
-    else:
-        add_feat("technology_familiarity", EvidenceResult(
-            None, "UNAVAILABLE", "No technology evidence on GitHub."
-        ))
+    add_feat("task_complexity", EvidenceResult(0.5, "DERIVED", "Task complexity defaulted."))
 
-    # =========================================================================
-    # PROJECT FAMILIARITY
-    # =========================================================================
-    user_task_count = Task.objects.filter(assignee=developer, project=project).count()
-    if user_task_count > 0:
-        add_feat("project_familiarity", EvidenceResult(
-            min(1.0, 0.2 + (user_task_count / 10.0)), "REAL_DB", f"Developer previously assigned to {user_task_count} tasks in project {project.name}."
-        ))
-    elif mapped_repo and repo_stats:
-        add_feat("project_familiarity", EvidenceResult(
-            0.5, "DERIVED", f"No prior tasks, but has contributed to mapped repository {mapped_repo}."
-        ))
-    else:
-        add_feat("project_familiarity", EvidenceResult(
-            0.1, "DERIVED", f"No prior tasks in {project.name}."
-        ))
-
-    # =========================================================================
-    # ARCHITECTURE FAMILIARITY
-    # =========================================================================
-    if mapped_repo and mapped_repo in architecture:
-        dirs = architecture[mapped_repo]
-        add_feat("architecture_familiarity", EvidenceResult(
-            min(1.0, 0.3 + (len(dirs) / 10.0)), "REAL_GITHUB", f"Analyzed {len(dirs)} top-level architecture modules in {mapped_repo}."
-        ))
-    else:
-        add_feat("architecture_familiarity", EvidenceResult(
-            None, "UNAVAILABLE", "Current GitHub evidence does not contain sufficient architecture/module history."
-        ))
-
-    # =========================================================================
-    # SIMILAR TASK COUNT
-    # =========================================================================
-    add_feat("similar_task_count", EvidenceResult(
-        user_task_count, "REAL_DB", f"Counted {user_task_count} previous tasks in the same project."
-    ))
-    
-    add_feat("task_complexity", EvidenceResult(
-        0.5, "DERIVED", "Task complexity defaulted."
-    ))
-
-    # =========================================================================
-    # DEPENDENCY FAMILIARITY
-    # =========================================================================
-    if mapped_repo and mapped_repo in dependencies:
-        deps = dependencies[mapped_repo]
+    if dependencies:
         add_feat("dependency_count", EvidenceResult(
-            len(deps), "REAL_GITHUB", f"Detected {len(deps)} dependency environments ({', '.join(deps)})."
+            len(dependencies), source_tag, f"Detected dependencies."
         ))
         add_feat("dependency_familiarity", EvidenceResult(
-            min(1.0, 0.4 + (len(deps) / 5.0)), "REAL_GITHUB", f"Familiar with mapped repository dependencies."
+            min(1.0, 0.4 + (len(dependencies) / 5.0)), source_tag, f"Familiar with mapped repository dependencies."
         ))
     else:
-        add_feat("dependency_count", EvidenceResult(
-            None, "UNAVAILABLE", "No dependency environments detected."
-        ))
-        add_feat("dependency_familiarity", EvidenceResult(
-            None, "UNAVAILABLE", "No dependency evidence available."
-        ))
+        add_feat("dependency_count", EvidenceResult(None, "UNAVAILABLE", "No dependency environments detected."))
+        add_feat("dependency_familiarity", EvidenceResult(None, "UNAVAILABLE", "No dependency evidence available."))
 
     add_feat("documentation_quality", EvidenceResult(None, "UNAVAILABLE", "No evidence"))
     add_feat("comment_context_quality", EvidenceResult(None, "UNAVAILABLE", "No evidence"))
     
-    # =========================================================================
-    # PREVIOUS OWNER CONTEXT
-    # =========================================================================
-    # Heuristic: did someone else own this recently?
-    add_feat("previous_owner_context", EvidenceResult(
-        None, "UNAVAILABLE", "No historical ownership changes recorded."
-    ))
+    if historical_profile and historical_profile.get("previous_ownership"):
+        add_feat("previous_owner_context", EvidenceResult(
+            0.8, "HISTORICAL_PROFILE", "Historical profile indicates previous component ownership."
+        ))
+    else:
+        add_feat("previous_owner_context", EvidenceResult(None, "UNAVAILABLE", "No historical ownership changes recorded."))
     
     add_feat("ownership_changes_before", EvidenceResult(None, "UNAVAILABLE", "No evidence"))
     add_feat("handoff_quality", EvidenceResult(None, "UNAVAILABLE", "No evidence"))

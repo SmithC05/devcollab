@@ -114,3 +114,110 @@ def assign_task(task_id: int, user_id: int) -> str:
         },
         "status": "READY_FOR_APPROVAL"
     })
+
+def declare_unavailable_core(duration_days: int, scope: str, original_message: str, user=None, project_id: int=None) -> str:
+    """
+    Declares the authenticated user as unavailable for the given duration and scope.
+    This creates an availability event and triggers an engineering decision point.
+    """
+    from apps.realtime.models import PresenceSession, EngineEvent
+    from apps.tasks.models import Task
+    from channels.layers import get_channel_layer
+    from asgiref.sync import async_to_sync
+    import json
+    
+    if not user or not user.is_authenticated:
+        return json.dumps({"error": "User is not authenticated."})
+        
+    # Update PresenceSession
+    try:
+        session = PresenceSession.objects.filter(user=user).order_by('-last_activity').first()
+        if session:
+            session.status = 'UNAVAILABLE'
+            session.save()
+    except Exception as e:
+        pass
+        
+    # Find active critical tasks
+    active_tasks = Task.objects.filter(
+        assignee=user, 
+        status__in=['TODO', 'IN_PROGRESS', 'IN_REVIEW']
+    )
+    
+    # Priority for P0, P1
+    critical_tasks = active_tasks.filter(priority__in=['P0', 'P1'])
+    affected_task_ids = list(critical_tasks.values_list('id', flat=True))
+    
+    # Downstream impact (blocking tasks)
+    downstream_impact = []
+    for task in critical_tasks:
+        for bt in task.blocking_tasks.all():
+            downstream_impact.append({"task_id": bt.id, "title": bt.title})
+    
+    # Determine Workspace
+    workspace_id = None
+    if critical_tasks.exists():
+        workspace_id = critical_tasks.first().project.workspace_id
+        
+    if not workspace_id and project_id:
+        from apps.projects.models import Project
+        try:
+            workspace_id = Project.objects.get(id=project_id).workspace_id
+        except:
+            pass
+
+    # Create EngineEvent
+    payload = {
+        "duration_days": duration_days,
+        "scope": scope,
+        "original_message": original_message,
+        "affected_task_ids": affected_task_ids
+    }
+    
+    event = EngineEvent.objects.create(
+        event_type="MEMBER_UNAVAILABLE",
+        actor=user,
+        workspace_id=workspace_id,
+        payload=payload
+    )
+    
+    # Broadcast Decision Point
+    if workspace_id:
+        from apps.workspaces.models import WorkspaceMembership
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        candidates = []
+        members = WorkspaceMembership.objects.filter(
+            workspace_id=workspace_id, 
+            role__in=['DEVELOPER']
+        ).exclude(user=user)
+        
+        for m in members:
+            candidates.append({"id": m.user.id, "username": m.user.username})
+            
+        dp_payload = {
+            "event_type": "DECISION_POINT_CREATED",
+            "workspace_id": workspace_id,
+            "trigger": "MEMBER_UNAVAILABLE",
+            "affected_member": {"id": user.id, "username": user.username, "duration_days": duration_days},
+            "affected_tasks": [{"id": t.id, "title": t.title, "priority": t.priority} for t in critical_tasks],
+            "downstream_impact": downstream_impact,
+            "candidates": candidates
+        }
+        
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                f"workspace_global",
+                {
+                    "type": "engine_event",
+                    "payload": dp_payload
+                }
+            )
+            
+    return json.dumps({
+        "status": "success",
+        "message": f"Availability recorded as UNAVAILABLE for {duration_days} days. Decision point created for {len(critical_tasks)} critical tasks."
+    })
+

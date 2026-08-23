@@ -182,13 +182,22 @@ def logout_view(request):
 def me_view(request):
     if not request.user or not request.user.is_authenticated:
         return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
-        
+
     if request.method == 'GET':
-        return JsonResponse({
+        # Generate and return a fresh access_token in the response body.
+        # The frontend stores this in Zustand so it can be sent as an
+        # Authorization: Bearer header on POST requests — which HttpOnly
+        # SameSite=Lax cookies may not cover on all browsers/ports.
+        access_token = generate_access_token(request.user.id)
+        refresh_token = generate_refresh_token(request.user.id)
+        response = JsonResponse({
             "success": True,
-            "user": safe_user(request.user, request)
+            "user": safe_user(request.user, request),
+            "access_token": access_token,
         })
-        
+        set_auth_cookies(response, access_token, refresh_token)
+        return response
+
     elif request.method in ['PATCH', 'POST']:
         try:
             # Handle both JSON and multipart/form-data

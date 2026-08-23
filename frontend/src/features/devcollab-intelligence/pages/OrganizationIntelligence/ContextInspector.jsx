@@ -1,10 +1,10 @@
-// ─────────────────────────────────────────────────────────────────────────────
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { slideIn } from '../../motion/presets';
 import { ProvenancePip, mono } from './shared';
 import { DvBadge } from '../../primitives/core';
-import { coverageToVariant, contextLabelToVariant } from '../../data/organizationAdapter';
+import { coverageToVariant, contextLabelToVariant, getMemberEvidence } from '../../data/organizationAdapter';
 
 export default function ContextInspector({ node, onClose, members, projects, responsibilities }) {
   if (!node) return null;
@@ -22,7 +22,7 @@ export default function ContextInspector({ node, onClose, members, projects, res
         style={{
           position:   'fixed',
           top:        0, right: 0, bottom: 0,
-          width:      360,
+          width:      380,
           background: 'var(--dv-bg-canvas)',
           borderLeft: '1px solid var(--dv-border-default)',
           zIndex:     200,
@@ -33,7 +33,6 @@ export default function ContextInspector({ node, onClose, members, projects, res
         role="dialog"
         aria-label={`Inspector: ${label}`}
       >
-        {/* Header */}
         <div style={{
           padding:      '18px 20px 14px',
           borderBottom: '1px solid var(--dv-border-subtle)',
@@ -69,7 +68,6 @@ export default function ContextInspector({ node, onClose, members, projects, res
           </button>
         </div>
 
-        {/* Body */}
         <div style={{ padding: '16px 20px', flex: 1 }}>
           {type === 'org'     && <OrgInspector members={members} projects={projects} />}
           {type === 'project' && <ProjectInspector project={payload} members={members} responsibilities={responsibilities} />}
@@ -162,35 +160,60 @@ function ProjectInspector({ project, members, responsibilities }) {
 }
 
 function MemberInspector({ member }) {
+  const [evidence, setEvidence] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getMemberEvidence(member.id).then(res => {
+      if (!cancelled && res) {
+        setEvidence(res);
+      }
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [member.id]);
+
   return member ? (
     <>
       <InspectorSection title="Capacity & Availability">
-        <InspectorRow label="Availability" value={member.availability}   prov="DERIVED" />
-        <InspectorRow label="Capacity Load" value={`${member.capacity_pct}%`} prov="DERIVED" />
-        <InspectorRow label="Active Tasks"  value={member.active_task_count}   prov="REAL_DB" />
-        <InspectorRow label="Critical"      value={member.critical_task_count} prov="REAL_DB" />
+        <InspectorRow label="Availability" value={evidence?.capacity?.availability || member.availability}   prov="DERIVED" />
+        <InspectorRow label="Capacity Load" value={`${evidence?.capacity?.capacity_pct || member.capacity_pct}%`} prov="DERIVED" />
+        <InspectorRow label="Active Tasks"  value={evidence?.capacity?.active_task_count || member.active_task_count}   prov="REAL_DB" />
+        <InspectorRow label="Critical"      value={evidence?.capacity?.critical_task_count || member.critical_task_count} prov="REAL_DB" />
       </InspectorSection>
-      <InspectorSection title="Project Context">
-        {member.project_contexts.map(ctx => (
-          <div key={ctx.project_id} style={{ padding: '7px 0', borderBottom: '1px solid var(--dv-border-subtle)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: ctx.rationale ? 4 : 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)' }}>{ctx.project_name}</span>
-                <DvBadge variant={contextLabelToVariant(ctx.context_label)} size="sm">{ctx.context_label}</DvBadge>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                {mono(`${ctx.context_score}%`, ctx.context_score >= 70 ? 'var(--dv-success)' : ctx.context_score >= 40 ? 'var(--dv-warning)' : 'var(--dv-danger)')}
-                <ProvenancePip prov={ctx.provenance} />
-              </div>
+      
+      {loading ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <Loader2 className="dv-spinner" size={24} color="var(--dv-text-faint)" />
+        </div>
+      ) : evidence ? (
+        <>
+          <InspectorSection title="AI Summary">
+            <div style={{
+              fontSize: 'var(--dv-text-xs)', padding: '12px', borderRadius: 'var(--dv-radius-sm)',
+              background: 'var(--dv-bg-elevated)', border: '1px solid var(--dv-border-subtle)',
+              color: 'var(--dv-text-secondary)', lineHeight: 1.5
+            }}>
+              {evidence.ai_summary}
             </div>
-            {ctx.rationale && (
-              <div style={{ fontSize: 10, color: 'var(--dv-text-faint)', lineHeight: 1.4 }}>
-                {ctx.rationale}
+          </InspectorSection>
+          
+          <InspectorSection title="Detailed Evidence">
+            {evidence.evidence && evidence.evidence.length > 0 ? (
+              evidence.evidence.filter(e => e.value !== null).map((e, idx) => (
+                <InspectorRow key={idx} label={e.feature.replace(/_/g, ' ')} value={e.value} prov={e.provenance} rationale={e.explanation} />
+              ))
+            ) : (
+              <div style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)', padding: '10px 0' }}>
+                No detailed task evidence (select a task for specific context).
               </div>
             )}
-          </div>
-        ))}
-      </InspectorSection>
+          </InspectorSection>
+        </>
+      ) : null}
+
       <InspectorSection title="Owned Tasks">
         {!member.owned_tasks ? (
           <div style={{ fontSize: 'var(--dv-text-xs)', color: 'var(--dv-text-muted)', fontStyle: 'italic', padding: '10px 0' }}>
@@ -261,4 +284,3 @@ function DecisionInspector({ dp, members }) {
     </>
   ) : null;
 }
-

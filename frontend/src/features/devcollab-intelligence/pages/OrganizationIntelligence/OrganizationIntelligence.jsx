@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 
@@ -12,6 +12,7 @@ import { panelEnter } from '../../motion/presets';
 
 import OrganizationTabs from './OrganizationTabs';
 import ContextInspector from './ContextInspector';
+import DecisionRequiredModal from '../../components/DecisionRequiredModal';
 
 export function SourceChip({ source }) {
   const isLive = source === 'LIVE';
@@ -40,12 +41,14 @@ export function SourceChip({ source }) {
 
 export default function OrganizationIntelligence() {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const [mode, setMode] = useState('LIVE');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   
   const [selectedNode, setSelectedNode] = useState(null);
+  const [decisionPoint, setDecisionPoint] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -66,8 +69,11 @@ export default function OrganizationIntelligence() {
   // Wire realtime event engine_event
   useEffect(() => {
     if (mode !== 'LIVE') return;
-    const handleEngineEvent = () => {
+    const handleEngineEvent = (e) => {
       fetchData(); // Invalidate and refetch
+      if (e.detail && e.detail.event_type === 'DECISION_POINT_CREATED') {
+        setDecisionPoint(e.detail);
+      }
     };
     document.addEventListener('engine_event', handleEngineEvent);
     return () => {
@@ -133,6 +139,24 @@ export default function OrganizationIntelligence() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            {/* Incident Response Entry Point */}
+            <button
+              id="incident-response-entry-btn"
+              onClick={() => navigate('/dashboard/intelligence/incident')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
+                background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)',
+                color: '#ef4444', fontSize: 11, fontWeight: 700,
+                fontFamily: 'var(--dv-font-mono)', letterSpacing: '0.06em',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.18)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.5)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; }}
+            >
+              <AlertTriangle size={12} />
+              INCIDENT RESPONSE
+            </button>
             {mode === 'LIVE' && (
               <DvButton variant="outline" size="sm" onClick={() => setMode('DEMO')}>
                 SIMULATE DEMO
@@ -159,6 +183,15 @@ export default function OrganizationIntelligence() {
             members={data.members}
             projects={data.projects}
             responsibilities={data.responsibilities}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {decisionPoint && (
+          <DecisionRequiredModal 
+            decisionPoint={decisionPoint} 
+            onClose={() => setDecisionPoint(null)} 
           />
         )}
       </AnimatePresence>

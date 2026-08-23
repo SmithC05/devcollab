@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { to: '/intelligence/organization', label: 'Organization Intelligence' },
   { to: '/intelligence/decision/dp1', label: 'Decision Point' },
   { to: '/intelligence/foundation-preview', label: 'Foundation Preview' },
+  { to: '/intelligence/incident',     label: '🚨 Incident Response' },
 ];
 
 
