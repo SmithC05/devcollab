@@ -86,14 +86,19 @@ def get_recent_activity(project_id: int, task_id: int = None) -> str:
         })
     return json.dumps(events)
 
-def simulate_interventions(task_id: int, candidate_id: int) -> str:
+def simulate_interventions(task_id: int, candidate_ids: list) -> str:
     """
-    Runs deterministic simulations of various interventions (WAIT, REASSIGN, PAIR, etc.)
-    and returns their predicted outcomes.
+    Runs deterministic read-only simulations of various interventions (WAIT, REASSIGN, PAIR, KNOWLEDGE_TRANSFER)
+    across multiple candidates and returns their predicted outcomes.
     """
-    # The LLM calls this to get hard numbers instead of guessing.
-    results = run_simulation(task_id, candidate_id)
-    return json.dumps({"options": results})
+    results = []
+    for c_id in candidate_ids:
+        c_results = run_simulation(task_id, c_id)
+        results.append({
+            "candidate_id": c_id,
+            "interventions": c_results
+        })
+    return json.dumps({"evaluation": results})
 
 def assign_task(task_id: int, user_id: int) -> str:
     """

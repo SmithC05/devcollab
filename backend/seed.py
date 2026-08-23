@@ -27,6 +27,11 @@ def seed_data():
     # Create Workspace
     workspace = Workspace.objects.create(name="DevCollab Startup")
     workspace.members.add(user)
+    
+    # Also create for apps.workspaces
+    from apps.workspaces.models import Workspace as NewWorkspace, WorkspaceMembership
+    new_workspace = NewWorkspace.objects.create(name="DevCollab Startup")
+    WorkspaceMembership.objects.create(workspace=new_workspace, user=user, role='OWNER')
 
     # Create Projects
     p1 = Project.objects.create(name="Frontend App", workspace=workspace)

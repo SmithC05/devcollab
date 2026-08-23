@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import project_state
+from .views import evaluate_scenario, approve_scenario
 
 urlpatterns = [
-    path('state/<int:project_id>/', project_state, name='project-state'),
+    path('evaluate/', evaluate_scenario, name='evaluate-scenario'),
+    path('<int:scenario_id>/approve/', approve_scenario, name='approve-scenario'),
 ]

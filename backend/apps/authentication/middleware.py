@@ -6,12 +6,14 @@ User = get_user_model()
 
 class JWTAuthMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        access_token = request.COOKIES.get('access_token')
+        access_token = None
         
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            access_token = auth_header.split(' ')[1]
+            
         if not access_token:
-            auth_header = request.headers.get('Authorization')
-            if auth_header and auth_header.startswith('Bearer '):
-                access_token = auth_header.split(' ')[1]
+            access_token = request.COOKIES.get('access_token')
         
         if access_token:
             try:

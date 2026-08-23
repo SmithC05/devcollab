@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from apps.projects.models import Workspace, Project
+from apps.projects.models import Project
+from apps.workspaces.models import Workspace
 from apps.tasks.models import Task
 from django.utils import timezone
 from datetime import timedelta
@@ -134,12 +135,47 @@ class ProjectListView(APIView):
                 "name": p.name,
                 "description": f"Project for {p.name}",
                 "status": "Active" if p.is_active else "Archived",
-                "members_count": workspace.members.count(),
+                "members_count": workspace.memberships.count(),
                 "tasks_count": total_tasks,
                 "progress": progress,
                 "updated_at": p.updated_at
             })
         return Response(data)
+
+    def post(self, request):
+        workspace = Workspace.objects.first()
+        if not workspace:
+            workspace = Workspace.objects.create(name="Default Workspace")
+            if request.user.is_authenticated:
+                workspace.members.add(request.user)
+        
+        # Enforce free plan limit
+        current_project_count = Project.objects.filter(workspace=workspace).count()
+        if current_project_count >= 3:
+            return Response(
+                {"error": "You've reached the 3-project limit on the Free plan. Upgrade to Pro for unlimited projects."},
+                status=403
+            )
+            
+        name = request.data.get('name')
+        if not name or not str(name).strip():
+            return Response({"error": "Project name is required"}, status=400)
+            
+        project = Project.objects.create(
+            name=str(name).strip(),
+            workspace=workspace
+        )
+        
+        return Response({
+            "id": project.id,
+            "name": project.name,
+            "description": f"Project for {project.name}",
+            "status": "Active",
+            "members_count": workspace.members.count(),
+            "tasks_count": 0,
+            "progress": 0,
+            "updated_at": project.updated_at
+        }, status=201)
 
 class WorkspaceActivityView(APIView):
     def get(self, request):
@@ -159,7 +195,8 @@ class WorkspaceMembersView(APIView):
         workspace = Workspace.objects.first()
         if not workspace: return Response([])
         data = []
-        for m in workspace.members.all():
+        for membership in workspace.memberships.select_related('user').all():
+            m = membership.user
             data.append({
                 "id": m.id,
                 "name": f"{m.first_name} {m.last_name}".strip() or m.username,
@@ -168,6 +205,23 @@ class WorkspaceMembersView(APIView):
                 "status": "Active",
                 "last_active": "Just now"
             })
+            
+        # Fetch pending invitations
+        try:
+            from apps.workspaces.models import Invitation
+            invitations = Invitation.objects.filter(workspace_id=workspace.id, status='PENDING')
+            for inv in invitations:
+                data.append({
+                    "id": f"inv_{inv.id}",
+                    "name": inv.name or "Pending Invite",
+                    "email": inv.email,
+                    "role": inv.role,
+                    "status": "Pending",
+                    "last_active": "Sent just now"
+                })
+        except ImportError:
+            pass
+            
         return Response(data)
 
 class WorkspaceBillingView(APIView):
@@ -175,7 +229,7 @@ class WorkspaceBillingView(APIView):
         workspace = Workspace.objects.first()
         if not workspace: return Response({})
         projects_count = Project.objects.filter(workspace=workspace).count()
-        members_count = workspace.members.count()
+        members_count = workspace.memberships.count()
         return Response({
             "plan": "FREE",
             "usage": {

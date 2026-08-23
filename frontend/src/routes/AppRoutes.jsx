@@ -15,58 +15,69 @@ import WorkspaceLayout from '../components/layout/WorkspaceLayout';
 import WorkspaceOverview from '../components/workspace/WorkspaceOverview';
 import ProjectLayout from '../components/project/ProjectLayout';
 import PlaceholderPage from '../components/project/PlaceholderPage';
-import ProjectOverviewPage  from '../components/project/ProjectOverviewPage';
-import ProjectBoardPage     from '../components/project/ProjectBoardPage';
-import ProjectActivityPage  from '../components/project/ProjectActivityPage';
-import ProjectMembersPage   from '../components/project/ProjectMembersPage';
-import ProjectWikiPage      from '../components/project/ProjectWikiPage';
-import ProjectSnippetsPage  from '../components/project/ProjectSnippetsPage';
-import ProjectEditorPage    from '../components/project/ProjectEditorPage';
-import ProjectChatPage      from '../components/project/ProjectChatPage';
-import ProjectSettingsPage  from '../components/project/ProjectSettingsPage';
-import ProjectSprintPage    from '../components/project/ProjectSprintPage';
-import ProjectWorkloadPage  from '../components/project/ProjectWorkloadPage';
-import ProjectMyTasksPage   from '../components/project/ProjectMyTasksPage';
-import ProjectMyTeamPage    from '../components/project/ProjectMyTeamPage';
+import ProjectOverviewPage from '../components/project/ProjectOverviewPage';
+import ProjectBoardPage from '../components/project/ProjectBoardPage';
+import ProjectActivityPage from '../components/project/ProjectActivityPage';
+import ProjectMembersPage from '../components/project/ProjectMembersPage';
+import ProjectWikiPage from '../components/project/ProjectWikiPage';
+import ProjectSnippetsPage from '../components/project/ProjectSnippetsPage';
+import ProjectEditorPage from '../components/project/ProjectEditorPage';
+import ProjectChatPage from '../components/project/ProjectChatPage';
+import ProjectSettingsPage from '../components/project/ProjectSettingsPage';
+import ProjectSprintPage from '../components/project/ProjectSprintPage';
+import ProjectWorkloadPage from '../components/project/ProjectWorkloadPage';
+import ProjectMyTasksPage from '../components/project/ProjectMyTasksPage';
+import ProjectMyTeamPage from '../components/project/ProjectMyTeamPage';
 import AuthCallbackPage     from '../pages/AuthCallbackPage';
+import IntelligenceLayout        from '../features/devcollab-intelligence/pages/IntelligenceLayout';
+import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
+import EngineeringCommandCenter  from '../features/devcollab-intelligence/pages/EngineeringCommandCenter';
+import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence';
+import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
+import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
+import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';
+import JudgeMode                 from '../features/devcollab-intelligence/pages/JudgeMode';
+import DevCollabDemoMode, { DemoStartScreen } from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
+import InvitationPage       from '../pages/InvitationPage';
+import LandingPage          from '../pages/LandingPage';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
   const { isAuthenticated, workspaces } = useAuthStore();
-  
+
   if (isAuthenticated) {
     if (workspaces?.length > 0) return <Navigate to="/select-workspace" replace />;
     return <Navigate to="/onboarding" replace />;
   }
-  
+
   return children;
 }
 
 function RequireOnboarding({ children }) {
   const { isAuthenticated, workspaces } = useAuthStore();
-  
+
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (workspaces?.length > 0) return <Navigate to="/select-workspace" replace />;
-  
+
   return children;
 }
 
 function RequireSelectWorkspace({ children }) {
   const { isAuthenticated, workspaces } = useAuthStore();
-  
+
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!workspaces || workspaces.length === 0) return <Navigate to="/onboarding" replace />;
-  
+
   return children;
 }
 
 function RequireWorkspace({ children }) {
   const { isAuthenticated, workspaces, activeWorkspace } = useAuthStore();
-  
+
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!workspaces || workspaces.length === 0) return <Navigate to="/onboarding" replace />;
   if (!activeWorkspace) return <Navigate to="/select-workspace" replace />;
-  
+
   return children;
 }
 
@@ -107,6 +118,9 @@ export default function AppRoutes() {
       {/* Auth Callback (Public) */}
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
+      {/* Invitation Landing */}
+      <Route path="/invitations/:token" element={<InvitationPage />} />
+
       {/* Onboarding — needs auth, no workspaces yet */}
       <Route
         path="/onboarding"
@@ -136,7 +150,7 @@ export default function AppRoutes() {
           </RequireWorkspace>
         }
       >
-        <Route index element={<WorkspaceOverview setWorkspaceName={() => {}} />} />
+        <Route index element={<WorkspaceOverview setWorkspaceName={() => { }} />} />
         <Route path="projects" element={<WorkspaceProjectsPage />} />
         <Route path="activity" element={<WorkspaceActivityPage />} />
         <Route path="members" element={<WorkspaceMembersPage />} />
@@ -155,24 +169,48 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<Navigate to="overview" replace />} />
-        <Route path="overview"  element={<ProjectOverviewPage />} />
-        <Route path="board"     element={<ProjectBoardPage />} />
-        <Route path="activity"  element={<ProjectActivityPage />} />
-        <Route path="members"   element={<ProjectMembersPage />} />
-        <Route path="sprint"    element={<ProjectSprintPage />} />
-        <Route path="workload"  element={<ProjectWorkloadPage />} />
-        <Route path="mytasks"   element={<ProjectMyTasksPage />} />
-        <Route path="myteam"    element={<ProjectMyTeamPage />} />
-        <Route path="wiki"      element={<ProjectWikiPage />} />
-        <Route path="snippets"  element={<ProjectSnippetsPage />} />
-        <Route path="editor"    element={<ProjectEditorPage />} />
-        <Route path="chat"      element={<ProjectChatPage />} />
-        <Route path="ai"        element={<PlaceholderPage title="AI Assistant" subtitle="Context-aware project intelligence — coming soon." />} />
-        <Route path="settings"  element={<ProjectSettingsPage />} />
+        <Route path="overview" element={<ProjectOverviewPage />} />
+        <Route path="board" element={<ProjectBoardPage />} />
+        <Route path="activity" element={<ProjectActivityPage />} />
+        <Route path="members" element={<ProjectMembersPage />} />
+        <Route path="sprint" element={<ProjectSprintPage />} />
+        <Route path="workload" element={<ProjectWorkloadPage />} />
+        <Route path="mytasks" element={<ProjectMyTasksPage />} />
+        <Route path="myteam" element={<ProjectMyTeamPage />} />
+        <Route path="wiki" element={<ProjectWikiPage />} />
+        <Route path="snippets" element={<ProjectSnippetsPage />} />
+        <Route path="editor" element={<ProjectEditorPage />} />
+        <Route path="chat" element={<ProjectChatPage />} />
+        <Route path="ai" element={<PlaceholderPage title="AI Assistant" subtitle="Context-aware project intelligence — coming soon." />} />
+        <Route path="settings" element={<ProjectSettingsPage />} />
+      </Route>
+
+      {/* ── Demo / Orchestration Mode (Standalone Layout) ── */}
+      <Route path="/intelligence/demo" element={<DevCollabDemoMode />}>
+        <Route index element={<DemoStartScreen />} />
+        <Route path="judge" element={<JudgeMode />} />
+        <Route path="organization" element={<OrganizationIntelligence />} />
+        <Route path="decision/:id" element={<DecisionPoint />} />
+        <Route path="simulation/:id" element={<SimulationCenter />} />
+        <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
+      </Route>
+
+      {/* ── Phase 2-8: Isolated Intelligence Experience ── */}
+      <Route path="/intelligence" element={<IntelligenceLayout />}>
+        <Route index element={<EngineeringCommandCenter />} />
+        <Route path="foundation-preview" element={<FoundationPreviewPage />} />
+        {/* Future routes — placeholder until Phase 2–4 */}
+        <Route path="project/:id"     element={<PlaceholderPage title="Project Intelligence" subtitle="Project-level engineering state — Phase 2" />} />
+        <Route path="organization"    element={<OrganizationIntelligence />} />
+        <Route path="member/:id"      element={<PlaceholderPage title="Member Intelligence" subtitle="Member capacity &amp; context — Phase 2" />} />
+        <Route path="decision/:id"    element={<DecisionPoint />} />
+        <Route path="simulation/:id"  element={<SimulationCenter />} />
+        <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
+        <Route path="judge"           element={<JudgeMode />} />
       </Route>
 
       {/* Default */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
