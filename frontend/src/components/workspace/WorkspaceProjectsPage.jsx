@@ -1,23 +1,12 @@
 import { useState, useEffect } from 'react';
-<<<<<<< HEAD
 import { Plus, FolderOpen, MoreHorizontal, Users, CheckSquare, LayoutGrid, List as ListIcon, Search, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-=======
-import { apiClient } from '../../api/client';
-import { Plus, FolderOpen, MoreHorizontal, Users, CheckSquare, LayoutGrid, List as ListIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
 import PageContainer from '../layout/PageContainer';
 import { Spinner, EmptyState, Badge, IconButton, Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '../ui/index';
 import { useNavigate } from 'react-router-dom';
 import CreateProjectModal from '../project/CreateProjectModal';
 import LaunchScreen from '../project/LaunchScreen';
-<<<<<<< HEAD
 import { apiClient } from '../../api/client';
-=======
-import { useAuthStore } from '../../stores/authStore';
-import { workspaceApi } from '../../api/workspaceApi';
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
 
 // --- Utilities ---
 const formatRelativeTime = (dateString) => {
@@ -66,15 +55,10 @@ export default function WorkspaceProjectsPage() {
 
   const handleCreateProject = async (name) => {
     try {
-<<<<<<< HEAD
       const newProject = await apiClient('/workspace/projects/', {
         method: 'POST',
         body: JSON.stringify({ name })
       });
-=======
-      // BUG-18 FIX: Use workspaceApi.createProject with workspace_id
-      const newProject = await workspaceApi.createProject(activeWorkspace?.id, name);
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
       setProjects(prev => [newProject, ...prev]);
       setIsCreateModalOpen(false);
     } catch (err) {
@@ -85,12 +69,7 @@ export default function WorkspaceProjectsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-<<<<<<< HEAD
         const data = await apiClient('/workspace/projects/');
-=======
-        // BUG-18 FIX: Use workspaceApi.getProjects with workspace_id
-        const data = await workspaceApi.getProjects(activeWorkspace?.id);
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         setProjects(data);
       } catch (err) {
         setError(err.message);

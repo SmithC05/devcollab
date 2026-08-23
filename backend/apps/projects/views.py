@@ -40,12 +40,8 @@ class WorkspaceOverviewView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-<<<<<<< HEAD
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
-=======
-        workspace, membership = _get_user_workspace(request)
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         if not workspace:
             return Response({
                 "workspace_name": "Workspace",
@@ -156,15 +152,9 @@ class ProjectListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-<<<<<<< HEAD
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
         if not workspace: return Response([])
-=======
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response([])
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         projects = Project.objects.filter(workspace=workspace)
         data = []
         for p in projects:
@@ -185,24 +175,10 @@ class ProjectListView(APIView):
         return Response(data)
 
     def post(self, request):
-<<<<<<< HEAD
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
         if not workspace:
             return Response({"error": "Workspace not found."}, status=404)
-=======
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            workspace = Workspace.objects.create(
-                name="Default Workspace",
-                owner=request.user
-            )
-            WorkspaceMembership.objects.create(
-                workspace=workspace,
-                user=request.user,
-                role='OWNER'
-            )
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         
         # Enforce free plan limit
         current_project_count = Project.objects.filter(workspace=workspace).count()
@@ -237,17 +213,10 @@ class WorkspaceActivityView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-<<<<<<< HEAD
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
         if not workspace: return Response({})
         projects = Project.objects.filter(workspace=workspace, is_active=True).count()
-=======
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response({})
-        projects_count = Project.objects.filter(workspace=workspace, is_active=True).count()
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         return Response({
             "total_events": 0,
             "today_events": 0,
@@ -262,7 +231,6 @@ class WorkspaceMembersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-<<<<<<< HEAD
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
         if not workspace: return Response([])
@@ -282,24 +250,12 @@ class WorkspaceMembersView(APIView):
                         avatar_url = f"{backend_url}{avatar_url}"
             except Exception:
                 pass
-=======
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response([])
-        data = []
-        for mem in workspace.memberships.select_related('user').all():
-            m = mem.user
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
             data.append({
                 "id": m.id,
                 "name": f"{m.first_name} {m.last_name}".strip() or m.username,
                 "email": m.email,
-<<<<<<< HEAD
                 "role": membership.role,
                 "avatar_url": avatar_url,
-=======
-                "role": mem.role,
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
                 "status": "Active",
                 "joined_at": membership.created_at.isoformat() if membership.created_at else None,
                 "last_active": "Just now"
@@ -400,15 +356,9 @@ class WorkspaceBillingView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-<<<<<<< HEAD
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
         if not workspace: return Response({})
-=======
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response({})
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         projects_count = Project.objects.filter(workspace=workspace).count()
         members_count = workspace.memberships.count()
         return Response({
@@ -425,15 +375,9 @@ class WorkspaceSettingsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-<<<<<<< HEAD
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
         if not workspace: return Response({})
-=======
-        workspace, _ = _get_user_workspace(request)
-        if not workspace:
-            return Response({})
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         return Response({
             "name": workspace.name,
             "slug": workspace.slug or workspace.name.lower().replace(" ", "-"),
@@ -441,21 +385,11 @@ class WorkspaceSettingsView(APIView):
         })
 
     def put(self, request):
-<<<<<<< HEAD
         from apps.workspaces.permissions import get_current_workspace
         workspace = get_current_workspace(request)
         if workspace:
             workspace.name = request.data.get('name', workspace.name)
             workspace.save()
-=======
-        workspace, membership = _get_user_workspace(request)
-        if not workspace:
-            return Response({"error": "Workspace not found"}, status=404)
-        if membership and membership.role not in ['OWNER', 'ADMIN']:
-            return Response({"error": "Insufficient permissions"}, status=403)
-        workspace.name = request.data.get('name', workspace.name)
-        workspace.save()
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         return Response({"status": "success"})
 
 class ProjectRepositoryMappingView(APIView):

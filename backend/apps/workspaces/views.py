@@ -11,17 +11,11 @@ def workspaces_view(request):
     if request.method == 'GET':
         if not request.user.is_authenticated:
             return JsonResponse({"success": False, "error": "Not authenticated"}, status=401)
-<<<<<<< HEAD
             
         memberships = WorkspaceMembership.objects.filter(
             user=request.user
         ).select_related('workspace', 'workspace__owner')
         
-=======
-
-        memberships = WorkspaceMembership.objects.filter(user=request.user).select_related('workspace')
-
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
         workspaces_data = []
         for membership in memberships:
             ws = membership.workspace
@@ -37,16 +31,10 @@ def workspaces_view(request):
                 "name": ws.name,
                 "slug": ws.slug,
                 "role": membership.role,
-<<<<<<< HEAD
                 "plan": "free",  # Placeholder — extend when billing is built
                 "memberCount": member_count,
                 "projectCount": project_count,
                 "created_by_me": ws.owner_id == request.user.id,
-=======
-                "plan": "free",  # Placeholder
-                "memberCount": ws.memberships.count(),
-                "projectCount": ws.projects.count(),
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
             })
 
         return JsonResponse({
@@ -75,7 +63,6 @@ def workspaces_view(request):
             if Workspace.objects.filter(slug=slug).exists():
                 return JsonResponse({"success": False, "error": "Workspace slug already exists"}, status=400)
 
-<<<<<<< HEAD
             # FREE plan: count workspaces CREATED by this user (owner_id = user.id)
             # This does NOT count workspaces they joined as DEVELOPER/ADMIN/LEAD
             owner = request.user
@@ -103,26 +90,6 @@ def workspaces_view(request):
                     user=owner,
                     role='OWNER'
                 )
-=======
-            workspace = Workspace.objects.create(
-                name=name,
-                slug=slug,
-                owner=request.user
-            )
-
-            WorkspaceMembership.objects.create(
-                workspace=workspace,
-                user=request.user,
-                role='OWNER'
-            )
-
-            workspace_data = {
-                "id": workspace.id,
-                "name": workspace.name,
-                "slug": workspace.slug,
-                "ownerId": request.user.id
-            }
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
 
             return JsonResponse({
                 "success": True,
@@ -168,13 +135,8 @@ def join_workspace(request):
 
             membership, created = WorkspaceMembership.objects.get_or_create(
                 workspace=workspace,
-<<<<<<< HEAD
                 user=user,
                 defaults={'role': 'DEVELOPER'}
-=======
-                user=request.user,
-                defaults={'role': 'DEVELOPER'}  # BUG-10 FIX: was 'MEMBER', not in ROLE_CHOICES
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
             )
 
             return JsonResponse({

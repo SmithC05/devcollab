@@ -14,7 +14,6 @@ from apps.authentication.jwt_utils import (
     clear_auth_cookies
 )
 
-<<<<<<< HEAD
 def safe_user(user, request=None):
     from .models import UserProfile
     from django.conf import settings
@@ -37,22 +36,6 @@ def safe_user(user, request=None):
         "bio": profile.bio,
         "github_url": profile.github_url,
         "avatar_url": avatar_url,
-=======
-def safe_user(user):
-    # BUG-16 FIX: Return a proper display name. Previously returned user.username
-    # which equals the email address (set that way in register_view).
-    display_name = f"{user.first_name} {user.last_name}".strip() or user.username
-    data = {
-        "id": user.id,
-        "email": user.email,
-        "name": display_name,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "github_connected": False,
-        "github_username": None,
-        "sync_status": "NOT_SYNCED",
-        "last_sync_at": None,
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
     }
     if hasattr(user, 'developer_profile'):
         data["github_connected"] = user.developer_profile.github_connection_status == 'CONNECTED'

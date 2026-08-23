@@ -7,13 +7,8 @@ export const workspaceApi = {
     });
   },
 
-<<<<<<< HEAD
   createWorkspace: async (name, slug) => {
     // Backend uses request.user as owner — no need to pass ownerId
-=======
-  // BUG-09 FIX: Removed ownerId param — backend now uses request.user
-  createWorkspace: async (name, slug) => {
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
     return await apiClient('/workspaces/', {
       method: 'POST',
       body: JSON.stringify({ name, slug }),

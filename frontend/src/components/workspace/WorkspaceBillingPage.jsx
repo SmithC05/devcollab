@@ -16,14 +16,8 @@ export default function WorkspaceBillingPage() {
   useEffect(() => {
     const fetchBilling = async () => {
       try {
-<<<<<<< HEAD
         const response = await apiClient('/workspace/billing/');
         setData(response);
-=======
-        // BUG-18 FIX: Use workspaceApi.getBilling with workspace_id
-        const json = await workspaceApi.getBilling(activeWorkspace?.id);
-        setData(json);
->>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
       } catch (err) {
         setError(err.message);
       } finally {

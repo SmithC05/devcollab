@@ -5,8 +5,6 @@ import PageContainer from '../layout/PageContainer';
 import { Card, Button, Spinner, Input, SectionHeader, Tabs, Tab } from '../ui/index';
 import DeveloperProfileSettings from './DeveloperProfileSettings';
 import { useAuthStore } from '../../stores/authStore';
-import { workspaceApi } from '../../api/workspaceApi';
-import { useAuthStore } from '../../stores/authStore';
 import { apiClient } from '../../api/client';
 
 export default function WorkspaceSettingsPage() {
@@ -25,9 +23,6 @@ export default function WorkspaceSettingsPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        // BUG-18 FIX: Use workspaceApi.getSettings with workspace_id
-        const json = await workspaceApi.getSettings(activeWorkspace?.id);
-        setData(json);
         const data = await apiClient('/workspace/settings/');
         setData(data);
       } catch (err) {
@@ -176,15 +171,7 @@ export default function WorkspaceSettingsPage() {
         )}
 
         {activeTab === 'Profile' && (
-          <Card className="p-6">
-            <div className="mb-6">
-              <h2 className="text-[16px] font-semibold text-[var(--fg)] mb-1">Profile</h2>
-              <p className="text-[13px] text-[var(--text-secondary)]">Manage your personal developer profile.</p>
-            </div>
-            <div className="py-12 border border-dashed border-[var(--border-strong)] rounded-xl text-center text-[var(--text-muted)] text-[13px]">
-              Profile fields (Avatar, Bio, GitHub link) — backend schema update pending.
-            </div>
-          </Card>
+          <DeveloperProfileSettings />
         )}
 
         {activeTab === 'Appearance' && (
