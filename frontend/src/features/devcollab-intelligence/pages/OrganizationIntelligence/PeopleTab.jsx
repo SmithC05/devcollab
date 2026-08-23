@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, GitBranch } from 'lucide-react';
+import { Users, GitBranch, GitMerge, Loader2 } from 'lucide-react';
 import { SectionLabel, cap } from './shared';
-import { DvCard, DvBadge, DvAvatar, DvProgressBar, DvProgressRing } from '../../primitives/core';
+import { DvCard, DvBadge, DvAvatar, DvProgressBar, DvProgressRing, DvButton } from '../../primitives/core';
 import { availabilityToVariant, contextLabelToVariant } from '../../data/organizationAdapter';
+import { compareTaskCandidates } from '../../data/organizationAdapter';
 import EngineeringGraph from './EngineeringGraph';
 import { fadeUp, staggerChildren } from '../../motion/presets';
 
@@ -111,6 +112,106 @@ function MemberIntelligenceCard({ member, responsibilities, onClick }) {
   );
 }
 
+function TaskComparisonSection({ members }) {
+  const [selectedTaskId, setSelectedTaskId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [comparison, setComparison] = useState(null);
+
+  // Extract all tasks
+  const allTasks = useMemo(() => {
+    const tasks = [];
+    if (!members) return [];
+    members.forEach(m => {
+      if (m.owned_tasks) {
+        m.owned_tasks.forEach(t => {
+          if (!tasks.find(x => x.id === t.id)) {
+            tasks.push(t);
+          }
+        });
+      }
+    });
+    return tasks;
+  }, [members]);
+
+  useEffect(() => {
+    if (!selectedTaskId) {
+      setComparison(null);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    compareTaskCandidates(selectedTaskId).then(res => {
+      if (!cancelled && res) {
+        setComparison(res);
+      }
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [selectedTaskId]);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <SectionLabel label="Task-Specific Context Comparison" icon={GitMerge} />
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <select 
+          value={selectedTaskId} 
+          onChange={e => setSelectedTaskId(e.target.value)}
+          style={{
+            background: 'var(--dv-bg-elevated)', border: '1px solid var(--dv-border-subtle)',
+            color: 'var(--dv-text-primary)', padding: '6px 12px', borderRadius: 'var(--dv-radius-sm)',
+            fontSize: 'var(--dv-text-xs)', flex: 1, maxWidth: 300
+          }}
+        >
+          <option value="">-- Select a Task to Compare --</option>
+          {allTasks.map(t => (
+            <option key={t.id} value={t.id}>{t.project_name} → {t.title}</option>
+          ))}
+        </select>
+        {loading && <Loader2 className="dv-spinner" size={14} color="var(--dv-text-faint)" />}
+      </div>
+
+      {comparison && comparison.candidates && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+          {comparison.candidates.map(c => (
+            <DvCard key={c.developer.id} style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <DvAvatar name={c.developer.name} size={30} />
+                  <span style={{ fontSize: 'var(--dv-text-sm)', fontWeight: 600 }}>{c.developer.name}</span>
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div style={{ padding: 8, background: 'var(--dv-bg-canvas)', borderRadius: 4, border: '1px solid var(--dv-border-subtle)' }}>
+                  <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', textTransform: 'uppercase', marginBottom: 4 }}>Task-Specific Context</div>
+                  <DvBadge variant={contextLabelToVariant(c.context.level)}>{c.context.level}</DvBadge>
+                </div>
+                <div style={{ padding: 8, background: 'var(--dv-bg-canvas)', borderRadius: 4, border: '1px solid var(--dv-border-subtle)' }}>
+                  <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', textTransform: 'uppercase', marginBottom: 4 }}>Capacity</div>
+                  <DvBadge variant={availabilityToVariant(c.capacity.availability)}>{c.capacity.availability}</DvBadge>
+                </div>
+              </div>
+              
+              <div>
+                <div style={{ fontSize: 9, color: 'var(--dv-text-faint)', textTransform: 'uppercase', marginBottom: 6 }}>Key Evidence</div>
+                {c.evidence.filter(e => e.value !== null).slice(0, 3).map((e, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 10, color: 'var(--dv-text-primary)' }}>{e.feature.replace(/_/g, ' ')}: {e.value}</div>
+                      <div style={{ fontSize: 9, color: 'var(--dv-text-muted)' }}>{e.explanation}</div>
+                    </div>
+                    <DvBadge variant="muted" size="sm" style={{ fontSize: 8 }}>{e.provenance}</DvBadge>
+                  </div>
+                ))}
+              </div>
+            </DvCard>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PeopleTab({ data, onSelectNode }) {
   const { members, responsibilities, projects, decisionPoints } = data;
   
@@ -122,6 +223,10 @@ export default function PeopleTab({ data, onSelectNode }) {
       <motion.div variants={fadeUp}>
         <SectionLabel label="Engineering Graph" icon={GitBranch} right={<span style={{ fontSize: 10, color: 'var(--dv-text-faint)' }}>Click any node to inspect</span>} />
         <EngineeringGraph members={members} projects={projects} decisionPoints={decisionPoints} onSelectNode={onSelectNode} />
+      </motion.div>
+      
+      <motion.div variants={fadeUp}>
+        <TaskComparisonSection members={members} />
       </motion.div>
 
       <motion.div variants={fadeUp}>

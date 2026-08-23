@@ -143,6 +143,26 @@ export async function getOrganizationIntelligenceState(mode = 'LIVE') {
   }
 }
 
+export async function getMemberEvidence(memberId, taskId = null) {
+  try {
+    let url = `/intelligence/members/${memberId}/evidence/`;
+    if (taskId) url += `?task_id=${taskId}`;
+    return await apiClient(url);
+  } catch (error) {
+    console.error('Failed to fetch member evidence:', error);
+    return null;
+  }
+}
+
+export async function compareTaskCandidates(taskId) {
+  try {
+    return await apiClient(`/intelligence/compare/?task_id=${taskId}`);
+  } catch (error) {
+    console.error('Failed to fetch task comparison:', error);
+    return null;
+  }
+}
+
 // ── Demo State ────────────────────────────────────────────────────────────
 // Derived from the seed script (Smith/Rahul/Ankush/Riya/Karthik, Payments project).
 // Extended with plausible multi-project structure for visual richness.
