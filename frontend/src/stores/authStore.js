@@ -108,10 +108,6 @@ export const useAuthStore = create(
               workspaces: fetchedWorkspaces,
               activeWorkspace: nextActive,
               role: nextActive?.role ?? get().role,
-              // Store the fresh access_token returned by /api/auth/me/ so that
-              // the Authorization header can be sent on POST requests regardless
-              // of login method (email/password or OAuth).
-              accessToken: data.access_token || null,
               isLoading: false,
             });
           } else {

@@ -283,9 +283,7 @@ AUTH_COOKIE_SAMESITE = 'Lax'
 BREVO_API_KEY = config("BREVO_API_KEY", default="")
 BREVO_SENDER_EMAIL = config("BREVO_SENDER_EMAIL", default="devcollab.workspace@gmail.com")
 BREVO_SENDER_NAME = config("BREVO_SENDER_NAME", default="DevCollab")
-SOCIALACCOUNT_STORE_TOKENS = True
-
-GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
+BREVO_API_BASE_URL = config("BREVO_API_BASE_URL", default="https://api.brevo.com/v3")
 
 # ---------------------------------------------------------------------------
 # Razorpay Configuration
