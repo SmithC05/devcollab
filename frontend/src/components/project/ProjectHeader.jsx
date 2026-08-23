@@ -24,26 +24,19 @@ export default function ProjectHeader() {
   }, [isLoaded, fetchNotifications, addNotification]);
 
   return (
-    <header className="h-12 border-b border-[var(--border-default)] bg-[var(--surface-raised)] flex items-center justify-between px-5">
+    <header className="h-[60px] bg-[var(--bg)] border-b border-[var(--border-subtle)] px-6 flex items-center justify-between sticky top-0 z-20">
       {/* Breadcrumb / Left Side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+      <div className="flex items-center gap-2 text-[13px]">
         <button
           id="header-back-to-workspace"
           onClick={() => navigate('/dashboard/projects')}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-            gap: '5px', padding: '4px 8px', borderRadius: '6px',
-            fontSize: '12px', fontWeight: 500, transition: 'background 120ms',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = '#1c1c1c'}
-          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] text-[var(--text-muted)] hover:bg-[var(--surface-item)] hover:text-[var(--text-primary)] font-medium transition-colors"
         >
-          <ArrowLeft size={13} strokeWidth={2} />
+          <ArrowLeft size={14} strokeWidth={2} />
           Projects
         </button>
-        <span style={{ color: '#333' }}>/</span>
-        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{projectName}</span>
+        <span className="text-[var(--text-muted)]">/</span>
+        <span className="text-[var(--text-primary)] font-semibold truncate max-w-[200px]">{projectName}</span>
       </div>
 
       {/* Right Actions */}

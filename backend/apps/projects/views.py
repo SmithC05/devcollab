@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from apps.projects.models import Project, WikiPage, Snippet
 from apps.workspaces.models import Workspace, WorkspaceMembership
+from apps.workspaces.permissions import check_workspace_role
+from rest_framework.exceptions import PermissionDenied
 from apps.tasks.models import Task
 from django.utils import timezone
 from datetime import timedelta
@@ -16,8 +18,16 @@ User = get_user_model()
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
-def _get_project_or_404(project_id):
-    return get_object_or_404(Project, id=project_id)
+def _get_project_or_404(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    is_allowed, err = check_workspace_role(
+        request.user, 
+        project.workspace_id, 
+        ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER']
+    )
+    if not is_allowed:
+        raise PermissionDenied(err)
+    return project
 
 def _serialize_wiki_page(page):
     return {
@@ -49,7 +59,7 @@ def _serialize_snippet(s):
 
 class ProjectStatsView(APIView):
     def get(self, request, project_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         tasks = Task.objects.filter(project=project)
         total    = tasks.count()
         done     = tasks.filter(status='Done').count()
@@ -79,12 +89,12 @@ class ProjectStatsView(APIView):
 
 class WikiPageListView(APIView):
     def get(self, request, project_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         pages = project.wiki_pages.all()
         return Response([_serialize_wiki_page(p) for p in pages])
 
     def post(self, request, project_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         user = request.user if request.user.is_authenticated else None
         title = request.data.get('title', 'Untitled Page')
         content = request.data.get('content', '')
@@ -100,12 +110,12 @@ class WikiPageListView(APIView):
 
 class WikiPageDetailView(APIView):
     def get(self, request, project_id, page_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         page = get_object_or_404(WikiPage, id=page_id, project=project)
         return Response(_serialize_wiki_page(page))
 
     def put(self, request, project_id, page_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         page = get_object_or_404(WikiPage, id=page_id, project=project)
         user = request.user if request.user.is_authenticated else None
         if 'title' in request.data:
@@ -117,7 +127,7 @@ class WikiPageDetailView(APIView):
         return Response(_serialize_wiki_page(page))
 
     def delete(self, request, project_id, page_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         page = get_object_or_404(WikiPage, id=page_id, project=project)
         page.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -127,12 +137,12 @@ class WikiPageDetailView(APIView):
 
 class SnippetListView(APIView):
     def get(self, request, project_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         snippets = project.snippets.all()
         return Response([_serialize_snippet(s) for s in snippets])
 
     def post(self, request, project_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         user = request.user if request.user.is_authenticated else None
         data = request.data
         if not data.get('title') or not data.get('code'):
@@ -155,7 +165,7 @@ class SnippetListView(APIView):
 
 class SnippetDetailView(APIView):
     def put(self, request, project_id, snippet_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         snippet = get_object_or_404(Snippet, id=snippet_id, project=project)
         user = request.user if request.user.is_authenticated else None
         data = request.data
@@ -173,7 +183,7 @@ class SnippetDetailView(APIView):
         return Response(_serialize_snippet(snippet))
 
     def delete(self, request, project_id, snippet_id):
-        project = _get_project_or_404(project_id)
+        project = _get_project_or_404(request, project_id)
         snippet = get_object_or_404(Snippet, id=snippet_id, project=project)
         snippet.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,6 +1,7 @@
 import { Outlet, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import ProjectSidebar from './ProjectSidebar';
+import ProjectHeader from './ProjectHeader';
 import AgentPanel from '../ai/AgentPanel';
 
 export default function ProjectLayout() {
@@ -47,18 +48,22 @@ export default function ProjectLayout() {
   return (
     <div
       style={{ display: 'flex', width: '100%', height: '100vh', overflow: 'hidden' }}
-      className="bg-[#0d0d0f] text-[var(--text-primary)] font-sans relative"
+      className="bg-[var(--bg)] text-[var(--text-primary)] relative"
     >
       <ProjectSidebar project={currentProject} />
 
       {/* Main Content Area */}
-      <main
-        style={{ flex: 1, minWidth: 0, height: '100vh', overflow: 'auto' }}
-        className="bg-[#0d0d0f]"
+      <div
+        style={{ flex: 1, minWidth: 0, height: '100vh', display: 'flex', flexDirection: 'column' }}
+        className="bg-[var(--bg)]"
       >
-        {/* We pass the project down to the outlet context */}
-        <Outlet context={{ openAgent: () => setIsAgentOpen(true), project: currentProject }} />
-      </main>
+        <ProjectHeader />
+        
+        <main style={{ flex: 1, minWidth: 0, overflow: 'auto' }}>
+          {/* We pass the project down to the outlet context */}
+          <Outlet context={{ openAgent: () => setIsAgentOpen(true), project: currentProject }} />
+        </main>
+      </div>
 
       <AgentPanel 
         projectId={projectId || 1} 

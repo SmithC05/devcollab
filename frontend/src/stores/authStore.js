@@ -3,57 +3,57 @@ import { persist } from 'zustand/middleware';
 import { authApi } from '../api/authApi';
 import { workspaceApi } from '../api/workspaceApi';
 
-export const ROLES = ['Owner', 'Admin', 'Lead', 'Dev'];
+export const ROLES = ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'];
 
 export const PERMISSIONS = {
   // Project
-  'project.view':      ['Owner', 'Admin', 'Lead', 'Dev'],
-  'project.settings':  ['Owner', 'Admin'],
-  'project.delete':    ['Owner'],
-  'project.ownership': ['Owner'],
+  'project.view':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'project.settings':  ['OWNER', 'ADMIN'],
+  'project.delete':    ['OWNER'],
+  'project.ownership': ['OWNER'],
 
   // Task / Board
-  'task.view':      ['Owner', 'Admin', 'Lead', 'Dev'],
-  'task.create':    ['Owner', 'Admin', 'Lead', 'Dev'],
-  'task.edit':      ['Owner', 'Admin', 'Lead', 'Dev'],
-  'task.delete':    ['Owner', 'Admin', 'Lead'],
-  'task.move':      ['Owner', 'Admin', 'Lead', 'Dev'],
-  'task.assign':    ['Owner', 'Admin', 'Lead'],
-  'board.manage':   ['Owner', 'Admin'],
+  'task.view':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'task.create':    ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'task.edit':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'task.delete':    ['OWNER', 'ADMIN', 'LEAD'],
+  'task.move':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'task.assign':    ['OWNER', 'ADMIN', 'LEAD'],
+  'board.manage':   ['OWNER', 'ADMIN'],
 
   // Members
-  'member.view':        ['Owner', 'Admin', 'Lead', 'Dev'],
-  'member.add':         ['Owner', 'Admin'],
-  'member.remove':      ['Owner', 'Admin'],
-  'member.role.change': ['Owner', 'Admin'],
+  'member.view':        ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'member.add':         ['OWNER', 'ADMIN'],
+  'member.remove':      ['OWNER', 'ADMIN'],
+  'member.role.change': ['OWNER', 'ADMIN'],
 
   // Knowledge (Wiki & Snippets)
-  'wiki.view':    ['Owner', 'Admin', 'Lead', 'Dev'],
-  'wiki.create':  ['Owner', 'Admin', 'Lead', 'Dev'],
-  'wiki.edit':    ['Owner', 'Admin', 'Lead', 'Dev'],
-  'wiki.delete':  ['Owner', 'Admin', 'Lead'],
+  'wiki.view':    ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'wiki.create':  ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'wiki.edit':    ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'wiki.delete':  ['OWNER', 'ADMIN', 'LEAD'],
   
-  'snippet.view':   ['Owner', 'Admin', 'Lead', 'Dev'],
-  'snippet.create': ['Owner', 'Admin', 'Lead', 'Dev'],
-  'snippet.edit':   ['Owner', 'Admin', 'Lead', 'Dev'],
-  'snippet.delete': ['Owner', 'Admin', 'Lead'],
+  'snippet.view':   ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'snippet.create': ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'snippet.edit':   ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'snippet.delete': ['OWNER', 'ADMIN', 'LEAD'],
 
   // Editor
-  'editor.view':        ['Owner', 'Admin', 'Lead', 'Dev'],
-  'editor.edit':        ['Owner', 'Admin', 'Lead', 'Dev'],
-  'editor.file.create': ['Owner', 'Admin', 'Lead', 'Dev'],
-  'editor.file.rename': ['Owner', 'Admin', 'Lead', 'Dev'],
-  'editor.file.delete': ['Owner', 'Admin', 'Lead', 'Dev'],
+  'editor.view':        ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'editor.edit':        ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'editor.file.create': ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'editor.file.rename': ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'editor.file.delete': ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
 
   // Chat
-  'chat.view':      ['Owner', 'Admin', 'Lead', 'Dev'],
-  'chat.send':      ['Owner', 'Admin', 'Lead', 'Dev'],
-  'channel.create': ['Owner', 'Admin', 'Lead'],
+  'chat.view':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'chat.send':      ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'channel.create': ['OWNER', 'ADMIN', 'LEAD'],
 
   // AI
-  'ai.view':    ['Owner', 'Admin', 'Lead', 'Dev'],
-  'ai.use':     ['Owner', 'Admin', 'Lead', 'Dev'],
-  'ai.execute': ['Owner', 'Admin', 'Lead', 'Dev'],
+  'ai.view':    ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'ai.use':     ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
+  'ai.execute': ['OWNER', 'ADMIN', 'LEAD', 'DEVELOPER'],
 };
 
 export function hasPermission(role, action) {
@@ -237,26 +237,22 @@ export const useAuthStore = create(
         const ws = get().workspaces.find(w => w.id === workspaceId);
         if (ws) {
           // BUG-08 FIX: Backend sends uppercase roles (OWNER, DEVELOPER, ADMIN, LEAD)
-          // but the PERMISSIONS map uses title-case (Owner, Dev, Admin, Lead).
-          // Normalize here so hasPermission() actually works.
-          const roleMap = {
-            OWNER: 'Owner',
-            ADMIN: 'Admin',
-            LEAD: 'Lead',
-            DEVELOPER: 'Dev',
-            MEMBER: 'Dev',
-          };
-          const normalizedRole = roleMap[ws.role?.toUpperCase()] || ws.role || 'Dev';
+          // Store the exact uppercase role from the backend
+          const normalizedRole = ws.role?.toUpperCase() || 'DEVELOPER';
           set({ activeWorkspace: { ...ws, role: normalizedRole }, role: normalizedRole });
         }
       },
 
-      setWorkspace: (workspace) => set({ activeWorkspace: workspace, role: workspace?.role }),
+      setWorkspace: (workspace) => {
+        const normalizedRole = workspace?.role?.toUpperCase() || 'DEVELOPER';
+        set({ 
+          activeWorkspace: workspace ? { ...workspace, role: normalizedRole } : null, 
+          role: workspace ? normalizedRole : null 
+        });
+      },
       
-      setRole: (role) => set({ role }),
-
       can: (action) => {
-        const currentRole = get().role || 'Dev';
+        const currentRole = get().role || 'DEVELOPER';
         return hasPermission(currentRole, action);
       },
       

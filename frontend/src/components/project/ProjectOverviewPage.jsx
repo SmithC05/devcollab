@@ -7,81 +7,53 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
-/* ─── breadcrumb bar ─────────────────────────────────────────────────────── */
-function PageTopBar({ projectName }) {
-  const navigate = useNavigate();
-  return (
-    <div style={{
-      height: '48px', borderBottom: '1px solid #1a1a1e', flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 24px', background: '#0e0e10',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <button
-          onClick={() => navigate('/dashboard/projects')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 500, transition: 'background 120ms' }}
-          onMouseEnter={e => e.currentTarget.style.background = '#1c1c1c'}
-          onMouseLeave={e => e.currentTarget.style.background = 'none'}
-        >
-          <ArrowLeft size={13} strokeWidth={2} /> Projects
-        </button>
-        <span style={{ color: '#333' }}>/</span>
-        <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontSize: '14px' }}>{projectName}</span>
-      </div>
-    </div>
-  );
-}
 
 /* ─── stat card ─────────────────────────────────────────────────────────── */
-function StatCard({ icon: Icon, value, label, loading }) {
+function StatCard({ value, label, loading }) {
+  const formattedValue = typeof value === 'number' && value < 10 && value >= 0 ? `0${value}` : value;
   return (
-    <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 24px' }}>
-      <div style={{ marginBottom: '12px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#1c1c1e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon size={15} color='#666' />
-        </div>
-      </div>
-      {loading
-        ? <Loader2 size={18} color="var(--text-muted)" style={{ animation: 'spin 1s linear infinite' }} />
-        : <>
-          <div style={{ fontSize: '30px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>{value ?? '—'}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '5px', fontWeight: 500 }}>{label}</div>
+    <div className="flex flex-col gap-1.5 min-w-[120px] bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-[12px] p-5 hover:border-[var(--border-strong)] transition-colors">
+      {loading ? (
+        <Loader2 size={18} className="text-[var(--text-muted)] animate-spin my-auto" />
+      ) : (
+        <>
+          <span className="text-[32px] md:text-[40px] font-medium text-[var(--fg)] leading-none tracking-tight">{formattedValue ?? '—'}</span>
+          <span className="text-[10px] md:text-[11px] text-[var(--text-muted)] font-bold uppercase tracking-[0.15em]">{label}</span>
         </>
-      }
+      )}
     </div>
   );
 }
-
 
 /* ─── member row ─────────────────────────────────────────────────────────── */
 const ROLE_BADGE = {
-  OWNER:  { bg: '#6366f118', color: '#818cf8', border: '#6366f144' },
-  ADMIN:  { bg: '#f59e0b18', color: '#fbbf24', border: '#f59e0b44' },
-  LEAD:   { bg: '#10b98118', color: '#34d399', border: '#10b98144' },
-  DEVELOPER: { bg: '#3b82f618', color: '#60a5fa', border: '#3b82f644' },
-  Owner:  { bg: '#6366f118', color: '#818cf8', border: '#6366f144' },
-  Admin:  { bg: '#f59e0b18', color: '#fbbf24', border: '#f59e0b44' },
-  Lead:   { bg: '#10b98118', color: '#34d399', border: '#10b98144' },
-  Dev:    { bg: '#3b82f618', color: '#60a5fa', border: '#3b82f644' },
-  Member: { bg: '#ffffff0a', color: '#aaa',    border: '#ffffff18' },
+  OWNER:  { border: 'var(--border-focus)', bg: 'transparent', text: 'var(--text-primary)' },
+  ADMIN:  { border: 'var(--border-strong)', bg: 'transparent', text: 'var(--text-primary)' },
+  LEAD:   { border: 'var(--border-subtle)', bg: 'transparent', text: 'var(--text-secondary)' },
+  DEVELOPER: { border: 'var(--border-default)', bg: 'transparent', text: 'var(--text-secondary)' },
+  Owner:  { border: 'var(--border-focus)', bg: 'transparent', text: 'var(--text-primary)' },
+  Admin:  { border: 'var(--border-strong)', bg: 'transparent', text: 'var(--text-primary)' },
+  Lead:   { border: 'var(--border-subtle)', bg: 'transparent', text: 'var(--text-secondary)' },
+  Dev:    { border: 'var(--border-default)', bg: 'transparent', text: 'var(--text-secondary)' },
+  Member: { border: 'var(--border-subtle)', bg: 'transparent', text: 'var(--text-muted)' },
 };
 
 function MemberRow({ m }) {
   const badge = ROLE_BADGE[m.role] || ROLE_BADGE.Member;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '8px', transition: 'background 120ms' }}
-      onMouseEnter={e => e.currentTarget.style.background = '#1a1a1e'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-    >
-      <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#2a2a2e', color: '#fff', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
+    <div className="flex items-center gap-3 py-3 border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--surface-hover)] transition-colors px-2 -mx-2 rounded-[6px]">
+      <div className="w-[32px] h-[32px] rounded-full bg-[var(--surface-item)] border border-[var(--border-strong)] text-[var(--text-secondary)] flex items-center justify-center text-[12px] font-medium shrink-0">
         {(m.name || m.username || '?')[0].toUpperCase()}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name || m.username}</div>
-        <div style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[14px] font-medium text-[var(--text-primary)] truncate">{m.name || m.username}</div>
+        <div className="text-[13px] text-[var(--text-muted)] truncate">{m.email}</div>
       </div>
-      <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: badge.bg, color: badge.color, border: `1px solid ${badge.border}`, flexShrink: 0 }}>
-        {m.role?.toUpperCase() || 'MEMBER'}
+      <span 
+        className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase tracking-wider shrink-0"
+        style={{ border: `1px solid ${badge.border}`, background: badge.bg, color: badge.text }}
+      >
+        {m.role || 'MEMBER'}
       </span>
     </div>
   );
@@ -129,55 +101,72 @@ function OwnerOverview({ project }) {
   );
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="flex-1 overflow-auto bg-[var(--bg)] p-6 md:p-10 max-w-[1400px] mx-auto w-full">
       {/* Title */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-12">
         <div>
-          <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-muted)', margin: '0 0 6px 0' }}>OWNER VIEW</p>
-          <h1 style={{ fontSize: '36px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1 }}>
-            {project?.name || 'Project'}
-          </h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>
-            Full project authority · real-time health &amp; team tracking
+          <span className="text-[11px] font-bold tracking-[0.15em] text-[var(--text-muted)] uppercase mb-3 block">
+            Workspace / Project
+          </span>
+          <div className="flex items-center gap-4">
+            <h1 className="text-[32px] md:text-[42px] font-semibold text-[var(--fg)] tracking-tight leading-none mb-3">
+              {project?.name || 'Project'}
+            </h1>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--surface-item)] border border-[var(--border-subtle)] mb-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-[11px] font-medium text-[var(--text-primary)]">Active</span>
+            </div>
+          </div>
+          <p className="text-[14px] md:text-[15px] text-[var(--text-secondary)]">
+            Full project authority · real-time health & team tracking
           </p>
         </div>
-        <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', marginTop: '4px' }}>
+        <button 
+          onClick={() => navigate(`/projects/${projectId}/board`)} 
+          className="h-[36px] px-4 rounded-[6px] border border-[var(--border-strong)] text-[var(--text-primary)] text-[13px] font-medium hover:bg-[var(--surface-hover)] transition-colors"
+        >
           Open Board
         </button>
       </div>
 
-      <div style={{ borderTop: '1px solid #1a1a1e', margin: '24px 0' }} />
+      <div className="h-px bg-[var(--border-subtle)] w-full mb-10" />
 
-      {/* Live stat cards — monochrome */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginBottom: '20px' }}>
-        <StatCard icon={TrendingUp}    value={loadingStats ? null : `${stats?.completion_pct ?? 0}%`} label="Completion"   loading={loadingStats} />
-        <StatCard icon={ListTodo}      value={loadingStats ? null : stats?.total}                       label="Total Tasks"  loading={loadingStats} />
-        <StatCard icon={CheckCheck}    value={loadingStats ? null : stats?.done}                        label="Done"         loading={loadingStats} />
-        <StatCard icon={Clock}         value={loadingStats ? null : stats?.in_progress}                 label="In Progress"  loading={loadingStats} />
-        <StatCard icon={AlertTriangle} value={loadingStats ? null : stats?.blocked}                     label="Blocked"      loading={loadingStats} />
+      {/* Live stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6 mb-10">
+        <StatCard value={loadingStats ? null : `${stats?.completion_pct ?? 0}%`} label="Completion"   loading={loadingStats} />
+        <StatCard value={loadingStats ? null : stats?.total}                       label="Total Tasks"  loading={loadingStats} />
+        <StatCard value={loadingStats ? null : stats?.done}                        label="Done"         loading={loadingStats} />
+        <StatCard value={loadingStats ? null : stats?.in_progress}                 label="In Progress"  loading={loadingStats} />
+        <StatCard value={loadingStats ? null : stats?.blocked}                     label="Blocked"      loading={loadingStats} />
       </div>
 
-      {/* Members panel — full width, no status side panel */}
-      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 22px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Team {!loadingMembers && <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>({members.length})</span>}
+      {/* Members panel */}
+      <div className="bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-[12px] p-6 max-w-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <p className="m-0 text-[16px] font-semibold text-[var(--text-primary)]">
+              Team {!loadingMembers && <span className="text-[14px] font-normal text-[var(--text-muted)]">({members.length})</span>}
             </p>
-            <div style={{ position: 'relative' }}>
-              <Search size={12} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search…" style={{ background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '7px', padding: '6px 10px 6px 28px', fontSize: '12px', color: 'var(--text-primary)', outline: 'none', width: '150px', fontFamily: 'inherit' }} />
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              <input 
+                value={memberSearch} 
+                onChange={e => setMemberSearch(e.target.value)} 
+                placeholder="Search…" 
+                className="bg-[var(--bg)] border border-[var(--border-subtle)] rounded-[8px] py-1.5 pr-3 pl-9 text-[13px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-focus)] transition-colors w-[180px]" 
+              />
             </div>
           </div>
-          {loadingMembers
-            ? <Loader2 size={16} color="var(--text-muted)" style={{ animation: 'spin 1s linear infinite', margin: '12px auto', display: 'block' }} />
-            : filteredMembers.length === 0
-              ? <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', padding: '16px' }}>No members found.</p>
-              : filteredMembers.map(m => <MemberRow key={m.id} m={m} />)
-          }
-          <button onClick={() => navigate(`/projects/${projectId}/members`)}
-            style={{ marginTop: '12px', width: '100%', padding: '8px', borderRadius: '7px', border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          <div className="flex flex-col gap-2 mb-4">
+            {loadingMembers
+              ? <Loader2 size={16} className="text-[var(--text-muted)] animate-spin my-4 mx-auto" />
+              : filteredMembers.length === 0
+                ? <p className="text-[var(--text-muted)] text-[13px] text-center p-4">No members found.</p>
+                : filteredMembers.map(m => <MemberRow key={m.id} m={m} />)
+            }
+          </div>
+          <button 
+            onClick={() => navigate(`/projects/${projectId}/members`)}
+            className="w-full h-[36px] flex items-center justify-center gap-2 rounded-[8px] border border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-colors text-[13px] font-medium"
           >
             Team →
           </button>
@@ -227,69 +216,65 @@ function MembersReadOnly({ role }) {
   const roleLabel = { Admin: 'ADMIN VIEW', Lead: 'LEAD VIEW', Dev: 'DEVELOPER VIEW' }[role] || 'PROJECT VIEW';
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--text-muted)', margin: '0 0 6px 0' }}>{roleLabel}</p>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px' }}>
+    <div className="flex-1 overflow-auto bg-[var(--bg)] p-6 md:p-10 max-w-[1400px] mx-auto w-full">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-12">
         <div>
-          <h1 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>Project Overview</h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>Your team and the current state of this project</p>
+          <span className="text-[11px] font-bold tracking-[0.15em] text-[var(--text-muted)] uppercase mb-3 block">
+            {roleLabel}
+          </span>
+          <div className="flex items-center gap-4">
+            <h1 className="text-[32px] md:text-[42px] font-semibold text-[var(--fg)] tracking-tight leading-none mb-3">
+              Project Overview
+            </h1>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--surface-item)] border border-[var(--border-subtle)] mb-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-[11px] font-medium text-[var(--text-primary)]">Active</span>
+            </div>
+          </div>
+          <p className="text-[14px] md:text-[15px] text-[var(--text-secondary)]">Your team and the current state of this project</p>
         </div>
-        <button onClick={() => navigate(`/projects/${projectId}/board`)} style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid #2a2a2e', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', marginTop: '4px' }}>Open Board</button>
+        <button 
+          onClick={() => navigate(`/projects/${projectId}/board`)} 
+          className="h-[36px] px-4 rounded-[6px] border border-[var(--border-strong)] text-[var(--text-primary)] text-[13px] font-medium hover:bg-[var(--surface-hover)] transition-colors"
+        >
+          Open Board
+        </button>
       </div>
-      <div style={{ borderTop: '1px solid #1a1a1e', margin: '24px 0' }} />
+      
+      <div className="h-px bg-[var(--border-subtle)] w-full mb-10" />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
-        <StatCard icon={TrendingUp}    value={loadingStats ? null : `${stats?.completion_pct ?? 0}%`} label="Completion"  loading={loadingStats} />
-        <StatCard icon={ListTodo}      value={loadingStats ? null : stats?.total}                       label="Total Tasks" loading={loadingStats} />
-        <StatCard icon={CheckCheck}    value={loadingStats ? null : stats?.done}                        label="Done"        loading={loadingStats} />
-        <StatCard icon={AlertTriangle} value={loadingStats ? null : stats?.blocked}                     label="Blocked"     loading={loadingStats} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
+        <StatCard value={loadingStats ? null : `${stats?.completion_pct ?? 0}%`} label="Completion"  loading={loadingStats} />
+        <StatCard value={loadingStats ? null : stats?.total}                       label="Total Tasks" loading={loadingStats} />
+        <StatCard value={loadingStats ? null : stats?.done}                        label="Done"        loading={loadingStats} />
+        <StatCard value={loadingStats ? null : stats?.blocked}                     label="Blocked"     loading={loadingStats} />
       </div>
 
       {/* Read-only member list */}
-      <div style={{ background: '#141416', border: '1px solid #1f1f24', borderRadius: '12px', padding: '20px 22px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-            Team Members {!loadingMembers && <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>({members.length})</span>}
+      <div className="bg-[var(--surface-card)] border border-[var(--border-subtle)] rounded-[12px] p-6 max-w-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <p className="m-0 text-[16px] font-semibold text-[var(--text-primary)]">
+            Team Members {!loadingMembers && <span className="text-[14px] font-normal text-[var(--text-muted)]">({members.length})</span>}
           </p>
-          <div style={{ position: 'relative' }}>
-            <Search size={12} style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)} placeholder="Search…" style={{ background: '#0e0e0e', border: '1px solid #2a2a2e', borderRadius: '7px', padding: '6px 10px 6px 28px', fontSize: '12px', color: 'var(--text-primary)', outline: 'none', width: '150px', fontFamily: 'inherit' }} />
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input 
+              value={memberSearch} 
+              onChange={e => setMemberSearch(e.target.value)} 
+              placeholder="Search…" 
+              className="bg-[var(--bg)] border border-[var(--border-subtle)] rounded-[8px] py-1.5 pr-3 pl-9 text-[13px] text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-focus)] transition-colors w-[180px]" 
+            />
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '6px 10px', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.09em', textTransform: 'uppercase', borderBottom: '1px solid #1a1a1e', marginBottom: '6px' }}>
-          <span>Member</span><span>Role</span><span>Status</span>
-        </div>
+        
+        <div className="flex flex-col gap-2">
         {loadingMembers
-          ? <Loader2 size={16} color="var(--text-muted)" style={{ animation: 'spin 1s linear infinite', margin: '16px auto', display: 'block' }} />
+          ? <Loader2 size={16} className="text-[var(--text-muted)] animate-spin my-4 mx-auto" />
           : filtered.length === 0
-            ? <p style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', padding: '20px' }}>No members found.</p>
-            : filtered.map(m => {
-              const badge = ROLE_BADGE[m.role] || ROLE_BADGE.Member;
-              return (
-                <div key={m.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', alignItems: 'center', padding: '9px 10px', borderRadius: '8px', transition: 'background 120ms' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#1a1a1e'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#2a2a2e', color: '#fff', border: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
-                      {(m.name || '?')[0].toUpperCase()}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.email}</div>
-                    </div>
-                  </div>
-                  <span style={{ padding: '3px 9px', borderRadius: '999px', fontSize: '10px', fontWeight: 700, background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}>
-                    {m.role?.toUpperCase() || 'MEMBER'}
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Active</span>
-                  </div>
-                </div>
-              );
-            })
+            ? <p className="text-[var(--text-muted)] text-[13px] text-center p-4">No members found.</p>
+            : filtered.map(m => <MemberRow key={m.id} m={m} />)
         }
+        </div>
       </div>
     </div>
   );
@@ -301,10 +286,9 @@ export default function ProjectOverviewPage() {
   const { project } = useOutletContext() || {};
   const safeRole = role || 'Dev';
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#0e0e10', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <PageTopBar projectName={project?.name || 'Project'} />
+    <div className="flex flex-col h-full bg-[var(--bg)] text-[var(--text-primary)]">
       <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
-      {safeRole === 'Owner' ? <OwnerOverview project={project} /> : <MembersReadOnly role={safeRole} />}
+      {safeRole === 'Owner' || safeRole === 'OWNER' ? <OwnerOverview project={project} /> : <MembersReadOnly role={safeRole} />}
     </div>
   );
 }

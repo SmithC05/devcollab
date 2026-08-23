@@ -14,19 +14,19 @@
 }
 
 :root {
-  /* Strictly Monochrome UI Tokens */
-  --bg: #050505;
-  --app-bg: #050505;
-  --surface: #0A0A0A;
-  --surface-raised: #0A0A0A;
-  --surface-item: #111111;
-  --surface-card: #0A0A0A;
-  --surface-hover: #151515;
+  /* Strictly Monochrome UI Tokens - Synced with Project Theme */
+  --bg: #0e0e0e;
+  --app-bg: #0e0e0e;
+  --surface: #121212;
+  --surface-raised: #161616;
+  --surface-item: #1c1c1c;
+  --surface-card: #121212;
+  --surface-hover: #1c1c1c;
   
   --border-subtle: #242424;
-  --border-default: #242424;
-  --border-strong: #303030;
-  --border-focus: #404040;
+  --border-default: #2a2a2d;
+  --border-strong: #333333;
+  --border-focus: #444444;
   
   --text-primary: #F5F5F5;
   --fg: #F5F5F5;
