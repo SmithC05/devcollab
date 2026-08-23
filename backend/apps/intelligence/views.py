@@ -326,7 +326,7 @@ def summarize_member_evidence(request, pk):
     
     try:
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-3.6-flash')
         response = model.generate_content(prompt)
         return Response({"summary": response.text.strip()})
     except Exception as e:
