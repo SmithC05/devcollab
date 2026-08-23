@@ -15,6 +15,7 @@ import PageContainer from '../layout/PageContainer';
 import { Card, Button } from '../ui/index';
 import { useAuthStore } from '../../stores/authStore';
 import MemberUnavailableResultCard from '../../features/devcollab-intelligence/components/MemberUnavailableResultCard';
+import { apiClient } from '../../api/client';
 
 const API_BASE = 'http://localhost:8000/api';
 
@@ -108,23 +109,14 @@ export default function WorkspaceAIAssistantPage() {
     const { accessToken } = useAuthStore.getState();
     const projectId = getProjectId();
 
-    const response = await fetch(`${API_BASE}/ai/agent/`, {
+    const response = await apiClient('/ai/agent/', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
       body: JSON.stringify({
         project_id: projectId,
         message: messageText,
       }),
     });
-
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Agent error: ${response.status} ${err}`);
-    }
-    return response.json();
+    return response;
   };
 
   const handleSubmit = async (e) => {
