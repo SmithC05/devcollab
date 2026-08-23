@@ -34,6 +34,19 @@ export default function WorkspaceSettingsPage() {
     fetchSettings();
   }, []);
 
+  // Initialize profile data from global store when it loads or changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || user.first_name || '',
+        email: user.email || '',
+        bio: user.bio || '',
+        github_url: user.github_url || '',
+        avatar_url: user.avatar_url || ''
+      });
+    }
+  }, [user]);
+
   const handleSaveWorkspace = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -171,7 +184,104 @@ export default function WorkspaceSettingsPage() {
         )}
 
         {activeTab === 'Profile' && (
-          <DeveloperProfileSettings />
+          <div className="space-y-6">
+            <Card className="p-6">
+              <div className="mb-6">
+                <h2 className="text-[16px] font-semibold text-[var(--fg)] mb-1">Profile</h2>
+                <p className="text-[13px] text-[var(--text-secondary)]">Manage your personal developer profile.</p>
+              </div>
+              
+              <form onSubmit={handleSaveProfile} className="space-y-6">
+                {/* Avatar Section */}
+                <div className="flex items-center gap-5 pb-5 border-b border-[var(--border-subtle)]">
+                  <div className="w-[60px] h-[60px] rounded-full bg-[var(--surface-item)] border border-[var(--border-strong)] flex items-center justify-center overflow-hidden shrink-0">
+                    {profileData.avatar_url ? (
+                      <img src={profileData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[20px] font-medium text-[var(--text-secondary)]">
+                        {(profileData.name || 'User').charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[14px] font-medium text-[var(--fg)]">{profileData.name || 'User'}</span>
+                    <span className="text-[13px] text-[var(--text-muted)]">{profileData.email}</span>
+                    <div className="flex gap-3 mt-1">
+                      <button 
+                        type="button" 
+                        onClick={() => document.getElementById('avatar-upload').click()}
+                        className="text-[12px] font-medium text-[var(--text-primary)] hover:underline"
+                      >
+                        Change Avatar
+                      </button>
+                      {profileData.avatar_url && (
+                        <button type="button" onClick={() => setProfileData({ ...profileData, avatar_url: '', avatar_file: null })} className="text-[12px] font-medium text-red-400 hover:underline">Remove</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hidden file input */}
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const tempUrl = URL.createObjectURL(file);
+                      setProfileData({ ...profileData, avatar_url: tempUrl, avatar_file: file });
+                    }
+                  }}
+                />
+
+                <div>
+                  <label className={labelClass}>Full Name</label>
+                  <Input
+                    type="text"
+                    required
+                    value={profileData.name || ''}
+                    onChange={e => setProfileData({ ...profileData, name: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Email</label>
+                  <Input
+                    type="email"
+                    value={profileData.email || ''}
+                    disabled
+                    className="opacity-60 cursor-not-allowed"
+                  />
+                  <p className="text-[11px] text-[var(--text-muted)] mt-1.5">Email address is managed by your authentication provider.</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[12px] font-medium text-[var(--text-secondary)]">Bio</label>
+                    <span className="text-[11px] text-[var(--text-muted)]">{(profileData.bio || '').length} / 500</span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    maxLength={500}
+                    placeholder="Tell your team a little about yourself..."
+                    value={profileData.bio || ''}
+                    onChange={e => setProfileData({ ...profileData, bio: e.target.value })}
+                    className="w-full bg-[var(--surface-card)] border border-[var(--border-strong)] rounded-md px-3 py-2 text-[13px] text-[var(--fg)] placeholder-[var(--text-muted)] focus:border-[var(--border-focus)] transition-colors outline-none resize-none"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <Button type="submit" variant="primary" disabled={savingProfile} icon={Save} iconSize={14}>
+                    {savingProfile ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              </form>
+            </Card>
+
+            <DeveloperProfileSettings />
+          </div>
         )}
 
         {activeTab === 'Appearance' && (

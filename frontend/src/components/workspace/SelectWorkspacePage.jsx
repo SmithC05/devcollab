@@ -237,12 +237,7 @@ export default function SelectWorkspacePage() {
           </div>
         )}
 
-        {/* L-05: Surface action errors */}
-        {actionError && (
-          <div className="mt-4 px-4 py-3 bg-red-900/30 border border-red-700 rounded-xl text-red-400 text-[13px]">
-            {actionError}
-          </div>
-        )}
+
 
       </main>
 

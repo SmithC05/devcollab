@@ -18,7 +18,7 @@ export default function WorkspaceOverview() {
       try {
         const data = await apiClient('/workspace/overview/');
         setData(data);
-        setWorkspaceName(data.workspace_name);
+
       } catch (err) {
         console.error('Error fetching workspace data:', err);
       } finally {

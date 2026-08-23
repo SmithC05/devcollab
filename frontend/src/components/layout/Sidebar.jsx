@@ -145,7 +145,7 @@ export default function Sidebar({ isOpen, onClose }) {
               title="Switch workspace"
             >
               <span className="text-[13px] font-medium text-[var(--text-primary)] truncate">
-                {workspaceName || activeWorkspace?.name || 'Team Workspace'}
+                {activeWorkspace?.name || 'Team Workspace'}
               </span>
               <ChevronDown size={14} className="text-[var(--text-muted)] shrink-0 ml-2" />
             </button>

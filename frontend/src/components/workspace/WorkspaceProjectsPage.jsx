@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import CreateProjectModal from '../project/CreateProjectModal';
 import LaunchScreen from '../project/LaunchScreen';
 import { apiClient } from '../../api/client';
+import { useAuthStore } from '../../stores/authStore';
 
 // --- Utilities ---
 const formatRelativeTime = (dateString) => {
