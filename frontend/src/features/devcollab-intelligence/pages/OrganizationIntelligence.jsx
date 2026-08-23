@@ -1150,10 +1150,34 @@ export default function OrganizationIntelligence() {
   return (
     <div className="dv-intelligence" style={{ minHeight: '100vh', paddingBottom: 80, position: 'relative' }}>
 
+      {/* ── Demo Banner ─────────────────────────────────────── */}
+      <AnimatePresence>
+        {mode === 'DEMO' && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            style={{
+              background: 'var(--dv-warning-subtle)', borderBottom: '1px solid var(--dv-warning-border)',
+              padding: '12px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--dv-warning)' }}>
+              <AlertTriangle size={16} />
+              <div style={{ fontSize: 'var(--dv-text-sm)' }}>
+                 <strong>CONTROLLED DEMO SCENARIO</strong> &mdash; This view uses a controlled scenario. No live workspace data is being modified.
+              </div>
+            </div>
+            <DvButton variant="outline" size="sm" style={{ borderColor: 'var(--dv-warning)' }} onClick={() => setMode('LIVE')}>
+              EXIT DEMO
+            </DvButton>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Page Header ─────────────────────────────────────── */}
       <div style={{
         padding: '28px 40px 22px', borderBottom: '1px solid var(--dv-border-subtle)',
-        background: 'var(--dv-bg-canvas)', position: 'sticky', top: 52, zIndex: 'var(--dv-z-sticky)',
+        background: 'var(--dv-bg-canvas)', position: 'sticky', top: mode === 'DEMO' ? 0 : 52, zIndex: 'var(--dv-z-sticky)',
       }}>
         <motion.div variants={panelEnter} initial="hidden" animate="visible"
           style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
@@ -1170,7 +1194,17 @@ export default function OrganizationIntelligence() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <SourceChip source={systemStatus.source} />
+            {mode === 'LIVE' && (
+              <DvButton variant="outline" size="sm" onClick={() => setMode('DEMO')}>
+                SIMULATE DEMO
+              </DvButton>
+            )}
+            {mode === 'DEMO' && (
+              <DvButton variant="outline" size="sm" onClick={() => setMode('LIVE')}>
+                EXIT DEMO
+              </DvButton>
+            )}
+            <SourceChip source={mode === 'DEMO' ? 'CONTROLLED DEMO STATE' : systemStatus.source} />
           </div>
         </motion.div>
       </div>

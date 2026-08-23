@@ -138,7 +138,7 @@ export async function getOrganizationIntelligenceState(mode = 'LIVE') {
       decisionPoints: [],
       agentActivity: [],
       analysisSummary: '',
-      systemStatus: { source: 'LIVE', last_synced: new Date().toISOString(), agent_status: 'IDLE' },
+      systemStatus: { source: 'LIVE DATA UNAVAILABLE', last_synced: new Date().toISOString(), agent_status: 'ERROR' },
     };
   }
 }
