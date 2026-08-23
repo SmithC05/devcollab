@@ -83,6 +83,10 @@ export default function OrganizationIntelligence() {
       if (e.detail && e.detail.event_type === 'MEMBER_UNAVAILABLE') {
         setUnavailableBanner(e.detail.payload || e.detail);
       }
+      if (e.detail && e.detail.event_type === 'TASK_REASSIGNED') {
+        setDecisionPoint(null);
+        setUnavailableBanner(null);
+      }
       // Debounce the data refetch — wait 1.5s of silence before hitting the API
       clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
@@ -157,7 +161,7 @@ export default function OrganizationIntelligence() {
                 . {(unavailableBanner.affected_tasks || []).length} critical task(s) require reassignment.
               </div>
             </div>
-            <DvButton variant="danger" size="sm" onClick={() => navigate('/dashboard/intelligence/organization')}>
+            <DvButton variant="danger" size="sm" onClick={() => navigate(`/dashboard/intelligence/simulation/task/${unavailableBanner.affected_tasks[0]?.id}`)}>
               REVIEW DECISION
             </DvButton>
             <button onClick={() => setUnavailableBanner(null)}

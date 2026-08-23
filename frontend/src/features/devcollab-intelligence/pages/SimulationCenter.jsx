@@ -65,6 +65,7 @@ export default function SimulationCenter() {
         setBaseline({
           isLive: true,
           project: task.project_name || `Project ${task.project_id}`,
+          projectId: task.project_id,
           task: task.title,
           taskId: task.id,
           trigger: {
@@ -312,7 +313,14 @@ export default function SimulationCenter() {
                   scenarioId={simResults.scenario_id}
                   baseline={baseline}
                   recommendation={selectedRecommendation}
-                  onComplete={(payload) => setExecutionComplete(true)}
+                  onComplete={(payload) => {
+                    setExecutionComplete(true);
+                    if (baseline.projectId) {
+                      setTimeout(() => {
+                        navigate(`/projects/${baseline.projectId}/board`);
+                      }, 2500);
+                    }
+                  }}
                />
              )}
            </motion.div>

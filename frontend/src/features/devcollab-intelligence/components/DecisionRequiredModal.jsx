@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
 import { AlertTriangle, Zap, Shield, FileText } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { DvCard, DvButton, DvBadge } from '../primitives/core';
 import { panelEnter } from '../motion/presets';
 
 export default function DecisionRequiredModal({ decisionPoint, onClose }) {
+  const navigate = useNavigate();
   if (!decisionPoint) return null;
   
   const { affected_member, affected_tasks, downstream_impact, candidates } = decisionPoint;
@@ -69,7 +71,7 @@ export default function DecisionRequiredModal({ decisionPoint, onClose }) {
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <DvButton variant="ghost" onClick={onClose}>Dismiss</DvButton>
-                <DvButton variant="primary" onClick={onClose} icon={Zap}>REVIEW DECISION</DvButton>
+                <DvButton variant="primary" onClick={() => navigate(`/dashboard/intelligence/simulation/task/${affected_tasks[0]?.id}`)} icon={Zap}>REVIEW DECISION</DvButton>
               </div>
             </div>
           </div>

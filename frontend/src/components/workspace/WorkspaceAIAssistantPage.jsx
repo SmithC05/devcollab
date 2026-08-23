@@ -105,7 +105,7 @@ export default function WorkspaceAIAssistantPage() {
   }, [messages]);
 
   const callAgent = async (messageText) => {
-    const token = localStorage.getItem('access_token');
+    const { accessToken } = useAuthStore.getState();
     const projectId = getProjectId();
 
     const response = await fetch(`${API_BASE}/ai/agent/`, {
