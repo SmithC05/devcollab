@@ -78,7 +78,7 @@ export default function KnowledgeTransfer() {
       {/* 1. Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <DvButton variant="ghost" size="sm" onClick={() => navigate(`${prefix}/simulation/${id}`)}>
+          <DvButton variant="ghost" size="sm" onClick={() => navigate(`${prefix}/simulation/demo/${id}`)}>
             <ChevronLeft size={16} /> Back to Simulation
           </DvButton>
           <div style={{ width: 1, height: 16, background: 'var(--dv-border-subtle)' }} />

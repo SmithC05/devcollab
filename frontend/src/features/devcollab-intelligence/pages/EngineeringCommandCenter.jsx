@@ -1,6 +1,9 @@
 /**
- * Engineering Command Center
- * Route: /intelligence
+ * LEGACY: Engineering Command Center (Phase 1)
+ * This page has been removed from user-facing navigation in favor of Organization Intelligence.
+ * It is retained temporarily for internal reference but should not be accessible via routes.
+ *
+ * Route: /intelligence (Deprecated, redirects to /intelligence/organization)
  *
  * Phase 1 — Organization-level engineering state console.
  * Uses real backend data via commandCenterAdapter.js.

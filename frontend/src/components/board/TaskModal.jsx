@@ -199,7 +199,8 @@ export default function TaskModal({ task, defaultColumnId = 'todo', onClose }) {
           {isEdit && (
             <button 
               onClick={() => {
-                window.location.href = `/dashboard/intelligence/simulation/task/${task.id}`;
+                navigate(`/dashboard/intelligence/simulation/task/${task.id}`);
+                onClose();
               }}
               style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--dv-primary-border)', background: 'var(--dv-primary-subtle)', color: 'var(--dv-primary)', cursor: 'pointer' }}
             >

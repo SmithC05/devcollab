@@ -1032,7 +1032,7 @@ function CtaSection({ decisionId, decisionSeverity, status }) {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => navigate(`${prefix}/simulation/${decisionId}`)}
+          onClick={() => navigate(`${prefix}/simulation/demo/${decisionId}`)}
           style={{
             padding: '10px 22px', borderRadius: 'var(--dv-radius-md)', cursor: 'pointer',
             border: 'none', background: 'var(--dv-accent)',
@@ -1054,7 +1054,7 @@ export default function DecisionPoint() {
   const { id = 'dp1' } = useParams();
   const navigate        = useNavigate();
   const location        = useLocation();
-  const prefix          = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/intelligence';
+  const prefix          = location.pathname.startsWith('/intelligence/demo') ? '/intelligence/demo' : '/dashboard/intelligence';
 
   const data = useMemo(() => getDecisionPointState(id), [id]);
   const { decision, trigger, whyItMatters, impactMap, engineeringSnapshot,

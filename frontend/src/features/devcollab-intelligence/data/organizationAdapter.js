@@ -1,3 +1,4 @@
+import { apiClient } from '../../../api/client';
 /**
  * Organization Intelligence — Data Adapter
  *
@@ -105,9 +106,41 @@
 
 // ── Main Adapter ──────────────────────────────────────────────────────────
 
-export function getOrganizationIntelligenceState() {
-  // Future: return fetchOrganizationIntelligence(authToken);
-  return buildDemoState();
+export async function getOrganizationIntelligenceState(mode = 'LIVE') {
+  if (mode === 'DEMO') {
+    return buildDemoState();
+  }
+
+  try {
+    const rawData = await apiClient('/intelligence/command-center/');
+    
+    // Explicitly map snake_case to camelCase and set null for unavailable signals
+    const data = {
+      organization: rawData.organization,
+      projects: rawData.projects,
+      members: rawData.members,
+      decisionPoints: rawData.decision_points || [],
+      systemStatus: rawData.system_status || { source: 'LIVE', last_synced: new Date().toISOString(), agent_status: 'IDLE' },
+      responsibilities: null, 
+      dependencies: null
+    };
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch live engineering state:', error);
+    // Return empty state rather than demo state on error
+    return {
+      organization: { member_count: 0, project_count: 0, active_task_count: 0, dependency_count: 0, decision_point_count: 0 },
+      members: [],
+      projects: [],
+      responsibilities: null,
+      dependencies: null,
+      decisionPoints: [],
+      agentActivity: [],
+      analysisSummary: '',
+      systemStatus: { source: 'LIVE', last_synced: new Date().toISOString(), agent_status: 'IDLE' },
+    };
+  }
 }
 
 // ── Demo State ────────────────────────────────────────────────────────────
