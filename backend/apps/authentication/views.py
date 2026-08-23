@@ -14,6 +14,9 @@ from apps.authentication.jwt_utils import (
     clear_auth_cookies
 )
 
+from allauth.socialaccount.models import SocialAccount
+from apps.developers.models import DeveloperProfile
+
 def safe_user(user):
     # BUG-16 FIX: Return a proper display name. Previously returned user.username
     # which equals the email address (set that way in register_view).
@@ -29,6 +32,16 @@ def safe_user(user):
         "sync_status": "NOT_SYNCED",
         "last_sync_at": None,
     }
+
+    # Self-healing: if allauth successfully linked a GitHub account, ensure DeveloperProfile reflects it
+    github_account = SocialAccount.objects.filter(user=user, provider='github').first()
+    if github_account:
+        profile, _ = DeveloperProfile.objects.get_or_create(user=user)
+        if profile.github_connection_status != 'CONNECTED':
+            profile.github_connection_status = 'CONNECTED'
+            profile.github_username = github_account.extra_data.get('login', '')
+            profile.save()
+
     if hasattr(user, 'developer_profile'):
         data["github_connected"] = user.developer_profile.github_connection_status == 'CONNECTED'
         data["github_username"] = user.developer_profile.github_username

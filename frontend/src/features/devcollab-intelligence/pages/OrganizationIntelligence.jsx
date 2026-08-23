@@ -16,6 +16,7 @@ import {
   Lock, RefreshCw, Search, Shield, TrendingUp, Users,
   X, Zap, CheckCircle, Eye, ArrowDown, Link2,
 } from 'lucide-react';
+import { useAuthStore } from '../../../stores/authStore';
 
 import '../styles/tokens.css';
 import '../styles/components.css';
@@ -1109,6 +1110,156 @@ function EvidenceDrawer({ resp, onClose }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ENGINEERING EVIDENCE CONTROL
+// ─────────────────────────────────────────────────────────────────────────────
+function timeAgo(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  if (diffInSeconds < 60) return 'just now';
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+}
+
+function EngineeringEvidenceControl({ onSyncSuccess }) {
+  const { user, initFromServer } = useAuthStore();
+  const [syncing, setSyncing] = useState(false);
+  const [syncStage, setSyncStage] = useState('');
+  const [evidence, setEvidence] = useState(null);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user?.github_connected) {
+      loadEvidence();
+    }
+  }, [user?.github_connected]);
+
+  const loadEvidence = async () => {
+    try {
+      const res = await fetch('/api/integrations/github/evidence/');
+      const data = await res.json();
+      if (data.success && data.evidence) {
+        setEvidence(data.evidence);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    let interval;
+    if (user?.sync_status === 'SYNCING' || syncing) {
+      interval = setInterval(async () => {
+        await initFromServer();
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser?.sync_status !== 'SYNCING') {
+          setSyncing(false);
+          if (currentUser?.sync_status === 'FAILED') {
+            setError('SYNC FAILED: ENGINEERING EVIDENCE UNAVAILABLE');
+            setSyncStage('');
+          } else {
+            setSuccess(true);
+            setSyncStage('ENGINEERING EVIDENCE UPDATED');
+            loadEvidence();
+            onSyncSuccess?.();
+            setTimeout(() => setSuccess(false), 5000);
+          }
+          clearInterval(interval);
+        } else {
+           setSyncStage('GitHub connection verified\\n→ Analyzing accessible engineering evidence...');
+        }
+      }, 2000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [user?.sync_status, syncing, initFromServer, onSyncSuccess]);
+
+  const handleSync = async () => {
+    setError('');
+    setSuccess(false);
+    setSyncing(true);
+    setSyncStage('ANALYZING ENGINEERING EVIDENCE\\n\\nGitHub connection verified\\n→ Analyzing accessible engineering evidence...');
+    try {
+      const res = await fetch('/api/integrations/github/sync/', { method: 'POST' });
+      if (!res.ok) throw new Error('Failed to start sync');
+      await initFromServer();
+    } catch (e) {
+      setError('SYNC FAILED: ENGINEERING EVIDENCE UNAVAILABLE');
+      setSyncing(false);
+      setSyncStage('');
+    }
+  };
+
+  if (!user?.github_connected) {
+    return (
+       <DvCard style={{ padding: '16px 20px', marginBottom: 24, borderStyle: 'dashed' }}>
+         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+           <div>
+             <div style={{ fontSize: 11, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, color: 'var(--dv-text-muted)', marginBottom: 4 }}>ENGINEERING EVIDENCE</div>
+             <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>GitHub not connected. Connect in Profile Settings to analyze engineering evidence.</div>
+           </div>
+         </div>
+       </DvCard>
+    );
+  }
+
+  return (
+    <DvCard style={{ padding: '16px 20px', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+             <GitBranch size={14} color="var(--dv-accent)" />
+             <span style={{ fontSize: 11, fontFamily: 'var(--dv-font-mono)', fontWeight: 700, color: 'var(--dv-accent)', letterSpacing: '0.05em' }}>ENGINEERING EVIDENCE</span>
+           </div>
+           
+           {syncing || user?.sync_status === 'SYNCING' ? (
+             <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.5, fontFamily: 'var(--dv-font-mono)' }}>
+               {syncStage || 'ANALYZING ENGINEERING EVIDENCE'}
+             </div>
+           ) : error ? (
+             <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-danger)', fontWeight: 500 }}>{error}</div>
+           ) : success ? (
+             <div style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-success)', fontWeight: 500 }}>{syncStage}</div>
+           ) : (
+             <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+               <span style={{ fontSize: 'var(--dv-text-sm)', color: 'var(--dv-text-secondary)' }}>
+                 Connected to GitHub <strong style={{ color: 'var(--dv-text-primary)' }}>@{user.github_username || 'connected'}</strong>
+               </span>
+               {user.last_sync_at && (
+                 <span style={{ fontSize: 12, color: 'var(--dv-text-muted)' }}>
+                   Last analyzed: {timeAgo(user.last_sync_at)}
+                 </span>
+               )}
+               {evidence && (
+                 <span style={{ fontSize: 12, color: 'var(--dv-text-muted)' }}>
+                   • {evidence.repository_count} repos • {Object.keys(evidence.technology_evidence || {}).length} tech
+                 </span>
+               )}
+             </div>
+           )}
+        </div>
+        
+        <DvButton 
+          variant="secondary" 
+          onClick={handleSync} 
+          disabled={syncing || user?.sync_status === 'SYNCING'}
+          style={{ width: 220 }}
+        >
+          {syncing || user?.sync_status === 'SYNCING' ? 'ANALYZING...' : (user?.last_sync_at ? 'REFRESH EVIDENCE' : 'ANALYZE ENGINEERING EVIDENCE')}
+        </DvButton>
+      </div>
+    </DvCard>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function OrganizationIntelligence() {
@@ -1228,6 +1379,10 @@ export default function OrganizationIntelligence() {
             <SourceChip source={mode === 'DEMO' ? 'CONTROLLED DEMO STATE' : systemStatus.source} />
           </div>
         </motion.div>
+      </div>
+
+      <div style={{ padding: '24px 40px 0' }}>
+        <EngineeringEvidenceControl onSyncSuccess={fetchData} />
       </div>
 
       {/* ── Context Summary Bar ─────────────────────────────── */}
