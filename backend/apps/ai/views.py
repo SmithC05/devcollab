@@ -20,7 +20,7 @@ def agent_view(request):
         return Response({"error": "project_id and message are required"}, status=400)
         
     try:
-        response_data = run_agent(int(project_id), message)
+        response_data = run_agent(int(project_id), message, request.user)
         return Response(response_data)
     except Exception as e:
         return Response({"error": str(e)}, status=500)

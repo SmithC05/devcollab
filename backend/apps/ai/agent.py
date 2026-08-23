@@ -19,10 +19,9 @@ TOOL_FUNCTIONS = [
     get_task_dependencies,
     get_recent_activity,
     simulate_interventions,
-    assign_task
 ]
 
-def run_agent(project_id: int, message: str) -> dict:
+def run_agent(project_id: int, message: str, user=None) -> dict:
     """
     Orchestrates the decision agent. 
     It takes the user's natural language request, provides the tools to the LLM,
@@ -37,8 +36,19 @@ def run_agent(project_id: int, message: str) -> dict:
         # Try to call Gemini
         messages = [{"role": "user", "parts": [{"text": f"Project ID: {project_id}\nManager Request: {message}"}]}]
         
+        # Bind declare_unavailable dynamically to inject context
+        def declare_unavailable(duration_days: int, scope: str, original_message: str) -> str:
+            """
+            Declares the authenticated user as unavailable for the given duration and scope.
+            This creates an availability event and triggers an engineering decision point.
+            """
+            from apps.ai.tools import declare_unavailable_core
+            return declare_unavailable_core(duration_days, scope, original_message, user, project_id)
+            
+        dynamic_tools = TOOL_FUNCTIONS + [declare_unavailable]
+        
         # This will raise ValueError if GEMINI_API_KEY is not set.
-        response = generate_decision(messages, TOOL_FUNCTIONS, DECISION_AGENT_SYSTEM_PROMPT)
+        response = generate_decision(messages, dynamic_tools, DECISION_AGENT_SYSTEM_PROMPT)
         
         # In a real implementation we would execute the tool calls requested by the model 
         # and send them back until it provides a final text/JSON response.
@@ -52,10 +62,10 @@ def run_agent(project_id: int, message: str) -> dict:
         
     except Exception as e:
         logger.warning(f"Using deterministic fallback for Agent: {e}")
-        return execute_deterministic_demo_flow(project_id, message)
+        return execute_deterministic_demo_flow(project_id, message, user)
 
 
-def execute_deterministic_demo_flow(project_id: int, message: str) -> dict:
+def execute_deterministic_demo_flow(project_id: int, message: str, user=None) -> dict:
     """
     A hardcoded orchestration loop that mimics the LLM's tool calling and reasoning
     for the exact Smith/Rahul demo scenario to ensure the hackathon UX is perfect
@@ -70,6 +80,30 @@ def execute_deterministic_demo_flow(project_id: int, message: str) -> dict:
     # 2. get_team_presence
     presence = json.loads(get_team_presence(project_id))
     tool_trace.append({"tool": "get_team_presence", "success": True})
+    
+    # Check for availability intent via simple regex if LLM is unavailable
+    import re
+    availability_match = re.search(r'unavailable.*?(\d+)\s*days?', message, re.IGNORECASE)
+    if availability_match:
+        duration_days = int(availability_match.group(1))
+        from apps.ai.tools import declare_unavailable_core
+        result_json = declare_unavailable_core(duration_days, "CRITICAL_WORK", message, user, project_id)
+        result = json.loads(result_json)
+        
+        tool_trace.append({"tool": "declare_unavailable", "success": True})
+        
+        if result.get("error"):
+            return {
+                "message": result["error"],
+                "decision": None,
+                "tool_trace": tool_trace
+            }
+            
+        return {
+            "message": result.get("message", "Availability recorded successfully."),
+            "decision": None,
+            "tool_trace": tool_trace
+        }
     
     # Identify Smith and Rahul dynamically
     smith_id = 1

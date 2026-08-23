@@ -11,6 +11,7 @@ import { fadeUp, staggerChildren } from '../../motion/presets';
 const AVAIL_COLORS = {
   AVAILABLE: 'var(--dv-success)', IDLE: 'var(--dv-text-faint)',
   BUSY: 'var(--dv-warning)', OVERLOADED: 'var(--dv-danger)',
+  UNAVAILABLE: 'var(--dv-danger)',
 };
 
 function MemberIntelligenceCard({ member, responsibilities, onClick }) {

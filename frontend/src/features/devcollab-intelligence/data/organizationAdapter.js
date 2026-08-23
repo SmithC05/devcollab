@@ -441,7 +441,7 @@ export function contextLabelToVariant(label) {
 }
 
 export function availabilityToVariant(avail) {
-  return { AVAILABLE: 'success', IDLE: 'muted', BUSY: 'warning', OVERLOADED: 'danger' }[avail] ?? 'muted';
+  return { AVAILABLE: 'success', IDLE: 'muted', BUSY: 'warning', OVERLOADED: 'danger', UNAVAILABLE: 'danger' }[avail] ?? 'muted';
 }
 
 export function healthToVariant(health) {

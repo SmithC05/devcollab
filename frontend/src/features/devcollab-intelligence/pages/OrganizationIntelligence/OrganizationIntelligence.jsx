@@ -12,6 +12,7 @@ import { panelEnter } from '../../motion/presets';
 
 import OrganizationTabs from './OrganizationTabs';
 import ContextInspector from './ContextInspector';
+import DecisionRequiredModal from '../../components/DecisionRequiredModal';
 
 export function SourceChip({ source }) {
   const isLive = source === 'LIVE';
@@ -46,6 +47,7 @@ export default function OrganizationIntelligence() {
   const [loading, setLoading] = useState(true);
   
   const [selectedNode, setSelectedNode] = useState(null);
+  const [decisionPoint, setDecisionPoint] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -66,8 +68,11 @@ export default function OrganizationIntelligence() {
   // Wire realtime event engine_event
   useEffect(() => {
     if (mode !== 'LIVE') return;
-    const handleEngineEvent = () => {
+    const handleEngineEvent = (e) => {
       fetchData(); // Invalidate and refetch
+      if (e.detail && e.detail.event_type === 'DECISION_POINT_CREATED') {
+        setDecisionPoint(e.detail);
+      }
     };
     document.addEventListener('engine_event', handleEngineEvent);
     return () => {
@@ -159,6 +164,15 @@ export default function OrganizationIntelligence() {
             members={data.members}
             projects={data.projects}
             responsibilities={data.responsibilities}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {decisionPoint && (
+          <DecisionRequiredModal 
+            decisionPoint={decisionPoint} 
+            onClose={() => setDecisionPoint(null)} 
           />
         )}
       </AnimatePresence>
