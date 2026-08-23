@@ -4,8 +4,11 @@ import { apiClient } from '../../api/client';
 import { motion } from 'framer-motion';
 import PageContainer from '../layout/PageContainer';
 import { Card, CardHeader, Spinner, SectionHeader, StatCard, EmptyState } from '../ui/index';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
 
 export default function WorkspaceActivityPage() {
+  const { activeWorkspace } = useAuthStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,8 +17,14 @@ export default function WorkspaceActivityPage() {
   useEffect(() => {
     const fetchActivity = async () => {
       try {
+<<<<<<< HEAD
         const response = await apiClient('/workspace/activity/');
         setData(response);
+=======
+        // BUG-18 FIX: Use workspaceApi.getActivity with workspace_id
+        const json = await workspaceApi.getActivity(activeWorkspace?.id);
+        setData(json);
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
       } catch (err) {
         setError(err.message);
       } finally {
@@ -23,7 +32,7 @@ export default function WorkspaceActivityPage() {
       }
     };
     fetchActivity();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   return (
     <PageContainer>

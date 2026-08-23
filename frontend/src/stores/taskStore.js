@@ -25,31 +25,90 @@ export const PRIORITY_COLORS = {
 export const useTaskStore = create((set, get) => ({
   columns: EMPTY_TASKS,
 
-  addTask: (columnId, taskData) => {
+  addTask: async (columnId, taskData, projectId) => {
+    // Optimistic UUID for initial UI render
+    const tempId = `task-${nanoid(6)}`;
     const task = {
-      id: `task-${nanoid(6)}`,
+      id: tempId,
       columnId,
       createdAt: new Date().toISOString(),
       priority: 'P2',
       labels: [],
       assignee: '',
-      dueDate: '',
+      dueDate: null,
       description: '',
       ...taskData,
     };
+    
+    // Convert columnId to STATUS string expected by backend
+    let status = 'To Do';
+    if (columnId === 'inprogress') status = 'In Progress';
+    if (columnId === 'inreview') status = 'In Review';
+    if (columnId === 'done') status = 'Done';
+
     set((state) => ({
       columns: { ...state.columns, [columnId]: [...state.columns[columnId], task] },
     }));
+
+    try {
+      const { taskApi } = await import('../api/taskApi');
+      const payload = {
+        title: task.title,
+        description: task.description,
+        status: status,
+        priority: task.priority,
+        due_date: task.dueDate || null,
+      };
+      if (task.assignee !== undefined) {
+        payload.assignee = task.assignee;
+      }
+
+      const apiTask = await taskApi.createTask(projectId, payload);
+      // We don't necessarily need to replace it here since the websocket event will bring the real ID 
+      // but it's good practice to update the local ID just in case.
+      set((state) => {
+        const cols = { ...state.columns };
+        cols[columnId] = cols[columnId].map(t => t.id === tempId ? { ...t, id: apiTask.id.toString() } : t);
+        return { columns: cols };
+      });
+    } catch (e) {
+      console.error('Failed to create task:', e);
+      // Rollback
+      set((state) => ({
+        columns: { ...state.columns, [columnId]: state.columns[columnId].filter(t => t.id !== tempId) },
+      }));
+    }
     return task;
   },
 
-  updateTask: (taskId, updates) => {
+  updateTask: async (taskId, updates) => {
+    // Optimistic update
     const cols = get().columns;
     const newCols = {};
     for (const [colId, tasks] of Object.entries(cols)) {
-      newCols[colId] = tasks.map((t) => (t.id === taskId ? { ...t, ...updates } : t));
+      newCols[colId] = tasks.map((t) => (t.id === taskId.toString() ? { ...t, ...updates } : t));
     }
     set({ columns: newCols });
+
+    try {
+      // Map frontend fields to backend fields if necessary
+      let backendUpdates = { ...updates };
+      if (updates.dueDate !== undefined) backendUpdates.due_date = updates.dueDate || null;
+      if (updates.columnId) {
+        if (updates.columnId === 'todo') backendUpdates.status = 'To Do';
+        if (updates.columnId === 'inprogress') backendUpdates.status = 'In Progress';
+        if (updates.columnId === 'inreview') backendUpdates.status = 'In Review';
+        if (updates.columnId === 'done') backendUpdates.status = 'Done';
+      }
+
+      const { taskApi } = await import('../api/taskApi');
+      // If it's a temporary ID, we can't update it yet. It should be resolved soon by WebSocket.
+      if (!taskId.toString().startsWith('task-')) {
+        await taskApi.updateTask(taskId, backendUpdates);
+      }
+    } catch (e) {
+      console.error('Failed to update task:', e);
+    }
   },
 
   deleteTask: (taskId) => {
@@ -66,10 +125,10 @@ export const useTaskStore = create((set, get) => ({
     tasks.forEach(t => {
       // Map API STATUS to columnId
       let colId = 'todo';
-      if (t.status === 'TODO') colId = 'todo';
-      else if (t.status === 'IN_PROGRESS') colId = 'inprogress';
-      else if (t.status === 'IN_REVIEW') colId = 'inreview';
-      else if (t.status === 'DONE') colId = 'done';
+      if (t.status === 'To Do') colId = 'todo';
+      else if (t.status === 'In Progress') colId = 'inprogress';
+      else if (t.status === 'In Review') colId = 'inreview';
+      else if (t.status === 'Done') colId = 'done';
       
       const mappedTask = {
         ...t,
@@ -98,21 +157,19 @@ export const useTaskStore = create((set, get) => ({
   },
 
   syncEngineEvent: (payload) => {
-    const { task_id, new_status, new_position, task_data } = payload;
-    // For simplicity, just fetch all tasks if we get an event
-    // In a fully optimized app we would do targeted surgical updates
-    // Because we need project_id to fetch, and we might not have it here easily
-    // Let's implement targeted update:
+    const { event_type, task_id, new_status, new_position, task_data } = payload;
+    
+    // Ignore if task_data is missing
+    if (!task_data) return;
+
     let toColId = 'todo';
-    if (new_status === 'TODO') toColId = 'todo';
-    else if (new_status === 'IN_PROGRESS') toColId = 'inprogress';
-    else if (new_status === 'IN_REVIEW') toColId = 'inreview';
-    else if (new_status === 'DONE') toColId = 'done';
+    if (new_status === 'To Do' || task_data.status === 'To Do') toColId = 'todo';
+    else if (new_status === 'In Progress' || task_data.status === 'In Progress') toColId = 'inprogress';
+    else if (new_status === 'In Review' || task_data.status === 'In Review') toColId = 'inreview';
+    else if (new_status === 'Done' || task_data.status === 'Done') toColId = 'done';
 
     const cols = { ...get().columns };
     
-    // Remove from old column if exists
-    let found = false;
     let mappedTask = {
       ...task_data,
       id: task_data.id.toString(),
@@ -120,19 +177,31 @@ export const useTaskStore = create((set, get) => ({
       assigneeName: task_data.assignee_details?.username || '',
     };
     
-    for (const [cId, tasks] of Object.entries(cols)) {
-      const idx = tasks.findIndex(t => t.id === task_id.toString());
-      if (idx !== -1) {
-        if (!found) {
-          mappedTask = { ...tasks[idx], ...mappedTask };
-          found = true;
-        }
-        cols[cId] = tasks.filter(t => t.id !== task_id.toString());
+    if (event_type === 'TASK_CREATED') {
+      // Check if it already exists (from optimistic UI)
+      const existing = cols[toColId].find(t => t.id === mappedTask.id || (t.title === mappedTask.title && t.id.startsWith('task-')));
+      if (existing) {
+        // Replace temp ID with real ID
+        cols[toColId] = cols[toColId].map(t => t === existing ? { ...t, ...mappedTask } : t);
+      } else {
+        cols[toColId] = [...cols[toColId], mappedTask].sort((a, b) => a.position - b.position);
       }
+    } else {
+      // TASK_MOVED or TASK_UPDATED
+      let found = false;
+      for (const [cId, tasks] of Object.entries(cols)) {
+        const idx = tasks.findIndex(t => t.id === task_id.toString());
+        if (idx !== -1) {
+          if (!found) {
+            mappedTask = { ...tasks[idx], ...mappedTask };
+            found = true;
+          }
+          cols[cId] = tasks.filter(t => t.id !== task_id.toString());
+        }
+      }
+      cols[toColId] = [...cols[toColId], mappedTask].sort((a, b) => (a.position || 0) - (b.position || 0));
     }
     
-    // Add to new column and sort
-    cols[toColId] = [...cols[toColId], mappedTask].sort((a, b) => a.position - b.position);
     set({ columns: cols });
   },
 
@@ -169,11 +238,11 @@ export const useTaskStore = create((set, get) => ({
     set({ columns: { ...cols, [fromColId]: fromTasks, [toColId]: toTasks } });
 
     // 2. Map colId to STATUS
-    let status = 'TODO';
-    if (toColId === 'todo') status = 'TODO';
-    else if (toColId === 'inprogress') status = 'IN_PROGRESS';
-    else if (toColId === 'inreview') status = 'IN_REVIEW';
-    else if (toColId === 'done') status = 'DONE';
+    let status = 'To Do';
+    if (toColId === 'todo') status = 'To Do';
+    else if (toColId === 'inprogress') status = 'In Progress';
+    else if (toColId === 'inreview') status = 'In Review';
+    else if (toColId === 'done') status = 'Done';
 
     // 3. API Call
     try {
@@ -208,11 +277,11 @@ export const useTaskStore = create((set, get) => ({
     set((state) => ({ columns: { ...state.columns, [colId]: tasks } }));
 
     // API Call
-    let status = 'TODO';
-    if (colId === 'todo') status = 'TODO';
-    else if (colId === 'inprogress') status = 'IN_PROGRESS';
-    else if (colId === 'inreview') status = 'IN_REVIEW';
-    else if (colId === 'done') status = 'DONE';
+    let status = 'To Do';
+    if (colId === 'todo') status = 'To Do';
+    else if (colId === 'inprogress') status = 'In Progress';
+    else if (colId === 'inreview') status = 'In Review';
+    else if (colId === 'done') status = 'Done';
 
     try {
       const { taskApi } = await import('../api/taskApi');

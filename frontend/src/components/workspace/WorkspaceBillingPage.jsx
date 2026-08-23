@@ -3,8 +3,11 @@ import { CreditCard, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import PageContainer from '../layout/PageContainer';
 import { Card, CardContent, Button, Spinner, Progress, SectionHeader, Badge } from '../ui/index';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
 
 export default function WorkspaceBillingPage() {
+  const { activeWorkspace } = useAuthStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,8 +16,14 @@ export default function WorkspaceBillingPage() {
   useEffect(() => {
     const fetchBilling = async () => {
       try {
+<<<<<<< HEAD
         const response = await apiClient('/workspace/billing/');
         setData(response);
+=======
+        // BUG-18 FIX: Use workspaceApi.getBilling with workspace_id
+        const json = await workspaceApi.getBilling(activeWorkspace?.id);
+        setData(json);
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
       } catch (err) {
         setError(err.message);
       } finally {
@@ -22,7 +31,7 @@ export default function WorkspaceBillingPage() {
       }
     };
     fetchBilling();
-  }, []);
+  }, [activeWorkspace?.id]);
 
   const handleUpgrade = () => {
     setUpgrading(true);

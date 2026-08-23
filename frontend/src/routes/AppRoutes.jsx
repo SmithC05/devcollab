@@ -31,7 +31,6 @@ import ProjectMyTeamPage from '../components/project/ProjectMyTeamPage';
 import AuthCallbackPage     from '../pages/AuthCallbackPage';
 import IntelligenceLayout        from '../features/devcollab-intelligence/pages/IntelligenceLayout';
 import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
-import EngineeringCommandCenter  from '../features/devcollab-intelligence/pages/EngineeringCommandCenter';
 import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence';
 import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
 import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
@@ -40,12 +39,26 @@ import JudgeMode                 from '../features/devcollab-intelligence/pages/
 import DevCollabDemoMode, { DemoStartScreen } from '../features/devcollab-intelligence/pages/DevCollabDemoMode';
 import InvitationPage       from '../pages/InvitationPage';
 import LandingPage          from '../pages/LandingPage';
+// L-03 FIX: Moved these imports from mid-file to top where they belong
+import WorkspaceProjectsPage from '../components/workspace/WorkspaceProjectsPage';
+import WorkspaceActivityPage from '../components/workspace/WorkspaceActivityPage';
+import WorkspaceMembersPage from '../components/workspace/WorkspaceMembersPage';
+import WorkspaceBillingPage from '../components/workspace/WorkspaceBillingPage';
+import WorkspaceSettingsPage from '../components/workspace/WorkspaceSettingsPage';
+import WorkspaceAIAssistantPage from '../components/workspace/WorkspaceAIAssistantPage';
 // ── Guards ────────────────────────────────────────────────────────────────
 
 function PublicOnlyRoute({ children }) {
-  const { isAuthenticated, workspaces } = useAuthStore();
+  const { isAuthenticated, isLoading, workspaces, activeWorkspace } = useAuthStore();
+
+  // BUG-06/20 FIX: Don't redirect while the /me call is still in flight.
+  // Previously isLoading wasn't checked, so guards fired during hydration
+  // before workspaces had loaded, causing false redirects to /login.
+  if (isLoading) return null;
 
   if (isAuthenticated) {
+    // BUG-14 FIX: If they already have an active workspace go straight to dashboard
+    if (activeWorkspace) return <Navigate to="/dashboard" replace />;
     if (workspaces?.length > 0) return <Navigate to="/select-workspace" replace />;
     return <Navigate to="/onboarding" replace />;
   }
@@ -54,7 +67,8 @@ function PublicOnlyRoute({ children }) {
 }
 
 function RequireOnboarding({ children }) {
-  const { isAuthenticated, workspaces } = useAuthStore();
+  const { isAuthenticated, isLoading, workspaces } = useAuthStore();
+  if (isLoading) return null;  // BUG-20 FIX: wait for hydration
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (workspaces?.length > 0) return <Navigate to="/select-workspace" replace />;
@@ -63,7 +77,8 @@ function RequireOnboarding({ children }) {
 }
 
 function RequireSelectWorkspace({ children }) {
-  const { isAuthenticated, workspaces } = useAuthStore();
+  const { isAuthenticated, isLoading, workspaces } = useAuthStore();
+  if (isLoading) return null;  // BUG-20 FIX: wait for hydration
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   // If user has NO workspaces at all, send them to onboarding
@@ -74,7 +89,8 @@ function RequireSelectWorkspace({ children }) {
 }
 
 function RequireWorkspace({ children }) {
-  const { isAuthenticated, workspaces, activeWorkspace } = useAuthStore();
+  const { isAuthenticated, isLoading, workspaces, activeWorkspace } = useAuthStore();
+  if (isLoading) return null;  // BUG-06 FIX: wait for hydration
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!workspaces || workspaces.length === 0) return <Navigate to="/onboarding" replace />;
@@ -83,18 +99,11 @@ function RequireWorkspace({ children }) {
   return children;
 }
 
-import WorkspaceProjectsPage from '../components/workspace/WorkspaceProjectsPage';
-import WorkspaceActivityPage from '../components/workspace/WorkspaceActivityPage';
-import WorkspaceMembersPage from '../components/workspace/WorkspaceMembersPage';
-import WorkspaceBillingPage from '../components/workspace/WorkspaceBillingPage';
-import WorkspaceSettingsPage from '../components/workspace/WorkspaceSettingsPage';
-import WorkspaceAIAssistantPage from '../components/workspace/WorkspaceAIAssistantPage';
-
 // ── Routes ────────────────────────────────────────────────────────────────
 
 export default function AppRoutes() {
   const { activeWorkspace } = useAuthStore();
-  const workspaceName = activeWorkspace?.name || '';
+
 
   return (
     <Routes>
@@ -148,17 +157,30 @@ export default function AppRoutes() {
         path="/dashboard"
         element={
           <RequireWorkspace>
-            <WorkspaceLayout workspaceName={workspaceName} />
+            {/* BUG-15 FIX: WorkspaceLayout reads workspace from store, no prop needed */}
+            <WorkspaceLayout />
           </RequireWorkspace>
         }
       >
-        <Route index element={<WorkspaceOverview setWorkspaceName={() => { }} />} />
+        <Route index element={<WorkspaceOverview />} />
+
         <Route path="projects" element={<WorkspaceProjectsPage />} />
         <Route path="activity" element={<WorkspaceActivityPage />} />
         <Route path="members" element={<WorkspaceMembersPage />} />
         <Route path="billing" element={<WorkspaceBillingPage />} />
         <Route path="settings" element={<WorkspaceSettingsPage />} />
         <Route path="ai" element={<WorkspaceAIAssistantPage />} />
+        
+        {/* ── Phase Integration 1: Unified Intelligence Experience ── */}
+        <Route path="intelligence">
+          <Route index element={<Navigate to="organization" replace />} />
+          <Route path="organization" element={<OrganizationIntelligence />} />
+          <Route path="decision/:id" element={<DecisionPoint />} />
+          <Route path="simulation/task/:id" element={<SimulationCenter />} />
+          <Route path="simulation/demo/:id" element={<SimulationCenter />} />
+          <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
+          <Route path="demo" element={<DevCollabDemoMode />} />
+        </Route>
       </Route>
 
       {/* Project routes */}
@@ -197,19 +219,6 @@ export default function AppRoutes() {
         <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
       </Route>
 
-      {/* ── Phase 2-8: Isolated Intelligence Experience ── */}
-      <Route path="/intelligence" element={<IntelligenceLayout />}>
-        <Route index element={<EngineeringCommandCenter />} />
-        <Route path="foundation-preview" element={<FoundationPreviewPage />} />
-        {/* Future routes — placeholder until Phase 2–4 */}
-        <Route path="project/:id"     element={<PlaceholderPage title="Project Intelligence" subtitle="Project-level engineering state — Phase 2" />} />
-        <Route path="organization"    element={<OrganizationIntelligence />} />
-        <Route path="member/:id"      element={<PlaceholderPage title="Member Intelligence" subtitle="Member capacity &amp; context — Phase 2" />} />
-        <Route path="decision/:id"    element={<DecisionPoint />} />
-        <Route path="simulation/:id"  element={<SimulationCenter />} />
-        <Route path="knowledge-transfer/:id" element={<KnowledgeTransfer />} />
-        <Route path="judge"           element={<JudgeMode />} />
-      </Route>
 
       {/* Default */}
       <Route path="/" element={<LandingPage />} />

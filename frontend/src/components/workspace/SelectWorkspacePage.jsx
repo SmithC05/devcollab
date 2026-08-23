@@ -31,7 +31,11 @@ export default function SelectWorkspacePage() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
+<<<<<<< HEAD
   const [createError, setCreateError] = useState('');
+=======
+  const [actionError, setActionError] = useState(null);  // L-05: surface errors to UI
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
 
   // Refresh on mount to ensure latest membership list
   useEffect(() => {
@@ -48,20 +52,32 @@ export default function SelectWorkspacePage() {
     navigate('/dashboard');
   };
 
+<<<<<<< HEAD
   const handleCreate = async (name, slug) => {
     setCreateError('');
     try {
+=======
+  const handleCreate = async (name, slug, description) => {
+    setActionError(null);
+    try {
+      // BUG-09 FIX: Backend now uses request.user — don't pass user.id
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
       await workspaceApi.createWorkspace(name, slug);
       await refreshWorkspaces();
       setIsCreateOpen(false);
     } catch (err) {
+<<<<<<< HEAD
       setCreateError(err.message);
       // Re-throw so modal can also show the error if needed
       throw err;
+=======
+      setActionError(err.message || 'Failed to create workspace');
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
     }
   };
 
   const handleJoin = async (inviteCode) => {
+<<<<<<< HEAD
     try {
       await workspaceApi.joinWorkspace(inviteCode, user?.id);
       await refreshWorkspaces();
@@ -78,6 +94,17 @@ export default function SelectWorkspacePage() {
     }
     setCreateError('');
     setIsCreateOpen(true);
+=======
+    setActionError(null);
+    try {
+      // BUG-10 FIX: Backend now uses request.user — don't pass user.id
+      await workspaceApi.joinWorkspace(inviteCode);
+      await refreshWorkspaces();
+      setIsJoinOpen(false);
+    } catch (err) {
+      setActionError(err.message || 'Failed to join workspace');
+    }
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
   };
 
   return (
@@ -188,6 +215,7 @@ export default function SelectWorkspacePage() {
                     </div>
                   </div>
 
+<<<<<<< HEAD
                   {/* Workspace name + role */}
                   <div className="mb-auto">
                     <h3 className="text-[18px] font-semibold text-white mb-1.5 truncate">
@@ -206,6 +234,25 @@ export default function SelectWorkspacePage() {
                       </span>
                     </div>
                   </div>
+=======
+                {/* Bottom row: Stats with Divider */}
+                <div className="mt-8 pt-5 border-t border-[#242424] flex items-center gap-6 text-[#A1A1AA]">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} />
+                    {/* BUG-12 FIX: Backend returns memberCount, not members.length */}
+                    <span className="text-[14px] font-medium">{ws.memberCount ?? 1}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FolderOpen size={16} />
+                    {/* BUG-12 FIX: Backend returns projectCount, not projectsCount */}
+                    <span className="text-[14px] font-medium">{ws.projectCount ?? 0}</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
 
                   {/* Stats footer */}
                   <div className="mt-6 pt-4 border-t border-[#1f1f1f] flex items-center gap-5 text-[#737373]">
@@ -234,6 +281,13 @@ export default function SelectWorkspacePage() {
             <p className="text-[14px] text-[#A1A1AA] max-w-sm">
               Create a new workspace for your team or join one using an invite code.
             </p>
+          </div>
+        )}
+
+        {/* L-05: Surface action errors */}
+        {actionError && (
+          <div className="mt-4 px-4 py-3 bg-red-900/30 border border-red-700 rounded-xl text-red-400 text-[13px]">
+            {actionError}
           </div>
         )}
 

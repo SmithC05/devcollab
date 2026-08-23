@@ -3,8 +3,12 @@ import { Copy, UserPlus, MoreHorizontal, Shield, Users, Search, ChevronDown } fr
 import { Button } from '../ui/index';
 import InviteMemberModal from './InviteMemberModal';
 import { useAuthStore } from '../../stores/authStore';
+<<<<<<< HEAD
 import { canInviteMembers, canRemoveMember } from '../../utils/permissions';
 import { apiClient } from '../../api/client';
+=======
+import { workspaceApi } from '../../api/workspaceApi';
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
 
 export default function WorkspaceMembersPage() {
   const [members, setMembers] = useState([]);
@@ -13,12 +17,17 @@ export default function WorkspaceMembersPage() {
   const [search, setSearch] = useState('');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteSuccessMsg, setInviteSuccessMsg] = useState('');
-  
+
   const { user, activeWorkspace } = useAuthStore();
 
   const fetchMembers = async () => {
     try {
+<<<<<<< HEAD
       const data = await apiClient('/workspace/members/');
+=======
+      // BUG-18 FIX: Use workspaceApi.getMembers with workspace_id
+      const data = await workspaceApi.getMembers(activeWorkspace?.id);
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
       setMembers(data);
     } catch (err) {
       setError(err.message);

@@ -171,6 +171,16 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    # BUG-07 FIX: Without these, DRF defaults to AllowAny permission, meaning
+    # any unauthenticated request could read workspace/project data.
+    # We use SessionAuthentication since JWTAuthMiddleware already populates
+    # request.user from the JWT before DRF's authentication layer runs.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
 }
 
 # ---------------------------------------------------------------------------
@@ -180,7 +190,7 @@ REST_FRAMEWORK = {
 # Override CORS_ALLOWED_ORIGINS in .env for other origins.
 # ---------------------------------------------------------------------------
 
-FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5173")
+FRONTEND_URL = config("FRONTEND_URL", default="http://127.0.0.1:5173")
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
@@ -215,6 +225,16 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
+# Allauth Account Settings to bypass intermediate signup form
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_ADAPTER = 'apps.authentication.adapters.CustomSocialAccountAdapter'
+
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "APP": {
@@ -239,6 +259,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "SCOPE": [
             "user:email",
             "read:user",
+            "repo",
         ],
     }
 }

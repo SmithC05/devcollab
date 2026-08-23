@@ -8,6 +8,10 @@ import {
   CreditCard,
   Settings,
   Sparkles,
+  Globe,
+  Target,
+  PlayCircle,
+  Share2,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -56,7 +60,7 @@ function SideNavLink({ to, end, onClick, icon: Icon, children, collapsed }) {
   );
 }
 
-export default function Sidebar({ workspaceName, isOpen, onClose }) {
+export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { user, activeWorkspace } = useAuthStore();
   
@@ -78,6 +82,18 @@ export default function Sidebar({ workspaceName, isOpen, onClose }) {
         { to: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
         { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
       ]
+<<<<<<< HEAD
+=======
+    },
+    {
+      title: 'INTELLIGENCE',
+      items: [
+        { to: '/dashboard/intelligence/organization', icon: Globe, label: 'Organization' },
+        { to: '/dashboard/intelligence/decision/dp1', icon: Target, label: 'Decision Points' },
+        { to: '/dashboard/intelligence/simulation/demo/sc1', icon: PlayCircle, label: 'Simulations' },
+        { to: '/dashboard/intelligence/knowledge-transfer/kt1', icon: Share2, label: 'Knowledge Transfer' },
+      ]
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
     }
   ];
   
@@ -160,6 +176,14 @@ export default function Sidebar({ workspaceName, isOpen, onClose }) {
                   <span className="text-[11px] font-semibold text-[var(--text-muted)] tracking-wider">
                     {group.title}
                   </span>
+<<<<<<< HEAD
+=======
+                  {groupIdx === 0 && (
+                    <span className="text-[14px] font-semibold text-[var(--text-primary)] mb-2 truncate">
+                      {activeWorkspace?.name || 'Team Thunder'}
+                    </span>
+                  )}
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
                 </div>
               )}
               <nav className="flex flex-col relative">

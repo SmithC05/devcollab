@@ -1,11 +1,14 @@
-import { Search, Bell, Settings } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Search, Bell, Navigation } from 'lucide-react';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useNotificationStore } from '../../stores/notificationStore';
+import { Sparkles } from 'lucide-react';
 
 export default function ProjectHeader() {
   const { projectId } = useParams();
-  const projectName = projectId || "P1";
+  const navigate = useNavigate();
+  const { project } = useOutletContext() || {};
+  const projectName = project?.name || projectId || "P1";
   
   const { unreadCount, fetchNotifications, isLoaded, addNotification } = useNotificationStore();
   
@@ -27,10 +30,16 @@ export default function ProjectHeader() {
   return (
     <header className="h-16 border-b border-[var(--border-default)] bg-[var(--surface-raised)] flex items-center justify-between px-6">
       {/* Breadcrumb / Left Side */}
-      <div className="flex items-center text-sm">
-        <span className="text-zinc-400">Collab</span>
-        <span className="mx-3 text-zinc-600">/</span>
-        <span className="text-zinc-200 font-medium">{projectName}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
+        <button 
+          onClick={() => navigate('/dashboard/projects')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '0', marginRight: '8px' }}
+        >
+          <Navigation size={14} style={{ transform: 'rotate(-90deg)' }} />
+        </button>
+        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Workspace</span>
+        <span style={{ color: 'var(--border-strong)' }}>/</span>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{projectName}</span>
       </div>
 
       {/* Right Actions */}

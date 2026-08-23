@@ -4,17 +4,27 @@ import { apiClient } from '../../api/client';
 import TasksCompletedChart from '../dashboard/TasksCompletedChart';
 import StatusDistribution from '../dashboard/StatusDistribution';
 import PageContainer from '../layout/PageContainer';
+import { useAuthStore } from '../../stores/authStore';
+import { workspaceApi } from '../../api/workspaceApi';
 
-export default function WorkspaceOverview({ setWorkspaceName }) {
+// BUG-15: setWorkspaceName prop removed; workspace name now read from store
+export default function WorkspaceOverview() {
+  const { activeWorkspace } = useAuthStore();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+<<<<<<< HEAD
         const data = await apiClient('/workspace/overview/');
         setData(data);
         setWorkspaceName(data.workspace_name);
+=======
+        // BUG-18 FIX: Use workspaceApi.getOverview with workspace_id
+        const json = await workspaceApi.getOverview(activeWorkspace?.id);
+        setData(json);
+>>>>>>> 10b098ef335a82765d2f08f3c4029b6683a67f69
       } catch (err) {
         console.error('Error fetching workspace data:', err);
       } finally {
@@ -22,7 +32,7 @@ export default function WorkspaceOverview({ setWorkspaceName }) {
       }
     };
     fetchData();
-  }, [setWorkspaceName]);
+  }, [activeWorkspace?.id]);
 
   const getGreeting = () => {
     const h = new Date().getHours();
