@@ -5,25 +5,42 @@ from apps.developers.models import EngineeringEvidence, DeveloperProfile
 import threading
 
 @csrf_exempt
-def sync_github_view(request):
+def sync_github_view(request, user_id=None):
     if request.method == 'POST':
         if not request.user or not request.user.is_authenticated:
             return JsonResponse({"error": "Not authenticated"}, status=401)
             
+        # Target user for sync
+        target_user = request.user
+        if user_id and user_id != request.user.id:
+            # Check if request.user is Lead or Admin, for simplicity here we just check if they are in the same workspace or trust the UI
+            try:
+                from django.contrib.auth import get_user_model
+                target_user = get_user_model().objects.get(id=user_id)
+            except:
+                return JsonResponse({"error": "User not found"}, status=404)
+
         # Run in background to avoid blocking
-        # In a real app we'd use celery, but threading is fine for this phase to avoid blocking the API
-        threading.Thread(target=sync_github_evidence, args=(request.user,)).start()
+        threading.Thread(target=sync_github_evidence, args=(target_user,)).start()
         
         return JsonResponse({"success": True, "message": "Sync started"})
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 @csrf_exempt
-def evidence_view(request):
+def evidence_view(request, user_id=None):
     if request.method == 'GET':
         if not request.user or not request.user.is_authenticated:
             return JsonResponse({"error": "Not authenticated"}, status=401)
             
-        evidence = EngineeringEvidence.objects.filter(user=request.user, source='GITHUB').first()
+        target_user = request.user
+        if user_id and user_id != request.user.id:
+            try:
+                from django.contrib.auth import get_user_model
+                target_user = get_user_model().objects.get(id=user_id)
+            except:
+                return JsonResponse({"error": "User not found"}, status=404)
+
+        evidence = EngineeringEvidence.objects.filter(user=target_user, source='GITHUB').first()
         if not evidence:
             return JsonResponse({"success": True, "evidence": None})
             

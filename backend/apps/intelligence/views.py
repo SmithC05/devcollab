@@ -301,3 +301,33 @@ def get_member_evidence(request, pk):
         "evidence": evidence_arr,
         "ai_summary": ai_summary
     })
+
+import google.generativeai as genai
+from django.conf import settings
+from apps.developers.models import EngineeringEvidence
+
+@api_view(['GET'])
+def summarize_member_evidence(request, pk):
+    member = get_object_or_404(User, id=pk)
+    evidence = EngineeringEvidence.objects.filter(user=member, source='GITHUB').first()
+    
+    if not evidence:
+        return Response({"summary": "No GitHub evidence available to summarize."})
+        
+    prompt = f"""
+    You are an engineering intelligence AI. Summarize the following developer's GitHub evidence in 2-3 short, factual sentences.
+    Focus on their primary languages, repository experience, and key technical skills. Do not invent any information.
+    
+    Developer: {member.username}
+    Total Repositories: {evidence.repository_count}
+    Repository Details: {evidence.repositories}
+    Technologies: {evidence.technology_evidence}
+    """
+    
+    try:
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(prompt)
+        return Response({"summary": response.text.strip()})
+    except Exception as e:
+        return Response({"summary": "Could not generate summary at this time.", "error": str(e)})
