@@ -1,4 +1,4 @@
-import { Search, Bell, Navigation } from 'lucide-react';
+import { Search, Bell, ArrowLeft } from 'lucide-react';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useNotificationStore } from '../../stores/notificationStore';
@@ -16,10 +16,6 @@ export default function ProjectHeader() {
     if (!isLoaded) {
       fetchNotifications();
     }
-    
-    // Listen for incoming notifications from WS (if we implemented a notification_event)
-    // For now we can also listen to engine_event as a stand-in if we want, but typically 
-    // notifications would be sent to a user-specific group. We'll leave the hook ready.
     const handleNotification = (e) => {
       addNotification(e.detail);
     };
@@ -28,17 +24,25 @@ export default function ProjectHeader() {
   }, [isLoaded, fetchNotifications, addNotification]);
 
   return (
-    <header className="h-16 border-b border-[var(--border-default)] bg-[var(--surface-raised)] flex items-center justify-between px-6">
+    <header className="h-12 border-b border-[var(--border-default)] bg-[var(--surface-raised)] flex items-center justify-between px-5">
       {/* Breadcrumb / Left Side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
-        <button 
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+        <button
+          id="header-back-to-workspace"
           onClick={() => navigate('/dashboard/projects')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '0', marginRight: '8px' }}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
+            gap: '5px', padding: '4px 8px', borderRadius: '6px',
+            fontSize: '12px', fontWeight: 500, transition: 'background 120ms',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#1c1c1c'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
-          <Navigation size={14} style={{ transform: 'rotate(-90deg)' }} />
+          <ArrowLeft size={13} strokeWidth={2} />
+          Projects
         </button>
-        <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Workspace</span>
-        <span style={{ color: 'var(--border-strong)' }}>/</span>
+        <span style={{ color: '#333' }}>/</span>
         <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{projectName}</span>
       </div>
 
