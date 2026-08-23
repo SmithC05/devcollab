@@ -31,7 +31,7 @@ import ProjectMyTeamPage from '../components/project/ProjectMyTeamPage';
 import AuthCallbackPage     from '../pages/AuthCallbackPage';
 import IntelligenceLayout        from '../features/devcollab-intelligence/pages/IntelligenceLayout';
 import FoundationPreviewPage     from '../features/devcollab-intelligence/pages/FoundationPreviewPage';
-import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence';
+import OrganizationIntelligence  from '../features/devcollab-intelligence/pages/OrganizationIntelligence/OrganizationIntelligence';
 import DecisionPoint             from '../features/devcollab-intelligence/pages/DecisionPoint';
 import SimulationCenter          from '../features/devcollab-intelligence/pages/SimulationCenter';
 import KnowledgeTransfer         from '../features/devcollab-intelligence/pages/KnowledgeTransfer';

@@ -12,7 +12,7 @@ import { DvCard, DvButton, DvBadge } from '../primitives/core';
 
 // Existing Pages
 import JudgeMode from './JudgeMode';
-import OrganizationIntelligence from './OrganizationIntelligence';
+import OrganizationIntelligence from './OrganizationIntelligence/OrganizationIntelligence';
 import DecisionPoint from './DecisionPoint';
 import SimulationCenter from './SimulationCenter';
 import KnowledgeTransfer from './KnowledgeTransfer';
