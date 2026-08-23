@@ -363,8 +363,10 @@ class WorkspaceMembersView(APIView):
                 "id": m.id,
                 "name": f"{m.first_name} {m.last_name}".strip() or m.username,
                 "email": m.email,
-                "role": mem.role,
+                "role": membership.role,
+                "avatar_url": avatar_url,
                 "status": "Active",
+                "joined_at": membership.created_at.isoformat() if hasattr(membership, 'created_at') and membership.created_at else None,
                 "last_active": "Just now"
             })
 
@@ -379,6 +381,7 @@ class WorkspaceMembersView(APIView):
                     "email": inv.email,
                     "role": inv.role,
                     "status": "Pending",
+                    "joined_at": None,
                     "last_active": "Sent just now"
                 })
         except Exception:
