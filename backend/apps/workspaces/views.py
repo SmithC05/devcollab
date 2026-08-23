@@ -302,6 +302,29 @@ class CreateInvitationView(APIView):
                 "message": "Invitation could not be sent."
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
+        from apps.realtime.services import EventService
+        from django.contrib.auth import get_user_model
+        
+        EventService.record_activity(
+            event_type='MEMBER_INVITED',
+            actor=request.user,
+            workspace=workspace,
+            payload={"email": email, "role": role, "name": name}
+        )
+        
+        # If user already exists in the system, send in-app notification
+        User = get_user_model()
+        existing_user = User.objects.filter(email__iexact=email).first()
+        if existing_user:
+            EventService.send_notification(
+                user=existing_user,
+                title="Workspace Invitation",
+                content=f"You have been invited to join {workspace.name} as {role}.",
+                event_type='MEMBER_INVITED',
+                workspace=workspace,
+                link=f"/invite/{invite_code}"
+            )
+            
         return Response({"success": True, "message": "Invitation sent successfully."}, status=status.HTTP_201_CREATED)
 
 class InvitationDetailView(APIView):
@@ -373,8 +396,26 @@ class AcceptInvitationView(APIView):
         invitation.accepted_at = timezone.now()
         invitation.save()
         
-        # We optionally log this activity if the system uses Django signals, otherwise we do it here.
-        # But we were instructed not to rewrite unrelated systems.
+        from apps.realtime.services import EventService
+        EventService.record_activity(
+            event_type='MEMBER_JOINED',
+            actor=request.user,
+            workspace=workspace,
+            payload={"role": invitation.role}
+        )
+        
+        # Notify admins/owner
+        admins = WorkspaceMembership.objects.filter(workspace=workspace, role__in=['OWNER', 'ADMIN']).select_related('user')
+        for admin_membership in admins:
+            if admin_membership.user != request.user:
+                EventService.send_notification(
+                    user=admin_membership.user,
+                    title="New Workspace Member",
+                    content=f"{request.user.first_name or request.user.username} joined {workspace.name}.",
+                    event_type='MEMBER_JOINED',
+                    workspace=workspace,
+                    link="/workspace/members"
+                )
         
         return Response({
             "success": True,

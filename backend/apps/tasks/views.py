@@ -44,67 +44,105 @@ class TaskViewSet(viewsets.ModelViewSet):
         user = self.request.user if self.request.user.is_authenticated else None
         task = serializer.save()
         
-        # Broadcast TASK_CREATED event
-        from apps.realtime.models import EngineEvent
-        from asgiref.sync import async_to_sync
-        from channels.layers import get_channel_layer
-        
+        from apps.realtime.services import EventService
         event_payload = {
             'task_id': task.id,
             'new_status': task.status,
             'task_data': self.get_serializer(task).data
         }
-        EngineEvent.objects.create(
+        EventService.record_activity(
             event_type='TASK_CREATED',
             actor=user,
+            workspace=task.project.workspace,
             project=task.project,
             task=task,
             payload=event_payload
         )
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            'workspace_global',
-            {
-                'type': 'engine_event',
-                'payload': {
-                    'event_type': 'TASK_CREATED',
-                    **event_payload
-                }
-            }
-        )
+        
+        if task.assignee:
+            EventService.record_activity(
+                event_type='TASK_ASSIGNED',
+                actor=user,
+                workspace=task.project.workspace,
+                project=task.project,
+                task=task,
+                payload=event_payload
+            )
+            if task.assignee != user:
+                EventService.send_notification(
+                    user=task.assignee,
+                    title="New Task Assignment",
+                    content=f"You were assigned '{task.title}'",
+                    event_type='TASK_ASSIGNED',
+                    workspace=task.project.workspace,
+                    project=task.project,
+                    link=f"/workspace/projects/{task.project.id}?task={task.id}"
+                )
 
     def perform_update(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
+        
+        # Capture old state
+        old_assignee = serializer.instance.assignee if serializer.instance else None
         task = serializer.save()
         
-        # Broadcast TASK_UPDATED event
-        from apps.realtime.models import EngineEvent
-        from asgiref.sync import async_to_sync
-        from channels.layers import get_channel_layer
-        
+        from apps.realtime.services import EventService
         event_payload = {
             'task_id': task.id,
             'new_status': task.status,
             'task_data': self.get_serializer(task).data
         }
-        EngineEvent.objects.create(
+        EventService.record_activity(
             event_type='TASK_UPDATED',
             actor=user,
+            workspace=task.project.workspace,
             project=task.project,
             task=task,
             payload=event_payload
         )
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            'workspace_global',
-            {
-                'type': 'engine_event',
-                'payload': {
-                    'event_type': 'TASK_UPDATED',
-                    **event_payload
-                }
-            }
-        )
+        
+        # Check if assignee changed
+        if task.assignee != old_assignee:
+            if task.assignee:
+                EventService.record_activity(
+                    event_type='TASK_ASSIGNED',
+                    actor=user,
+                    workspace=task.project.workspace,
+                    project=task.project,
+                    task=task,
+                    payload=event_payload
+                )
+                if task.assignee != user:
+                    actor_name = user.username if user else "Someone"
+                    EventService.send_notification(
+                        user=task.assignee,
+                        title="Task Assigned",
+                        content=f"{actor_name} assigned '{task.title}' to you.",
+                        event_type='TASK_ASSIGNED',
+                        workspace=task.project.workspace,
+                        project=task.project,
+                        link=f"/workspace/projects/{task.project.id}?task={task.id}"
+                    )
+            elif old_assignee:
+                EventService.record_activity(
+                    event_type='TASK_UNASSIGNED',
+                    actor=user,
+                    workspace=task.project.workspace,
+                    project=task.project,
+                    task=task,
+                    payload=event_payload
+                )
+                if old_assignee != user:
+                    actor_name = user.username if user else "Someone"
+                    EventService.send_notification(
+                        user=old_assignee,
+                        title="Task Unassigned",
+                        content=f"You were removed from '{task.title}'.",
+                        event_type='TASK_UNASSIGNED',
+                        workspace=task.project.workspace,
+                        project=task.project,
+                        link=f"/workspace/projects/{task.project.id}?task={task.id}"
+                    )
 
     @action(detail=True, methods=['post'])
     def move(self, request, pk=None):

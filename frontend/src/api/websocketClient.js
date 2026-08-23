@@ -15,10 +15,11 @@ class WebSocketClient {
     if (this.isConnecting || (this.socket && this.socket.readyState === WebSocket.OPEN)) return;
     this.isConnecting = true;
 
-    const { sessionToken } = useAuthStore.getState();
+    const { sessionToken, activeWorkspace } = useAuthStore.getState();
+    const workspaceId = activeWorkspace ? `${activeWorkspace.id}/` : '';
     // Build URL — include token if available (for presence), but connect regardless for realtime events
     const tokenParam = sessionToken ? `?token=${sessionToken}` : '';
-    this.socket = new WebSocket(`${WS_BASE_URL}/workspace/${tokenParam}`);
+    this.socket = new WebSocket(`${WS_BASE_URL}/workspace/${workspaceId}${tokenParam}`);
 
     this.socket.onopen = () => {
       this.isConnecting = false;
@@ -35,6 +36,8 @@ class WebSocketClient {
       } else if (data.type === 'engine_event') {
         // Handle engine events (e.g., task moved) later
         document.dispatchEvent(new CustomEvent('engine_event', { detail: data.payload }));
+      } else if (data.type === 'notification') {
+        document.dispatchEvent(new CustomEvent('notification_created', { detail: data.payload }));
       } else if (data.type === 'task_view_update') {
         if (data.status === 'STARTED') {
           usePresenceStore.getState().addTaskViewer(data.task_id, data.user_id);

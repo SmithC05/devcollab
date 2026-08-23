@@ -19,7 +19,8 @@ class TaskService:
         
         task.save()
         
-        # Create EngineEvent
+        # Create EngineEvent and broadcast using EventService
+        from apps.realtime.services import EventService
         event_payload = {
             'task_id': task.id,
             'old_status': old_status,
@@ -27,22 +28,26 @@ class TaskService:
             'task_data': TaskSerializer(task).data
         }
         
-        event = EngineEvent.objects.create(
+        EventService.record_activity(
             event_type='TASK_MOVED',
             actor=user,
+            workspace=task.project.workspace,
             project=task.project,
             task=task,
             payload=event_payload
         )
         
-        # Broadcast to workspace
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            'workspace_global',
-            {
-                'type': 'engine_event',
-                'payload': event_payload
-            }
-        )
+        # Notify the assignee if someone else moved their task
+        if task.assignee and task.assignee != user:
+            actor_name = user.username if user else "Someone"
+            EventService.send_notification(
+                user=task.assignee,
+                title="Task Status Changed",
+                content=f"{actor_name} moved '{task.title}' to {task.status}.",
+                event_type='TASK_STATUS_CHANGED',
+                workspace=task.project.workspace,
+                project=task.project,
+                link=f"/workspace/projects/{task.project.id}?task={task.id}"
+            )
         
         return task

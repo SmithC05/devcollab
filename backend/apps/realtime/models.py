@@ -43,6 +43,9 @@ class Notification(models.Model):
     content = models.TextField(blank=True)
     event_type = models.CharField(max_length=100)
     link = models.CharField(max_length=255, blank=True)
+    workspace = models.ForeignKey('workspaces.Workspace', on_delete=models.SET_NULL, null=True, blank=True)
+    project = models.ForeignKey('projects.Project', on_delete=models.SET_NULL, null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
     read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -37,6 +37,19 @@ export const useNotificationStore = create((set, get) => ({
     }
   },
 
+  markAllRead: async () => {
+    try {
+      const { realtimeApi } = await import('../api/realtimeApi');
+      await realtimeApi.markAllNotificationsRead();
+      set(state => {
+        const updated = state.notifications.map(n => ({ ...n, read: true }));
+        return { notifications: updated, unreadCount: 0 };
+      });
+    } catch (error) {
+      console.error('Failed to mark all read', error);
+    }
+  },
+
   addNotification: (notification) => {
     set(state => ({
       notifications: [notification, ...state.notifications],

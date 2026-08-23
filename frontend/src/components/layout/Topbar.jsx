@@ -5,13 +5,18 @@ import { useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { IconButton } from '../ui';
 import { useAuthStore } from '../../stores/authStore';
+import { useNotificationStore } from '../../stores/notificationStore';
+import { Check } from 'lucide-react';
 
 // BUG-15 FIX: workspaceName prop removed; read from store directly
 export default function Topbar({ onMenuClick }) {
   const { user, activeWorkspace } = useAuthStore();
   const workspaceName = activeWorkspace?.name || 'Workspace';
   const [isFocused, setIsFocused] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
+  
+  const { notifications, unreadCount, isLoaded, fetchNotifications, markAsRead, markAllRead, addNotification } = useNotificationStore();
   const { theme, toggleTheme } = useTheme();
   
   const userName = user?.first_name
@@ -45,6 +50,20 @@ export default function Topbar({ onMenuClick }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Fetch initial notifications and setup event listener
+  useEffect(() => {
+    if (user && !isLoaded) {
+      fetchNotifications();
+    }
+    
+    const handleNewNotification = (e) => {
+      addNotification(e.detail);
+    };
+    
+    document.addEventListener('notification_created', handleNewNotification);
+    return () => document.removeEventListener('notification_created', handleNewNotification);
+  }, [user, isLoaded, fetchNotifications, addNotification]);
 
   return (
     <motion.header
@@ -120,11 +139,44 @@ export default function Topbar({ onMenuClick }) {
               <IconButton 
                 icon={Bell} 
                 size={15} 
-                className="w-8 h-8 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`w-8 h-8 rounded-full transition-colors ${showNotifications ? 'text-[var(--text-primary)] bg-[var(--surface-hover)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]'}`}
                 title="Notifications"
               />
               {/* Notification Badge */}
-              <div className="absolute top-[6px] right-[6px] w-[6px] h-[6px] rounded-full bg-green-500 pointer-events-none shadow-[0_0_0_2px_var(--bg)]" />
+              {unreadCount > 0 && (
+                <div className="absolute top-[6px] right-[6px] w-[8px] h-[8px] rounded-full bg-red-500 flex items-center justify-center text-[8px] text-white font-bold pointer-events-none shadow-[0_0_0_2px_var(--bg)]" />
+              )}
+              
+              {/* Notification Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-md shadow-lg z-50 flex flex-col">
+                  <div className="flex items-center justify-between p-3 border-b border-[var(--border-subtle)] sticky top-0 bg-[var(--surface-raised)]">
+                    <h3 className="text-sm font-semibold text-[var(--text-primary)]">Notifications</h3>
+                    {unreadCount > 0 && (
+                        <button onClick={markAllRead} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                        Mark all as read
+                        </button>
+                    )}
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-[var(--text-muted)] text-sm">No notifications</div>
+                  ) : (
+                    <div className="flex flex-col">
+                      {notifications.map(n => (
+                        <div key={n.id} className={`p-3 border-b border-[var(--border-subtle)] last:border-0 hover:bg-[var(--surface-hover)] transition-colors cursor-pointer flex flex-col gap-1 ${!n.read ? 'bg-[var(--surface-item)]' : ''}`} onClick={() => !n.read && markAsRead(n.id)}>
+                          <div className="flex justify-between items-start">
+                            <span className="text-[13px] font-medium text-[var(--text-primary)]">{n.title}</span>
+                            {!n.read && <div className="w-2 h-2 rounded-full bg-blue-500 mt-1" />}
+                          </div>
+                          <span className="text-[12px] text-[var(--text-secondary)]">{n.content}</span>
+                          <span className="text-[10px] text-[var(--text-muted)] mt-1">{new Date(n.created_at).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

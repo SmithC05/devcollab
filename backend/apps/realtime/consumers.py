@@ -19,13 +19,22 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
         if self.user_id is None and scope_user and scope_user.is_authenticated:
             self.user_id = scope_user.id
 
-        self.room_group_name = 'workspace_global'
+        self.workspace_id = self.scope['url_route']['kwargs'].get('workspace_id')
+        self.workspace_group_name = f'workspace_{self.workspace_id}' if self.workspace_id else 'workspace_global'
+        self.user_group_name = f'user_{self.user_id}' if self.user_id else None
 
-        # Join room group — allow all connections for realtime board events
+        # Join workspace room group
         await self.channel_layer.group_add(
-            self.room_group_name,
+            self.workspace_group_name,
             self.channel_name
         )
+
+        # Join personal user group for notifications
+        if self.user_group_name:
+            await self.channel_layer.group_add(
+                self.user_group_name,
+                self.channel_name
+            )
 
         await self.accept()
 
@@ -35,7 +44,7 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
         # Broadcast presence update if we have a user
         if self.user_id:
             await self.channel_layer.group_send(
-                self.room_group_name,
+                self.workspace_group_name,
                 {
                     'type': 'presence_update',
                     'user_id': self.user_id,
@@ -44,11 +53,16 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
             )
 
     async def disconnect(self, close_code):
-        # Leave room group
+        # Leave room groups
         await self.channel_layer.group_discard(
-            self.room_group_name,
+            self.workspace_group_name,
             self.channel_name
         )
+        if hasattr(self, 'user_group_name') and self.user_group_name:
+            await self.channel_layer.group_discard(
+                self.user_group_name,
+                self.channel_name
+            )
         
         # Mark as offline
         if hasattr(self, 'session_token'):
@@ -56,7 +70,7 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
             
             # Broadcast offline status
             await self.channel_layer.group_send(
-                self.room_group_name,
+                self.workspace_group_name,
                 {
                     'type': 'presence_update',
                     'user_id': self.user_id,
@@ -68,7 +82,7 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
             has_critical = await self.check_critical_tasks()
             if has_critical:
                 await self.channel_layer.group_send(
-                    self.room_group_name,
+                    self.workspace_group_name,
                     {
                         'type': 'engine_event',
                         'payload': {
@@ -90,7 +104,7 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
             status = data.get('status')
             await self.update_status(status)
             await self.channel_layer.group_send(
-                self.room_group_name,
+                self.workspace_group_name,
                 {
                     'type': 'presence_update',
                     'user_id': self.user_id,
@@ -105,7 +119,7 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
             task_id = data.get('task_id')
             status = data.get('status')
             await self.channel_layer.group_send(
-                self.room_group_name,
+                self.workspace_group_name,
                 {
                     'type': 'task_view_update',
                     'user_id': self.user_id,
@@ -132,6 +146,12 @@ class WorkspaceConsumer(AsyncWebsocketConsumer):
     async def engine_event(self, event):
         await self.send(text_data=json.dumps({
             'type': 'engine_event',
+            'payload': event['payload']
+        }))
+        
+    async def notification_event(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'notification',
             'payload': event['payload']
         }))
 

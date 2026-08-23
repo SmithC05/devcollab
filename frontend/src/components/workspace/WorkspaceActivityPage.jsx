@@ -26,6 +26,12 @@ export default function WorkspaceActivityPage() {
       }
     };
     fetchActivity();
+    
+    const handleEngineEvent = () => {
+      fetchActivity(); // Refresh when an event occurs
+    };
+    document.addEventListener('engine_event', handleEngineEvent);
+    return () => document.removeEventListener('engine_event', handleEngineEvent);
   }, [activeWorkspace?.id]);
 
   return (
@@ -76,9 +82,23 @@ export default function WorkspaceActivityPage() {
               {(!data?.heatmap || data.heatmap.length === 0) ? (
                 <EmptyState description="No activity recorded yet." />
               ) : (
-                <div className="flex items-center gap-1">
-                  {/* Real heatmap data would render here */}
-                </div>
+                  <div className="flex gap-1 overflow-x-auto pb-2">
+                    {data.heatmap.map((day, i) => {
+                      const count = day.count;
+                      let colorClass = 'bg-[var(--surface-item)] border border-[var(--border-subtle)]';
+                      if (count > 0 && count <= 2) colorClass = 'bg-blue-900 border border-blue-800';
+                      else if (count > 2 && count <= 5) colorClass = 'bg-blue-700 border border-blue-600';
+                      else if (count > 5) colorClass = 'bg-blue-500 border border-blue-400';
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          className={`w-5 h-5 rounded-[4px] shrink-0 ${colorClass}`}
+                          title={`${new Date(day.date).toLocaleDateString()}: ${count} events`}
+                        />
+                      );
+                    })}
+                  </div>
               )}
             </div>
           </Card>
@@ -107,9 +127,21 @@ export default function WorkspaceActivityPage() {
                       <div className="absolute -left-[13px] top-1 w-[22px] h-[22px] bg-[var(--surface-item)] rounded-full border-2 border-[var(--surface-card)] flex items-center justify-center">
                         <div className="w-2 h-2 bg-blue-500 rounded-full" />
                       </div>
-                      <div className="bg-[var(--surface-item)] border border-[var(--border-subtle)] p-3.5 rounded-lg">
-                        <p className="text-[13px] text-[var(--fg)] mb-0.5">{event.action_text}</p>
-                        <p className="text-[11px] text-[var(--text-muted)]">{event.timestamp}</p>
+                      <div className="bg-[var(--surface-item)] border border-[var(--border-subtle)] p-3.5 rounded-lg flex items-start gap-3">
+                        {event.avatar ? (
+                            <img src={event.avatar} alt="avatar" className="w-8 h-8 rounded-full shrink-0" />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-[var(--surface-raised)] border border-[var(--border-strong)] flex items-center justify-center text-[12px] shrink-0">
+                                {event.actor.charAt(0).toUpperCase()}
+                            </div>
+                        )}
+                        <div>
+                          <p className="text-[13px] text-[var(--fg)] mb-0.5">
+                              <span className="font-semibold">{event.actor}</span> {event.action} 
+                              <span className="text-[var(--text-muted)] ml-1">in {event.target}</span>
+                          </p>
+                          <p className="text-[11px] text-[var(--text-muted)]">{new Date(event.timestamp).toLocaleString()}</p>
+                        </div>
                       </div>
                     </motion.div>
                   ))}

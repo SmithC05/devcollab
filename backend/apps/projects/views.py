@@ -312,6 +312,16 @@ class ProjectListView(APIView):
         if not name or not str(name).strip():
             return Response({"error": "Project name is required"}, status=400)
         project = Project.objects.create(name=str(name).strip(), workspace=workspace)
+        
+        from apps.realtime.services import EventService
+        EventService.record_activity(
+            event_type='PROJECT_CREATED',
+            actor=request.user,
+            workspace=workspace,
+            project=project,
+            payload={"name": project.name}
+        )
+        
         return Response({
             "id": project.id, "name": project.name,
             "description": f"Project for {project.name}",
@@ -325,17 +335,100 @@ class WorkspaceActivityView(APIView):
 
     def get(self, request):
         from apps.workspaces.permissions import get_current_workspace
+        from apps.realtime.models import EngineEvent
+        from django.utils import timezone
+        import datetime
+        from django.db.models import Count
+        from django.db.models.functions import TruncDate
+
         workspace = get_current_workspace(request)
-        if not workspace: return Response({})
+        if not workspace: return Response({"error": "Workspace not found"}, status=404)
+        
+        # Stats
+        total_events = EngineEvent.objects.filter(workspace=workspace).count()
+        today = timezone.now().date()
+        today_events = EngineEvent.objects.filter(workspace=workspace, timestamp__date=today).count()
         projects = Project.objects.filter(workspace=workspace, is_active=True).count()
+        
+        # 14-day Heatmap
+        fourteen_days_ago = today - datetime.timedelta(days=13)
+        daily_counts = EngineEvent.objects.filter(
+            workspace=workspace, 
+            timestamp__date__gte=fourteen_days_ago
+        ).annotate(date=TruncDate('timestamp')).values('date').annotate(count=Count('id')).order_by('date')
+        
+        count_map = {item['date']: item['count'] for item in daily_counts if item['date']}
+        heatmap = []
+        for i in range(14):
+            day = fourteen_days_ago + datetime.timedelta(days=i)
+            heatmap.append({
+                "date": day.isoformat(),
+                "count": count_map.get(day, 0)
+            })
+            
+        # Recent Activity (last 20)
+        recent_events = EngineEvent.objects.filter(workspace=workspace).order_by('-timestamp')[:20]
+        recent_activity = []
+        for event in recent_events:
+            actor_name = "System"
+            avatar_url = None
+            if event.actor:
+                actor_name = f"{event.actor.first_name} {event.actor.last_name}".strip() or event.actor.username
+                try:
+                    from apps.authentication.models import UserProfile
+                    profile = UserProfile.objects.filter(user=event.actor).first()
+                    if profile and profile.avatar_url:
+                        avatar_url = profile.avatar_url
+                        if avatar_url.startswith('/'):
+                            backend_url = request.build_absolute_uri('/').rstrip('/')
+                            avatar_url = f"{backend_url}{avatar_url}"
+                except Exception:
+                    pass
+                    
+            # Generate human-readable action text
+            action_text = "performed an action"
+            target = event.project.name if event.project else workspace.name
+            
+            if event.event_type == 'TASK_CREATED':
+                action_text = f"created task '{event.task.title if event.task else 'Unknown'}'"
+            elif event.event_type == 'TASK_UPDATED':
+                action_text = f"updated task '{event.task.title if event.task else 'Unknown'}'"
+            elif event.event_type == 'TASK_ASSIGNED':
+                assignee_id = event.payload.get('task_data', {}).get('assignee')
+                if assignee_id and assignee_id == (event.actor.id if event.actor else None):
+                    action_text = f"self-assigned task '{event.task.title if event.task else 'Unknown'}'"
+                else:
+                    action_text = f"assigned task '{event.task.title if event.task else 'Unknown'}'"
+            elif event.event_type == 'TASK_UNASSIGNED':
+                action_text = f"removed assignee from task '{event.task.title if event.task else 'Unknown'}'"
+            elif event.event_type == 'TASK_MOVED' or event.event_type == 'TASK_STATUS_CHANGED':
+                new_status = event.payload.get('new_status', 'Unknown')
+                action_text = f"moved task '{event.task.title if event.task else 'Unknown'}' to {new_status}"
+            elif event.event_type == 'PROJECT_CREATED':
+                action_text = f"created project '{event.project.name if event.project else 'Unknown'}'"
+            elif event.event_type == 'MEMBER_INVITED':
+                invited_name = event.payload.get('name') or event.payload.get('email', 'someone')
+                action_text = f"invited {invited_name} to the workspace"
+            elif event.event_type == 'MEMBER_JOINED':
+                action_text = "joined the workspace"
+                
+            recent_activity.append({
+                "id": event.id,
+                "actor": actor_name,
+                "avatar": avatar_url,
+                "action": action_text,
+                "target": target,
+                "timestamp": event.timestamp.isoformat(),
+                "event_type": event.event_type
+            })
+
         return Response({
-            "total_events": 0, "today_events": 0,
-            "active_projects": projects, "recent_activity": [], "heatmap": []
+            "total_events": total_events, 
+            "today_events": today_events,
+            "active_projects": projects, 
+            "recent_activity": recent_activity, 
+            "heatmap": heatmap
         })
-
-
-
-from apps.workspaces.permissions import check_workspace_role
 
 class WorkspaceMembersView(APIView):
     """Fixed: uses actual WorkspaceMembership.role instead of is_superuser heuristic."""

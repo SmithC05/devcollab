@@ -16,12 +16,17 @@ class EngineEventViewSet(viewsets.ReadOnlyModelViewSet):
 
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
-    
-    def get_queryset(self):
-        # Allow unauthorized users to see all notifications for now since this is a prototype without real tokens in requests.
-        return Notification.objects.all().order_by('-created_at')
+    permission_classes = [permissions.IsAuthenticated]
 
-    @action(detail=True, methods=['post'])
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+
+    @action(detail=False, methods=['get'], url_path='unread-count')
+    def unread_count(self, request):
+        count = self.get_queryset().filter(read=False).count()
+        return Response({'unread_count': count})
+
+    @action(detail=True, methods=['post', 'patch'])
     def mark_read(self, request, pk=None):
         notification = self.get_object()
         notification.read = True
