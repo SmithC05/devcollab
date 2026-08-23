@@ -1,4 +1,5 @@
 import { useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useActivityStore, TYPE_COLORS } from '../../stores/activityStore';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 
@@ -19,13 +20,12 @@ const TYPE_ICONS = {
   comment: '💬',
 };
 
-// GitHub-style contribution colors
 function getIntensityColor(count) {
-  if (count === 0) return '#161b22'; // Empty
-  if (count <= 2)  return '#0e4429'; // Light green
-  if (count <= 4)  return '#006d32'; // Medium green
-  if (count <= 6)  return '#26a641'; // Bright green
-  return '#39d353'; // Very bright green
+  if (count === 0) return '#161b22';
+  if (count <= 2)  return '#0e4429';
+  if (count <= 4)  return '#006d32';
+  if (count <= 6)  return '#26a641';
+  return '#39d353';
 }
 
 function groupEventsByDay(events) {
@@ -41,23 +41,37 @@ function groupEventsByDay(events) {
   return groups;
 }
 
-export default function ProjectActivityPage({ projectId = 1 }) {
-  const { activityGrid, activeFilter, setFilter, getFilteredEvents, fetchEvents, isLoaded, addEvent } = useActivityStore();
+export default function ProjectActivityPage() {
+  // Always pull projectId from route — never use a default/hardcoded value
+  const { projectId } = useParams();
+
+  const {
+    activityGrid, activeFilter, setFilter,
+    getFilteredEvents, fetchEvents, addEvent, reset,
+  } = useActivityStore();
+
   const filteredEvents = getFilteredEvents();
   const grouped = useMemo(() => groupEventsByDay(filteredEvents), [filteredEvents]);
 
   useEffect(() => {
-    if (!isLoaded) {
-      fetchEvents(projectId);
-    }
-    
+    // Fetch events for THIS project — store compares loadedProjectId internally
+    fetchEvents(projectId);
+
     const handleEngineEvent = (e) => {
-      addEvent(e.detail);
+      // Only add if the event belongs to this project
+      if (!e.detail?.project_id || String(e.detail.project_id) === String(projectId)) {
+        addEvent(e.detail);
+      }
     };
-    
+
     document.addEventListener('engine_event', handleEngineEvent);
-    return () => document.removeEventListener('engine_event', handleEngineEvent);
-  }, [projectId, isLoaded, fetchEvents, addEvent]);
+
+    return () => {
+      document.removeEventListener('engine_event', handleEngineEvent);
+      // Reset when leaving so the next project always loads fresh data
+      reset();
+    };
+  }, [projectId]); // re-runs whenever projectId changes
 
   const weeks = useMemo(() => {
     const result = [];
@@ -74,7 +88,9 @@ export default function ProjectActivityPage({ projectId = 1 }) {
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 700, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>Activity</h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Project contribution history and event timeline.</p>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
+          Project contribution history and event timeline.
+        </p>
       </div>
 
       {/* Contribution Graph */}
@@ -99,7 +115,13 @@ export default function ProjectActivityPage({ projectId = 1 }) {
           {weeks.map((week, wi) => (
             <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {week.map((day, di) => (
-                <div key={di} title={`${day.date}: ${day.count} activities`} style={{ width: '12px', height: '12px', borderRadius: '2px', background: getIntensityColor(day.count), cursor: 'pointer', transition: 'transform 150ms', outline: '1px solid rgba(255,255,255,0.02)' }} onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'} onMouseLeave={(e) => e.target.style.transform = 'scale(1)'} />
+                <div
+                  key={di}
+                  title={`${day.date}: ${day.count} activities`}
+                  style={{ width: '12px', height: '12px', borderRadius: '2px', background: getIntensityColor(day.count), cursor: 'pointer', transition: 'transform 150ms', outline: '1px solid rgba(255,255,255,0.02)' }}
+                  onMouseEnter={e => e.target.style.transform = 'scale(1.2)'}
+                  onMouseLeave={e => e.target.style.transform = 'scale(1)'}
+                />
               ))}
             </div>
           ))}
@@ -153,7 +175,11 @@ export default function ProjectActivityPage({ projectId = 1 }) {
             </div>
           </div>
         ))}
-        {filteredEvents.length === 0 && <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px', fontSize: '14px' }}>No events for this filter.</div>}
+        {filteredEvents.length === 0 && (
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px', fontSize: '14px' }}>
+            No events recorded for this project yet.
+          </div>
+        )}
       </div>
     </div>
   );

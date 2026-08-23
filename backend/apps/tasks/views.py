@@ -3,11 +3,20 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Task
 from .serializers import TaskSerializer
+from .permissions import TaskManagementPermission
 from django.shortcuts import get_object_or_404
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     queryset = Task.objects.all()
+    permission_classes = [TaskManagementPermission]
+
+    def get_object(self):
+        """Override to ensure has_object_permission is always called."""
+        queryset = self.filter_queryset(self.get_queryset())
+        obj = get_object_or_404(queryset, pk=self.kwargs['pk'])
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     def get_queryset(self):
         queryset = Task.objects.all()
@@ -99,16 +108,15 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def move(self, request, pk=None):
+        # get_object() triggers has_object_permission — Dev blocked on others' tasks
+        task = self.get_object()
         from .services import TaskService
         new_status = request.data.get('status')
-        
         user = request.user if request.user.is_authenticated else None
-        
-        task = TaskService.move_task(pk, new_status, user)
-        if not task:
-            return Response({'error': 'Task not found or invalid'}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer(task)
+        updated_task = TaskService.move_task(task.id, new_status, user)
+        if not updated_task:
+            return Response({'error': 'Task not found or invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(updated_task)
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'], url_path='engineering-context')

@@ -38,7 +38,10 @@ def agent_execute_action(request):
         user_id = params.get("user_id")
         
         try:
-            task = Task.objects.get(id=task_id)
+            task = Task.objects.select_related('project__workspace').get(id=task_id)
+            # RBAC: only OWNER/ADMIN/LEAD may assign tasks via AI actions
+            from apps.tasks.permissions import assert_task_permission
+            assert_task_permission(request.user, task, 'assign')
             task.assignee_id = user_id
             task.save()
             

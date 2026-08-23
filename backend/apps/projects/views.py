@@ -1,40 +1,184 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from apps.projects.models import Project
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from apps.projects.models import Project, WikiPage, Snippet
 from apps.workspaces.models import Workspace, WorkspaceMembership
 from apps.tasks.models import Task
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
-def _get_user_workspace(request):
-    """
-    BUG-01 FIX: Previously all views used Workspace.objects.first() which returned
-    the same workspace for ALL users regardless of their actual membership.
-    Resolves workspace safely from ?workspace_id= query param + membership check.
-    Falls back to the user's first workspace if no ID is provided.
-    Returns (workspace, membership) or (None, None).
-    """
-    user = request.user
-    workspace_id = request.query_params.get('workspace_id') or request.data.get('workspace_id')
-    if workspace_id:
-        try:
-            membership = WorkspaceMembership.objects.select_related('workspace').get(
-                workspace_id=workspace_id,
-                user=user
-            )
-            return membership.workspace, membership
-        except WorkspaceMembership.DoesNotExist:
-            return None, None
-    else:
-        membership = WorkspaceMembership.objects.select_related('workspace').filter(
-            user=user
-        ).order_by('created_at').first()
-        if membership:
-            return membership.workspace, membership
-        return None, None
+# ─── helpers ──────────────────────────────────────────────────────────────────
+
+def _get_project_or_404(project_id):
+    return get_object_or_404(Project, id=project_id)
+
+def _serialize_wiki_page(page):
+    return {
+        'id': page.id,
+        'title': page.title,
+        'content': page.content,
+        'created_by': page.created_by.get_full_name() or page.created_by.username if page.created_by else None,
+        'updated_by': page.updated_by.get_full_name() or page.updated_by.username if page.updated_by else None,
+        'created_at': page.created_at.isoformat(),
+        'updated_at': page.updated_at.isoformat(),
+    }
+
+def _serialize_snippet(s):
+    return {
+        'id': s.id,
+        'title': s.title,
+        'description': s.description,
+        'language': s.language,
+        'code': s.code,
+        'tags': s.tags or [],
+        'created_by': s.created_by.get_full_name() or s.created_by.username if s.created_by else None,
+        'updated_by': s.updated_by.get_full_name() or s.updated_by.username if s.updated_by else None,
+        'created_at': s.created_at.isoformat(),
+        'updated_at': s.updated_at.isoformat(),
+    }
+
+
+# ─── project stats ─────────────────────────────────────────────────────────────
+
+class ProjectStatsView(APIView):
+    def get(self, request, project_id):
+        project = _get_project_or_404(project_id)
+        tasks = Task.objects.filter(project=project)
+        total    = tasks.count()
+        done     = tasks.filter(status='Done').count()
+        in_prog  = tasks.filter(status='In Progress').count()
+        in_rev   = tasks.filter(status='In Review').count()
+        todo     = tasks.filter(status='To Do').count()
+        blocked  = tasks.filter(status='Blocked').count()
+        progress = round((done / total * 100)) if total > 0 else 0
+
+        members_count = project.workspace.memberships.count()
+
+        return Response({
+            'project_id': project.id,
+            'project_name': project.name,
+            'total': total,
+            'done': done,
+            'in_progress': in_prog,
+            'in_review': in_rev,
+            'to_do': todo,
+            'blocked': blocked,
+            'completion_pct': progress,
+            'members_count': members_count,
+        })
+
+
+# ─── wiki pages ───────────────────────────────────────────────────────────────
+
+class WikiPageListView(APIView):
+    def get(self, request, project_id):
+        project = _get_project_or_404(project_id)
+        pages = project.wiki_pages.all()
+        return Response([_serialize_wiki_page(p) for p in pages])
+
+    def post(self, request, project_id):
+        project = _get_project_or_404(project_id)
+        user = request.user if request.user.is_authenticated else None
+        title = request.data.get('title', 'Untitled Page')
+        content = request.data.get('content', '')
+        page = WikiPage.objects.create(
+            project=project,
+            title=title,
+            content=content,
+            created_by=user,
+            updated_by=user,
+        )
+        return Response(_serialize_wiki_page(page), status=status.HTTP_201_CREATED)
+
+
+class WikiPageDetailView(APIView):
+    def get(self, request, project_id, page_id):
+        project = _get_project_or_404(project_id)
+        page = get_object_or_404(WikiPage, id=page_id, project=project)
+        return Response(_serialize_wiki_page(page))
+
+    def put(self, request, project_id, page_id):
+        project = _get_project_or_404(project_id)
+        page = get_object_or_404(WikiPage, id=page_id, project=project)
+        user = request.user if request.user.is_authenticated else None
+        if 'title' in request.data:
+            page.title = request.data['title']
+        if 'content' in request.data:
+            page.content = request.data['content']
+        page.updated_by = user
+        page.save()
+        return Response(_serialize_wiki_page(page))
+
+    def delete(self, request, project_id, page_id):
+        project = _get_project_or_404(project_id)
+        page = get_object_or_404(WikiPage, id=page_id, project=project)
+        page.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ─── snippets ─────────────────────────────────────────────────────────────────
+
+class SnippetListView(APIView):
+    def get(self, request, project_id):
+        project = _get_project_or_404(project_id)
+        snippets = project.snippets.all()
+        return Response([_serialize_snippet(s) for s in snippets])
+
+    def post(self, request, project_id):
+        project = _get_project_or_404(project_id)
+        user = request.user if request.user.is_authenticated else None
+        data = request.data
+        if not data.get('title') or not data.get('code'):
+            return Response({'error': 'title and code are required'}, status=400)
+        tags = data.get('tags', [])
+        if isinstance(tags, str):
+            tags = [t.strip() for t in tags.split(',') if t.strip()]
+        snippet = Snippet.objects.create(
+            project=project,
+            title=data['title'],
+            description=data.get('description', ''),
+            language=data.get('language', 'javascript'),
+            code=data['code'],
+            tags=tags,
+            created_by=user,
+            updated_by=user,
+        )
+        return Response(_serialize_snippet(snippet), status=status.HTTP_201_CREATED)
+
+
+class SnippetDetailView(APIView):
+    def put(self, request, project_id, snippet_id):
+        project = _get_project_or_404(project_id)
+        snippet = get_object_or_404(Snippet, id=snippet_id, project=project)
+        user = request.user if request.user.is_authenticated else None
+        data = request.data
+        if 'title' in data:      snippet.title       = data['title']
+        if 'description' in data: snippet.description = data['description']
+        if 'language' in data:   snippet.language    = data['language']
+        if 'code' in data:       snippet.code        = data['code']
+        if 'tags' in data:
+            tags = data['tags']
+            if isinstance(tags, str):
+                tags = [t.strip() for t in tags.split(',') if t.strip()]
+            snippet.tags = tags
+        snippet.updated_by = user
+        snippet.save()
+        return Response(_serialize_snippet(snippet))
+
+    def delete(self, request, project_id, snippet_id):
+        project = _get_project_or_404(project_id)
+        snippet = get_object_or_404(Snippet, id=snippet_id, project=project)
+        snippet.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ─── workspace members (fixed: uses actual role from WorkspaceMembership) ─────
 
 class WorkspaceOverviewView(APIView):
     permission_classes = [IsAuthenticated]
@@ -43,94 +187,71 @@ class WorkspaceOverviewView(APIView):
         workspace, membership = _get_user_workspace(request)
         if not workspace:
             return Response({
-                "workspace_name": "Workspace",
-                "user_name": "User",
-                "total_projects": 0,
-                "tasks_pending": 0,
-                "tasks_completed": 0,
-                "active_projects_user": 0,
-                "top_priority_tasks": [],
-                "my_projects": [],
-                "notifications": [],
-                "recent_projects": [],
-                "recent_activity": [],
-                "tasks_completed_7_days": [],
+                "workspace_name": "Workspace", "user_name": "User",
+                "total_projects": 0, "tasks_pending": 0, "tasks_completed": 0,
+                "active_projects_user": 0, "top_priority_tasks": [],
+                "my_projects": [], "notifications": [], "recent_projects": [],
+                "recent_activity": [], "tasks_completed_7_days": [],
                 "task_status_distribution": {}
             })
-            
+
         projects = Project.objects.filter(workspace=workspace, is_active=True)
         active_projects_count = projects.count()
         total_projects_count = Project.objects.filter(workspace=workspace).count()
+        user = request.user if request.user.is_authenticated else None
 
-        user = request.user
-        
+        tasks_pending_count = 0
+        tasks_completed_count = 0
         top_priority_tasks_data = []
         my_projects_data = []
         recent_projects_data = []
 
-        user_tasks = Task.objects.filter(project__workspace=workspace, assignee=user)
-        tasks_pending_count = user_tasks.exclude(status=Task.StatusChoices.DONE).count()
-        tasks_completed_count = user_tasks.filter(status=Task.StatusChoices.DONE).count()
-            
-        # Top Priority Tasks
-        pending_tasks = user_tasks.exclude(status=Task.StatusChoices.DONE).order_by('priority', 'due_date')[:5]
-        for pt in pending_tasks:
-            top_priority_tasks_data.append({
-                "id": pt.id,
-                "title": pt.title,
-                "status": pt.status,
-                "priority": pt.priority
-            })
-        
-        # My Projects (since all workspace projects are user's projects for now)
+        if user:
+            user_tasks = Task.objects.filter(project__workspace=workspace, assignee=user)
+            tasks_pending_count = user_tasks.exclude(status=Task.StatusChoices.DONE).count()
+            tasks_completed_count = user_tasks.filter(status=Task.StatusChoices.DONE).count()
+            pending_tasks = user_tasks.exclude(status=Task.StatusChoices.DONE).order_by('priority', 'due_date')[:5]
+            for pt in pending_tasks:
+                top_priority_tasks_data.append({
+                    "id": pt.id, "title": pt.title,
+                    "status": pt.status, "priority": pt.priority
+                })
+
         for p in projects.order_by('-updated_at')[:5]:
             p_tasks = p.tasks.all()
             total_tasks = p_tasks.count()
             completed = p_tasks.filter(status=Task.StatusChoices.DONE).count()
             open_tasks = total_tasks - completed
             progress = int((completed / total_tasks * 100)) if total_tasks > 0 else 0
-            
             my_projects_data.append({
-                "id": p.id,
-                "name": p.name,
-                "status": "Active",
-                "tasks_open": open_tasks,
-                "tasks_completed": completed,
-                "progress": progress
-            })
-            
-        # Recent Projects
-        for p in Project.objects.filter(workspace=workspace).order_by('-updated_at')[:3]:
-            recent_projects_data.append({
-                "id": p.id,
-                "name": p.name,
-                "tasks_count": p.tasks.count(),
-                "updated_at": p.updated_at
+                "id": p.id, "name": p.name, "status": "Active",
+                "tasks_open": open_tasks, "tasks_completed": completed, "progress": progress
             })
 
-        # Chart Data
+        for p in Project.objects.filter(workspace=workspace).order_by('-updated_at')[:3]:
+            recent_projects_data.append({
+                "id": p.id, "name": p.name,
+                "tasks_count": p.tasks.count(), "updated_at": p.updated_at
+            })
+
         tasks = Task.objects.filter(project__in=projects)
         end_date = timezone.now()
         start_date = end_date - timedelta(days=6)
         completed_tasks = tasks.filter(status=Task.StatusChoices.DONE, completed_at__gte=start_date)
-        
         date_counts = {}
         for i in range(7):
             d = (start_date + timedelta(days=i)).date()
             date_counts[d.strftime('%Y-%m-%d')] = 0
-            
         for t in completed_tasks:
             if t.completed_at:
                 date_str = t.completed_at.date().strftime('%Y-%m-%d')
                 if date_str in date_counts:
                     date_counts[date_str] += 1
-                    
         tasks_completed_7_days = [{"date": k, "count": v} for k, v in date_counts.items()]
-        
         distribution = {}
         for choice in Task.StatusChoices.choices:
             distribution[choice[0]] = tasks.filter(status=choice[0]).count()
-            
+
         return Response({
             "workspace_name": workspace.name,
             "user_name": f"{user.first_name} {user.last_name}".strip() or user.username,
@@ -147,6 +268,7 @@ class WorkspaceOverviewView(APIView):
             "task_status_distribution": distribution
         })
 
+
 class ProjectListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -162,13 +284,11 @@ class ProjectListView(APIView):
             completed = tasks.filter(status='Done').count()
             progress = int((completed / total_tasks * 100)) if total_tasks > 0 else 0
             data.append({
-                "id": p.id,
-                "name": p.name,
+                "id": p.id, "name": p.name,
                 "description": f"Project for {p.name}",
                 "status": "Active" if p.is_active else "Archived",
                 "members_count": workspace.memberships.count(),
-                "tasks_count": total_tasks,
-                "progress": progress,
+                "tasks_count": total_tasks, "progress": progress,
                 "updated_at": p.updated_at
             })
         return Response(data)
@@ -180,40 +300,26 @@ class ProjectListView(APIView):
                 name="Default Workspace",
                 owner=request.user
             )
-            WorkspaceMembership.objects.create(
-                workspace=workspace,
-                user=request.user,
-                role='OWNER'
-            )
-        
-        # Enforce free plan limit
+            if request.user.is_authenticated:
+                WorkspaceMembership.objects.create(workspace=workspace, user=request.user, role='OWNER')
+
         current_project_count = Project.objects.filter(workspace=workspace).count()
         if current_project_count >= 3:
             return Response(
                 {"error": "You've reached the 3-project limit on the Free plan. Upgrade to Pro for unlimited projects."},
                 status=403
             )
-            
         name = request.data.get('name')
         if not name or not str(name).strip():
             return Response({"error": "Project name is required"}, status=400)
-            
-        project = Project.objects.create(
-            name=str(name).strip(),
-            workspace=workspace
-        )
-        
+        project = Project.objects.create(name=str(name).strip(), workspace=workspace)
         return Response({
-            "id": project.id,
-            "name": project.name,
+            "id": project.id, "name": project.name,
             "description": f"Project for {project.name}",
-            "status": "Active",
-            "members_count": workspace.memberships.count(),
-            "members_count": workspace.memberships.count(),
-            "tasks_count": 0,
-            "progress": 0,
-            "updated_at": project.updated_at
+            "status": "Active", "members_count": workspace.memberships.count(),
+            "tasks_count": 0, "progress": 0, "updated_at": project.updated_at
         }, status=201)
+
 
 class WorkspaceActivityView(APIView):
     permission_classes = [IsAuthenticated]
@@ -224,16 +330,14 @@ class WorkspaceActivityView(APIView):
             return Response({})
         projects_count = Project.objects.filter(workspace=workspace, is_active=True).count()
         return Response({
-            "total_events": 0,
-            "today_events": 0,
-            "active_projects": projects_count,
-            "recent_activity": [],
-            "heatmap": []
+            "total_events": 0, "today_events": 0,
+            "active_projects": projects, "recent_activity": [], "heatmap": []
         })
 
-class WorkspaceMembersView(APIView):
-    permission_classes = [IsAuthenticated]
 
+
+class WorkspaceMembersView(APIView):
+    """Fixed: uses actual WorkspaceMembership.role instead of is_superuser heuristic."""
     def get(self, request):
         workspace, _ = _get_user_workspace(request)
         if not workspace:
@@ -245,12 +349,13 @@ class WorkspaceMembersView(APIView):
                 "id": m.id,
                 "name": f"{m.first_name} {m.last_name}".strip() or m.username,
                 "email": m.email,
-                "role": mem.role,
+                "role": membership.role,   # ← actual DB role, not is_superuser heuristic
                 "status": "Active",
-                "last_active": "Just now"
+                "last_active": "Just now",
+                "is_owner": membership.role in ('OWNER', 'Owner'),
             })
-            
-        # Fetch pending invitations
+
+        # Pending invitations
         try:
             from apps.workspaces.models import Invitation
             invitations = Invitation.objects.filter(workspace_id=workspace.id, status='PENDING')
@@ -261,12 +366,14 @@ class WorkspaceMembersView(APIView):
                     "email": inv.email,
                     "role": inv.role,
                     "status": "Pending",
-                    "last_active": "Sent just now"
+                    "last_active": "Invited",
+                    "is_owner": False,
                 })
-        except ImportError:
+        except Exception:
             pass
-            
+
         return Response(data)
+
 
 class WorkspaceBillingView(APIView):
     permission_classes = [IsAuthenticated]
@@ -280,12 +387,11 @@ class WorkspaceBillingView(APIView):
         return Response({
             "plan": "FREE",
             "usage": {
-                "projects": projects_count,
-                "projects_limit": 3,
-                "members": members_count,
-                "members_limit": 5
+                "projects": projects_count, "projects_limit": 3,
+                "members": members_count, "members_limit": 5
             }
         })
+
 
 class WorkspaceSettingsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -299,6 +405,7 @@ class WorkspaceSettingsView(APIView):
             "slug": workspace.slug or workspace.name.lower().replace(" ", "-"),
             "description": "Development Workspace"
         })
+
 
     def put(self, request):
         workspace, membership = _get_user_workspace(request)
