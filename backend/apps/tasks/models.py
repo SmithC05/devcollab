@@ -24,6 +24,12 @@ class Task(models.Model):
     priority = models.CharField(max_length=2, choices=PriorityChoices.choices, default=PriorityChoices.P2)
     due_date = models.DateField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Dependencies: Tasks that must be completed before THIS task can proceed.
+    # Therefore, task.dependencies.all() returns the upstream work that blocks this task.
+    # task.blocking_tasks.all() returns the downstream work that is blocked by this task.
+    dependencies = models.ManyToManyField('self', symmetrical=False, related_name='blocking_tasks', blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
