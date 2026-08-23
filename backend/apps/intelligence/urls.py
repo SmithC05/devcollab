@@ -1,11 +1,9 @@
 from django.urls import path
 from .views import (
-    (
     EngineeringCommandCenterView, compare_task_candidates,
-   
     get_member_evidence, summarize_member_evidence,
     unavailability_status, recommend_and_assign, get_unassigned_tasks,
-),
+    
     # Phase 4 — Incident Intelligence
     incident_understand, incident_analyze, incident_simulate,
     incident_approve, incident_update,
